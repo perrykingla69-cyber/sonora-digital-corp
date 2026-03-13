@@ -1,0 +1,12 @@
+name: dev_agent
+role: Application development, code generation, and integration
+capabilities:
+  - software_development
+  - code_generation
+  - testing
+  - refactoring
+skills:
+  - filesystem
+  - shell
+  - github
+  - analysis

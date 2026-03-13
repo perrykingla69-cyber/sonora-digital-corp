@@ -1,0 +1,25 @@
+skills:
+  - name: filesystem
+    module: skills.filesystem
+    entrypoint: run
+    description: Read, write, list, and delete files on the local filesystem.
+
+  - name: shell
+    module: skills.shell
+    entrypoint: run
+    description: Execute shell commands safely via subprocess.
+
+  - name: github
+    module: skills.github
+    entrypoint: run
+    description: Interact with GitHub via gh CLI (PRs, issues, repos).
+
+  - name: web_search
+    module: skills.web_search
+    entrypoint: run
+    description: Search the web via DuckDuckGo. No API key required.
+
+  - name: analysis
+    module: skills.analysis
+    entrypoint: run
+    description: Analyze text — stats, keywords, summarization (Ollama/extractive).

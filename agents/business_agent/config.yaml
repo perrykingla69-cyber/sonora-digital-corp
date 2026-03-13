@@ -1,0 +1,12 @@
+name: business_agent
+role: Strategy, planning, market analysis, and stakeholder support
+capabilities:
+  - planning
+  - market_analysis
+  - reporting
+  - strategy
+skills:
+  - web_search
+  - analysis
+  - github
+  - filesystem

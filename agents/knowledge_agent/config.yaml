@@ -1,0 +1,11 @@
+name: knowledge_agent
+role: Research, synthesis, and knowledge retrieval
+capabilities:
+  - documentation
+  - knowledge_retrieval
+  - summarization
+  - research
+skills:
+  - web_search
+  - analysis
+  - filesystem
