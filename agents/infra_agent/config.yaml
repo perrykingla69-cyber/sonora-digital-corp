@@ -1,0 +1,10 @@
+name: infra_agent
+role: Infrastructure operations and reliability
+capabilities:
+  - infrastructure
+  - deployment
+  - observability
+skills:
+  - shell
+  - filesystem
+  - analysis

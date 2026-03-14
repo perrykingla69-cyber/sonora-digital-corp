@@ -1,0 +1,16 @@
+skills:
+  - name: filesystem
+    module: skills.filesystem
+    entrypoint: run
+  - name: shell
+    module: skills.shell
+    entrypoint: run
+  - name: github
+    module: skills.github
+    entrypoint: run
+  - name: web_search
+    module: skills.web_search
+    entrypoint: run
+  - name: analysis
+    module: skills.analysis
+    entrypoint: run

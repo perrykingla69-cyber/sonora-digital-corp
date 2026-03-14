@@ -1,0 +1,21 @@
+agents:
+  - name: infra_agent
+    module: agents.infra_agent.agent
+    class: BaseAgent
+    capabilities: [infrastructure, deployment, observability]
+    skills: [shell, filesystem, analysis]
+  - name: dev_agent
+    module: agents.dev_agent.agent
+    class: BaseAgent
+    capabilities: [software_development, code_generation, testing]
+    skills: [filesystem, github, shell, analysis]
+  - name: knowledge_agent
+    module: agents.knowledge_agent.agent
+    class: BaseAgent
+    capabilities: [documentation, knowledge_retrieval, summarization]
+    skills: [web_search, analysis, filesystem]
+  - name: business_agent
+    module: agents.business_agent.agent
+    class: BaseAgent
+    capabilities: [planning, market_analysis, reporting]
+    skills: [web_search, analysis, github]
