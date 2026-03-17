@@ -97,6 +97,7 @@ services:
       N8N_HOST: 0.0.0.0
       N8N_PORT: 5678
       N8N_PROTOCOL: https
+      N8N_PATH: /n8n/
       WEBHOOK_URL: https://sonoradigitalcorp.com/n8n/
       N8N_SECURE_COOKIE: "false"
       N8N_EDITOR_BASE_URL: https://sonoradigitalcorp.com/n8n/
