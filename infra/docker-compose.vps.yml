@@ -68,6 +68,22 @@ services:
       timeout: 10s
       retries: 3
 
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: mystic_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://sonoradigitalcorp.com/api}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - mystic_net
+    restart: unless-stopped
+
   bot:
     build:
       context: ../bot
