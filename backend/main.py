@@ -1597,23 +1597,29 @@ def _rag_search(db: Session, question: str, limit: int = 4) -> list[dict]:
         return []
 
 
+_MAX_CHUNK_CHARS = 600  # truncar chunks para no saturar contexto de phi3-fast
+
+
 def _build_context(chunks: list[dict]) -> str:
     parts = []
     for i, c in enumerate(chunks, 1):
-        parts.append(f"[FUENTE {i}: {c['title']} | {c.get('source','')}]\n{c['content']}")
+        content = c['content']
+        if len(content) > _MAX_CHUNK_CHARS:
+            content = content[:_MAX_CHUNK_CHARS] + "…"
+        parts.append(f"[{i}. {c['title']} | {c.get('source','')}]\n{content}")
     return "\n\n".join(parts)
 
 
 def _ollama_ask(question: str, rag_context: str) -> str:
     system = _BRAIN_SYSTEM
     if rag_context:
-        system += f"\n\nBASE DE CONOCIMIENTO VERIFICADA:\n{rag_context}"
+        system += f"\n\nBASE DE CONOCIMIENTO:\n{rag_context}"
     payload = _json.dumps({
         "model": "phi3-fast",
         "prompt": f"Pregunta: {question}",
         "system": system,
         "stream": False,
-        "options": {"temperature": 0.1, "num_predict": 400, "num_ctx": 2048},
+        "options": {"temperature": 0.1, "num_predict": 300, "num_ctx": 1024},
     }).encode()
     req = _urllib_req.Request(
         f"{_OLLAMA_URL}/api/generate",
@@ -1621,7 +1627,7 @@ def _ollama_ask(question: str, rag_context: str) -> str:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with _urllib_req.urlopen(req, timeout=90) as r:
+    with _urllib_req.urlopen(req, timeout=60) as r:
         return _json.loads(r.read()).get("response", "").strip()
 
 

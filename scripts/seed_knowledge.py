@@ -813,6 +813,732 @@ Métodos aceptados: precio comparable no controlado (PCN), precio de reventa, co
 Si la SAT rechaza los precios → ajuste fiscal + multas + recargos.""",
 "LISR Art. 76 fracc. IX, 179-184","precios transferencia partes relacionadas arm's length documentación DIM Fourgea Triple R",2026),
 
+
+# ═══════════════════════════════════════════════════════════════════
+# Q. DEPRECIACIONES Y AMORTIZACIONES
+# ═══════════════════════════════════════════════════════════════════
+
+("isr","depreciacion","Tasas de Depreciación Fiscal LISR 2026",
+"""Tasas anuales de depreciación fiscal autorizadas (Art. 35 LISR):
+Edificios y construcciones: 5%
+Ferrocarriles y barcos: 6%
+Aviones (sin aerotaxi): 25%
+Automóviles, autobuses, camiones: 25%
+Computadoras y equipo de cómputo: 30%
+Dados, troqueles, moldes, matrices: 35%
+Comunicaciones telefónicas: 10%
+Comunicaciones satelitales: 8%
+Maquinaria industrial en general: 10%
+Equipos de generación de energía: 10%
+Instrumentos de medición: 10%
+Herramientas y equipo de taller: 35%
+Para Fourgea: filtros en arrendamiento/préstamo → 25% (equipo no identificado como maquinaria fija)
+Para Triple R: tanques de almacenamiento → 5% (similar a construcción).
+La depreciación fiscal puede diferir de la contable (CINIF NIF C-6).""",
+"LISR Art. 34-40","depreciación fiscal 5% edificios 25% autos 30% cómputo 10% maquinaria tasa LISR",2026),
+
+("isr","perdidas_fiscales","Pérdidas Fiscales — Amortización y Límites",
+"""Las pérdidas fiscales (cuando deducciones > ingresos) se pueden amortizar contra utilidades futuras.
+Reglas (Art. 57 LISR):
+- Plazo: hasta 10 ejercicios siguientes
+- Se actualiza por inflación (factor INPC) desde el primer mes de la segunda mitad del ejercicio que generó la pérdida hasta el último mes del ejercicio en que se aplica
+- Tope: no hay límite de monto, pero no puede generar otra pérdida al aplicarla
+- Si la empresa se fusiona o escinde: limitaciones especiales
+Ejemplo: Fourgea tiene pérdida fiscal 2024 de $500,000 → puede restarla de utilidades 2025-2034
+Al aplicar en 2026: actualización por inflación mejora el valor de la pérdida.""",
+"LISR Art. 57-58","pérdida fiscal amortización 10 años actualización INPC fusión escisión",2026),
+
+("isr","dividendos","Dividendos — Tratamiento Fiscal",
+"""Distribución de dividendos de persona moral a socio:
+Si el socio es PERSONA FÍSICA residente en México:
+  - La PM retiene 10% del dividendo bruto (Art. 140 LISR)
+  - El dividendo es ingreso acumulable para la PF en su declaración anual
+  - La PM ya pagó 30% ISR sobre la utilidad, entonces el total efectivo es ~37%
+Si el socio es PERSONA MORAL residente en México: dividendo no acumulable (evita doble imposición).
+Si el socio es RESIDENTE EN EL EXTRANJERO: retención 10% (o tasa del tratado).
+CUFIN (Cuenta de Utilidad Fiscal Neta): dividendo que sale de CUFIN no paga ISR adicional.
+Si el dividendo sale de utilidades NO en CUFIN: PM paga ISR corporativo adicional (piramidación).""",
+"LISR Art. 10, 77, 140","dividendos CUFIN retención 10% persona física socio extranjero piramidación",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# R. INFRACCIONES Y SANCIONES ADUANALES Y FISCALES
+# ═══════════════════════════════════════════════════════════════════
+
+("aduanas","infracciones","Infracciones Aduanales Comunes y Multas 2026",
+"""Infracciones frecuentes en importación y sus multas (LA Art. 176-199):
+1. FRACCIÓN ARANCELARIA INCORRECTA: multa del 70% al 100% del IGI omitido.
+2. VALOR EN ADUANA INCORRECTO: multa 130% del impuesto omitido si hay dolo, 70% si es error.
+3. DOCUMENTACIÓN FALSA: penalización penal (contrabando) hasta 9 años de prisión.
+4. NO PRESENTAR MVE: multa $4,000 a $8,000 pesos.
+5. EXCEDER TIEMPO DE IMPORTACIÓN TEMPORAL (IMMEX): pagar IGI + IVA + recargos + multa 70%.
+6. NO RETORNAR MERCANCÍA TEMPORAL: considérase importación definitiva no declarada.
+7. TRANSPORTAR SIN CARTA PORTE: retención de mercancía + multa $4,000-$16,000.
+RECONOCIMIENTO ADUANERO: si la aduana detecta error en físico vs. factura, inicia procedimiento administrativo (PAMA).
+Prescripción: 5 años para que el SAT reclame créditos aduanales.""",
+"LA Art. 176-199, CFF Art. 146","infracciones multas importación fracción arancelaria PAMA carta porte MVE contrabando",2026),
+
+("sat","infracciones_fiscales","Infracciones Fiscales Comunes — CFF",
+"""Infracciones y multas más frecuentes del CFF 2026:
+NO EMITIR CFDI:
+  - 1ra vez: $1,330 a $3,990 por comprobante no emitido
+  - Reincidencia: clausura de 3-15 días
+NO PRESENTAR DECLARACIÓN A TIEMPO:
+  - $1,400 a $17,370 por declaración (+ recargos sobre saldo)
+LLEVAR CONTABILIDAD INCORRECTA:
+  - $230 a $4,170 por cada libro o registro
+NO INSCRIBIRSE EN RFC:
+  - Persona moral: $5,230 a $17,580
+PRESENTAR DECLARACIÓN CON DATOS ERRÓNEOS:
+  - 55% a 75% de contribución omitida (con dolo 100%-150%)
+RECARGOS: tasa mensual publicada en RMF (~1.47% mensual en 2026 sobre saldo histórico actualizado).
+ACTUALIZACIÓN: INPC entre mes de vencimiento y mes de pago.""",
+"CFF Art. 76-91","multas CFDI declaración recargos actualización INPC infracciones fiscales 2026",2026),
+
+("sat","revision_electronica","Revisión Electrónica SAT — Carta Invitación",
+"""El SAT puede iniciar revisiones sin ir físicamente a la empresa:
+1. CARTA INVITACIÓN: correo o notificación en buzón tributario solicitando aclaraciones.
+   - Plazo para aclarar: 15 a 30 días
+   - No es una auditoría formal, pero puede derivar en una
+2. REVISIÓN ELECTRÓNICA: auditoría basada en datos del SAT (CFDI, declaraciones, pedimentos).
+   - Pre-liquidación: el SAT muestra monto supuesto y da 20 días para aclarar
+   - Si no se aclara: crédito fiscal determinado
+3. AUDITORÍA EN GABINETE: requerimiento de papeles de trabajo en las oficinas del SAT.
+4. VISITA DOMICILIARIA: auditores van a las instalaciones (cada vez menos frecuente).
+Para Fourgea/Triple R: la mayoría de discrepancias detectadas son por:
+- CFDI emitido vs. declaración (diferencias de IVA)
+- Pedimentos vs. deducciones de importación reportadas""",
+"CFF Art. 42-46","revisión electrónica SAT carta invitación pre-liquidación auditoría CFDI pedimentos",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# S. RFC, CSD Y SELLOS DIGITALES
+# ═══════════════════════════════════════════════════════════════════
+
+("sat","rfc","RFC y e.firma — Obligaciones Iniciales",
+"""RFC (Registro Federal de Contribuyentes):
+Fourgea Mexico SA de CV: RFC E080820LC2
+Triple R Oil México: RFC O150504GE3
+Para obtener o actualizar RFC:
+  - Personas morales: acta constitutiva + poderes del representante legal + ID
+  - Personas físicas: CURP + ID oficial
+e.firma (antes FIEL): certificado digital personal del representante legal.
+  - Vigencia: 4 años
+  - Renovar en SAT antes del vencimiento (con e.firma vigente)
+  - Sin e.firma: no se puede firmar declaraciones, solicitar devoluciones ni acceder a Buzón Tributario
+CSD (Certificado de Sello Digital): para timbrar CFDI 4.0.
+  - Vigencia: 4 años (puede ser diferente a e.firma)
+  - Una empresa puede tener múltiples CSD (para distintos establecimientos)
+  - Si el SAT cancela el CSD (efecto de embargo o incumplimiento): no se puede emitir CFDI""",
+"CFF Art. 17-D, 27","RFC e.firma CSD certificado sello digital vigencia 4 años timbrar CFDI buzón tributario",2026),
+
+("sat","buzon_tributario","Buzón Tributario SAT — Notificaciones Electrónicas",
+"""El Buzón Tributario es el canal oficial del SAT para comunicarse con el contribuyente.
+Obligatorio para personas morales desde 2014, personas físicas desde 2015.
+Funciones:
+- Recibir notificaciones oficiales (créditos, requerimientos, resoluciones)
+- Presentar promociones y trámites
+- Recibir resoluciones del SAT
+IMPORTANTE: las notificaciones en buzón tienen efectos legales desde que el contribuyente las abre O a los 3 días de enviadas (lo que ocurra primero).
+Si no se revisa el buzón → los plazos corren igual → preclusión de derechos.
+Para Fourgea: revisar el buzón tributario al menos cada semana para no perder plazos.
+Correo de alerta: configurar en portal SAT para recibir aviso por email cuando llega notificación.""",
+"CFF Art. 17-K","buzón tributario notificación electrónica 3 días plazo preclusión derechos SAT",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# T. EXPORTACIÓN — ASPECTOS FISCALES
+# ═══════════════════════════════════════════════════════════════════
+
+("comercio_exterior","exportacion_iva","IVA en Exportaciones — Tasa 0% y Devolución",
+"""Las exportaciones definitivas de bienes tangibles están gravadas a tasa 0% de IVA (Art. 29 LIVA).
+Esto significa:
+- No se cobra IVA al cliente extranjero
+- Pero sí se acredita TODO el IVA pagado en México para producir/adquirir lo exportado
+- Resultado: generalmente saldo a favor de IVA que se puede devolver
+Documentación para comprobar exportación:
+  1. Pedimento de exportación G1 validado por aduana
+  2. Factura comercial al cliente extranjero (con datos completos del receptor)
+  3. Comprobante de embarque (BL, guía aérea o carta porte)
+Si Triple R exporta aceites → paga IVA 0%, puede pedir devolución del IVA de sus insumos.
+Plazo SAT devolución IVA exportadores: 20 días hábiles (automática) o 5 días con certificación IVA/IEPS.""",
+"LIVA Art. 29-32","IVA exportación 0% devolución saldo favor pedimento G1 certificación acreditamiento",2026),
+
+("comercio_exterior","pedimento_exportacion","Pedimento de Exportación — Proceso",
+"""Proceso para exportar mercancía de México:
+1. El exportador o agente aduanal clasifica la mercancía en TIGIE y determina fracción de exportación.
+2. Se elabora el pedimento G1 (exportación definitiva) o V5 (temporal).
+3. Se pagan derechos si aplican (generalmente 0% para exportaciones manufactureras).
+4. El SAT puede solicitar reconocimiento aduanero o la mercancía sale sin revisión (desaduanamiento).
+5. La aduana valida el pedimento y se genera el número de pedimento oficial.
+6. El transportista recibe la mercancía ya con el pedimento pagado.
+Documentos que el exportador (Triple R o Fourgea) da al agente:
+  - Factura comercial al cliente extranjero (en USD o la moneda del contrato)
+  - Packing list
+  - Certificado de origen T-MEC si aplica
+  - Permisos de exportación si los hay (algunos productos químicos los requieren)""",
+"LA Art. 96-98","pedimento exportación G1 V5 proceso agente aduanal fracción TIGIE certificado origen",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# U. FINANCIAMIENTO Y CRÉDITO FISCAL
+# ═══════════════════════════════════════════════════════════════════
+
+("sat","compensacion","Compensación y Devolución de Saldos a Favor",
+"""Cuando hay saldo a favor en declaraciones, el contribuyente puede:
+1. COMPENSACIÓN UNIVERSAL (hasta 2019): compensar contra cualquier impuesto federal — eliminada.
+2. COMPENSACIÓN ACTUAL: solo contra el mismo impuesto (IVA vs IVA, ISR vs ISR) o retenciones del mismo período.
+   Excepción: el IVA de exportaciones sí puede pedirse en devolución directa.
+3. DEVOLUCIÓN: solicitud formal en portal SAT.
+   - IVA: 20 días hábiles automática / 40 días normal
+   - ISR (saldo a favor declaración anual): 25 días hábiles
+   - Exportadores con certificación IVA/IEPS: 5 días hábiles
+Requisitos para devolución:
+  - Tener e.firma vigente
+  - RFC al corriente de obligaciones (sin adeudos ni incumplimientos)
+  - Cuenta CLABE bancaria registrada en SAT
+Fourgea: puede tener saldo a favor de IVA en meses con muchas importaciones vs. pocas ventas.""",
+"CFF Art. 22-23, LIVA Art. 6","saldo favor devolución compensación IVA ISR 20 días 40 días CLABE exportadores",2026),
+
+("sat","facilidades_pago","Facilidades de Pago — Pago en Parcialidades",
+"""Si se tiene adeudo fiscal, se puede pagar en parcialidades (Art. 66 CFF):
+Plazos máximos:
+  - Hasta 12 meses: sin garantía adicional
+  - 13 a 36 meses: se requiere garantía (fianza, hipoteca, prenda)
+Tasa de interés: TIIE a 28 días + 2 puntos (aproximadamente 13-15% anual en 2026).
+También existe la PRÓRROGA: aplazar una sola fecha de pago (máximo 12 meses adicionales).
+Condonación: el SAT emite periódicamente programas de condonación de multas (pero no de contribuciones).
+En trámites aduanales: el importador puede otorgar garantía para desaduanar mercancía en disputa sin pagar el crédito fiscal inmediatamente.""",
+"CFF Art. 66-66-A","pago parcialidades adeudo fiscal TIIE 36 meses garantía prorroga condonación multas",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# V. OPERADOR ECONÓMICO AUTORIZADO (OEA)
+# ═══════════════════════════════════════════════════════════════════
+
+("aduanas","oea","OEA — Operador Económico Autorizado",
+"""El OEA es una certificación del SAT para importadores/exportadores confiables que agiliza el despacho aduanal.
+Beneficios:
+- Carril exclusivo en aduana (despacho más rápido)
+- Menor frecuencia de reconocimientos físicos
+- Acceso a regímenes especiales simplificados
+- Coordinación con otros países (reconocimiento mutuo EEUU, UE, etc.)
+Modalidades:
+  - Tipo A: importadores/exportadores
+  - Tipo B: agentes aduanales
+  - Tipo C: transportistas
+  - Tipo D: recinteros
+Requisitos generales:
+  1. RFC activo y corriente de obligaciones
+  2. No haber tenido créditos fiscales relevantes en los últimos 3 años
+  3. Sistema de control de inventarios certificado
+  4. Capacitación en seguridad de la cadena de suministro
+Para Fourgea: obtener OEA tipo A reduciría costos operativos de importación significativamente.""",
+"LA Art. 100-A, Reglas RGCE","OEA operador económico autorizado certificación importador despacho ágil reconocimiento",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# W. IVA ACREDITABLE — REGLAS ESPECIALES
+# ═══════════════════════════════════════════════════════════════════
+
+("iva","acreditamiento","IVA Acreditable — Requisitos para Acreditar",
+"""Para acreditar IVA pagado, se deben cumplir TODOS estos requisitos (Art. 5 LIVA):
+1. Que el IVA corresponda a bienes/servicios ESTRICTAMENTE INDISPENSABLES para la actividad gravada.
+2. Que el gasto sea deducible para ISR (si no es deducible ISR, el IVA tampoco es acreditable).
+3. Que se pague en el período (flujo de efectivo).
+4. Que se tenga CFDI con los requisitos del Art. 29-A CFF (RFC del receptor, domicilio, régimen).
+5. Si aplica, que el IVA haya sido retenido y enterado.
+Excepciones:
+- Vehículos cuyo deducible de ISR es limitado (sedan <$175,000) → IVA acreditable proporcional
+- Gastos que generan actividades exentas → no acreditable
+- Gastos mixtos (actividades gravadas y exentas) → proporcional al porcentaje de actividad gravada
+Para Fourgea: todos los filtros que compra para revender están en actividad gravada → 100% acreditable.""",
+"LIVA Art. 5","IVA acreditable requisitos indispensable deducible CFDI RFC proporcional actividad gravada exenta",2026),
+
+("iva","retencion_iva","Retenciones de IVA — Cuándo y Cuánto",
+"""Personas obligadas a RETENER IVA (Art. 1-A LIVA):
+1. Personas morales que reciben servicios de personas físicas.
+2. Personas físicas o morales que reciben servicios de comisión, mediación, agencia, etc.
+3. Personas morales del sector financiero.
+4. Personas morales que adquieren desperdicios.
+MONTOS DE RETENCIÓN:
+- Servicios personales independientes (honorarios, comisiones): retener 2/3 del IVA.
+- Servicios de autotransporte terrestre: retener 4% del valor de la contraprestación.
+- Servicios de personal temporal (outsourcing): retener 6%.
+Obligación: enterar el IVA retenido el día 17 del mes siguiente.
+En DIOT: reportar el IVA retenido en la columna correspondiente.
+En CFDI: el prestador emite el CFDI indicando el IVA retenido; el receptor emite CFDI de retenciones.""",
+"LIVA Art. 1-A, 3","retención IVA 2/3 honorarios autotransporte 4% outsourcing 6% persona moral física enterar",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# X. CONTABILIDAD DE COSTOS — IMPORTADOR COMERCIALIZADOR
+# ═══════════════════════════════════════════════════════════════════
+
+("contabilidad","costo_ventas","Costo de Ventas para Importador-Comercializador",
+"""Para Fourgea (importa filtros y los revende sin transformación):
+MÉTODO DE VALUACIÓN DE INVENTARIOS (Art. 41 LISR):
+Método autorizado para personas morales:
+  - PEPS (Primeras Entradas-Primeras Salidas): el más común para bienes no perecederos
+  - Costo de identificación específica: para bienes de alto valor unitario
+  - Costo promedio: simple de implementar, promedia todos los lotes
+El método elegido no puede cambiarse sin autorización del SAT.
+CÁLCULO DEL COSTO DE IMPORTACIÓN:
+  Costo unitario = (Valor factura extranjero + IGI + DTA proporcional + flete nacional + seguro + agente aduanal) / unidades importadas
+  Ejemplo: 1,000 filtros, valor aduana $200,000, IGI $10,000, DTA $669, flete nacional $3,000, agente $4,000
+  Costo total = $217,669 / 1,000 = $217.67 por filtro
+Al vender: Costo de venta = unidades vendidas × $217.67""",
+"LISR Art. 39-41, CINIF NIF C-4","costo ventas importador inventarios PEPS promedio valuación costo importación unitario",2026),
+
+("contabilidad","cuentas_orden","Cuentas de Orden y Conciliación Bancaria",
+"""CONCILIACIÓN BANCARIA:
+Diferencias entre estado de cuenta bancario y libro de bancos (causas normales):
+1. Cheques en tránsito: emitidos pero no cobrados aún
+2. Depósitos en tránsito: registrados contablemente pero no reflejados en banco
+3. Cargos bancarios no registrados: comisiones, intereses, cargos automáticos
+4. Errores: diferencias a investigar
+Frecuencia: mensual (obligatoria para contabilidad electrónica SAT).
+CUENTAS DE ORDEN: registros fuera del balance para control interno:
+  - Mercancías en consignación
+  - Garantías otorgadas
+  - Bienes en arrendamiento
+  - Pedimentos abiertos pendientes de pago
+Para Fourgea: llevar cuenta de orden con pedimentos en proceso para controlar el inventario en tránsito.""",
+"CINIF NIF B-10","conciliación bancaria cheques tránsito cargos bancarios cuentas orden pedimentos",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# Y. TIPO DE CAMBIO Y OPERACIONES EN MONEDA EXTRANJERA
+# ═══════════════════════════════════════════════════════════════════
+
+("contabilidad","tipo_cambio","Tipo de Cambio — Contabilización de Operaciones en USD",
+"""Para registrar operaciones en moneda extranjera (Art. 20 CFF y CINIF NIF B-15):
+TIPO DE CAMBIO FISCAL: publicado diariamente por el Banco de México (Banxico) en el DOF.
+  - Para pedimentos: tipo de cambio del día anterior al del despacho aduanal.
+  - Para CFDI en USD: tipo de cambio del día de emisión del CFDI.
+  - Para pagos al extranjero: tipo de cambio del día del pago.
+FLUCTUACIÓN CAMBIARIA:
+  - Cuando el USD sube vs MXN: la deuda con el proveedor extranjero (en pesos) aumenta → pérdida cambiaria (gasto deducible ISR).
+  - Cuando el USD baja: ganancia cambiaria (ingreso acumulable ISR).
+  - Reconocer al cierre mensual la diferencia entre TC histórico y TC al cierre.
+EJEMPLO: Fourgea debe $10,000 USD al proveedor.
+  TC compra: $17.50 → deuda registrada $175,000 MXN
+  TC al cierre del mes: $17.80 → deuda actualizada $178,000 MXN
+  Pérdida cambiaria reconocida: $3,000 MXN (deducible ISR)""",
+"CFF Art. 20, CINIF NIF B-15","tipo cambio Banxico DOF fluctuación cambiaria pérdida ganancia USD deuda proveedor",2026),
+
+("contabilidad","pagos_exterior","Pagos al Exterior — SWIFT y Obligaciones Fiscales",
+"""Al pagar a proveedor extranjero en USD o EUR:
+1. RETENCIÓN ISR si el pago es por servicios (no por bienes importados).
+2. DECLARACIÓN A-29 (DIOT): reportar el pago al proveedor extranjero.
+3. ANTI-LAVADO: transferencias >$10,000 USD se reportan al SAT (Art. 17 Ley Anti-Lavado).
+   Transferencias >$3,000 USD pueden requerir identificación adicional en el banco.
+4. TIPO DE CAMBIO: usar TC Banxico del día del pago para convertir a MXN en contabilidad.
+5. Bancos mexicanos a veces solicitan factura del proveedor para liberar transferencias internacionales.
+Para Triple R (aceites de EEUU): generalmente pago en USD por SWIFT, sin retención si es compra de mercancía.
+Contrato de compra-venta internacional recomendado para soportar la operación ante el SAT.""",
+"CFF Art. 32-B, Ley Anti-Lavado","pago exterior SWIFT USD anti-lavado $10,000 reporte DIOT proveedor extranjero",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# Z. NIF/CINIF — NORMAS DE INFORMACIÓN FINANCIERA
+# ═══════════════════════════════════════════════════════════════════
+
+("contabilidad","nif_inventarios","NIF C-4 — Inventarios",
+"""NIF C-4 establece el tratamiento contable de los inventarios:
+VALUACIÓN AL MENOR ENTRE: costo de adquisición y valor neto de realización.
+Métodos permitidos por NIF C-4:
+  - PEPS (primero en entrar primero en salir)
+  - Costo promedio ponderado
+  - No se permite UEPS desde 2011
+Deterioro de inventarios: si el valor neto de realización < costo → reconocer pérdida.
+Casos que requieren ajuste:
+  - Mercancías obsoletas (filtros que ya no tienen demanda)
+  - Daños físicos en almacén
+  - Reducción en precio de mercado
+Para Fourgea: revisar inventario de filtros cada cierre de ejercicio. Los filtros dañados o sin salida deben registrarse a su valor neto de realización (precio de venta estimado - costos de disposición).""",
+"CINIF NIF C-4","NIF inventarios PEPS promedio deterioro valor neto realización obsoleto daño ajuste",2026),
+
+("contabilidad","nif_activo_fijo","NIF C-6 — Propiedades, Planta y Equipo",
+"""NIF C-6 regula el activo fijo (propiedades, planta y equipo):
+RECONOCIMIENTO INICIAL: al costo de adquisición (precio + importación + instalación + pruebas).
+Para equipo importado: costo incluye valor aduana + IGI + DTA + flete nacional + instalación.
+DEPRECIACIÓN CONTABLE: basada en vida útil estimada (puede diferir de tasas fiscales LISR).
+  - Línea recta: cargo uniforme por vida útil estimada
+  - Método de unidades de producción: según horas de uso
+DIFERENCIA CONTABLE VS FISCAL:
+  - Contable: depreciación según vida útil real (ej. computadora 5 años = 20%)
+  - Fiscal LISR: tasa fija 30%
+  - Diferencia = impuesto diferido (NIF D-4)
+BAJA DE ACTIVO FIJO: cuando se vende o da de baja → reconocer utilidad o pérdida en venta.""",
+"CINIF NIF C-6","NIF activo fijo propiedades planta equipo costo depreciación vida útil diferencia fiscal impuesto diferido",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# AA. ADUANAS — TIGIE CAPÍTULOS ADICIONALES
+# ═══════════════════════════════════════════════════════════════════
+
+("tigie","lubricantes_industriales","TIGIE — Aceites y Lubricantes para Maquinaria Industrial (Triple R)",
+"""Fracciones arancelarias específicas para Triple R Oil México:
+2710.19.02 — Aceites lubricantes acabados con aditivos antioxidantes: IGI libre
+2710.19.03 — Aceites para transmisiones automáticas (ATF): IGI libre
+2710.19.04 — Aceites para motores de dos tiempos: IGI libre
+2710.19.05 — Aceites corte y taladrinas (metalurgia): IGI libre
+2710.19.06 — Aceites hidráulicos minerales: IGI libre
+2710.19.07 — Aceites para engranajes y cajas de velocidades: IGI libre
+3403.11.01 — Lubricantes sólidos y semisólidos (grasas con base mineral): IGI libre
+3403.19.99 — Las demás grasas lubricantes: IGI libre
+Nota: todos los aceites de capítulo 27 tienen IGI libre (0%) para México incluyendo importaciones de China.
+El único impuesto relevante es IVA 16%. No aplica IEPS para lubricantes (solo para combustibles).""",
+"TIGIE SE Cap. 27, 34","TIGIE aceites lubricantes ATF hidráulicos corte grasas 2710 3403 IGI libre Triple R",2026),
+
+("tigie","quimicos_industriales","TIGIE — Químicos y Solventes para Mantenimiento Industrial",
+"""Fracciones para productos químicos de mantenimiento industrial (Fourgea):
+2710.12.07 — Solventes minerales (thinner, nafta mineral): IGI 5%
+2905.11.01 — Metanol (alcohol metílico): IGI 5%
+3402.20.99 — Agentes de limpieza industrial a base de tensioactivos: IGI 5%
+3814.00.99 — Mezclas disolventes y diluyentes: IGI 5%
+3820.00.01 — Anticongelantes: IGI 5% (T-MEC 0%)
+3824.99.99 — Preparaciones químicas industriales no clasificadas: IGI 5% general
+Para productos SEMARNAT: los solventes halogenados requieren autorización previa (CFC/HCFC-134a).
+Etiquetado: NOM-018-STPS-2015 para sustancias peligrosas (SGA/GHS): pictogramas, fichas de seguridad.""",
+"TIGIE SE Cap. 27, 29, 38","TIGIE solventes químicos industriales limpieza anticongelante 2710 3402 3820 SEMARNAT NOM-018",2026),
+
+("tigie","maquinaria_electrica","TIGIE — Motores y Equipo Eléctrico Industrial",
+"""Fracciones eléctricas para equipos industriales (Fourgea sistemas de filtración):
+8501.10.01 — Motores de corriente continua hasta 37.5 W: IGI 5%
+8501.20.01 — Motores monofásicos 37.5W-750W: IGI 5%
+8501.51.01 — Motores de CA trifásicos hasta 750W: IGI 5%
+8501.52.01 — Motores de CA trifásicos más de 750W: IGI 5%
+8536.50.99 — Interruptores, seccionadores: IGI 5%
+8537.10.99 — Tableros de control eléctrico: IGI 5%
+8543.70.99 — Máquinas eléctricas especializadas: IGI 5%
+Regla de origen T-MEC para equipo eléctrico: generalmente CC (cambio de capítulo) o RVC 35-45%.
+Si el motor es de China con componentes no T-MEC: paga 5% IGI (sin preferencia).""",
+"TIGIE SE Cap. 85","TIGIE motores eléctricos trifásico CA CC tablero control 8501 8537 IGI 5% T-MEC",2026),
+
+("tigie","sellos_empaques","TIGIE — Sellos, Empaques y Material de Empaque",
+"""Fracciones para empaques y sellos usados en filtración industrial:
+4002.19.99 — Hule sintético (caucho SBR, NBR para juntas): IGI 5%
+4016.93.99 — Juntas y empaques de hule vulcanizado: IGI 5%
+4016.95.99 — Otros artículos de hule inflables o con forma: IGI 5%
+5911.90.99 — Tejidos técnicos (telas filtrantes, fieltros): IGI 5%
+6909.19.99 — Artículos cerámicos de uso industrial (boquillas filtrantes): IGI 5%
+7318.15.99 — Tornillos y pernos de acero (para ensamble de filtros): IGI 5%
+7320.20.99 — Resortes helicoïdales de acero (para válvulas y filtros): IGI 5%
+Nota: para todos estos materiales auxiliares, si son originarios de EEUU con certificado T-MEC: 0% IGI.""",
+"TIGIE SE Cap. 40, 59, 69, 73","TIGIE hule juntas empaques telas filtrantes tornillos resortes 4016 5911 7318 7320 IGI 5%",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# BB. RÉGIMEN ADUANERO — ORIGEN NO PREFERENCIAL
+# ═══════════════════════════════════════════════════════════════════
+
+("comercio_exterior","china_importacion","Importación desde China — Consideraciones Especiales",
+"""Importar desde China implica diferencias vs. EEUU (sin T-MEC):
+ARANCELES: se aplica la tasa general de la TIGIE (sin preferencia).
+  - Filtros 8421.29.99 desde China: IGI 5% (misma tasa, T-MEC no aplica)
+  - Aceites 2710.x desde China: IGI libre (0%)
+  - Maquinaria 84.xx: generalmente 5%
+CUOTAS COMPENSATORIAS: el SE puede imponer cuotas adicionales anti-dumping o compensatorias sobre productos chinos específicos. Verificar siempre en el Diario Oficial.
+  - Si hay cuota compensatoria en 8421.29.99 → se suma al IGI
+PROVEEDOR CHINO: no puede emitir certificado T-MEC, solo certificado de origen general (Formulario A del SGP).
+CALIDAD/NOM: verificar que el producto chino cumpla las mismas NOMs que el equivalente americano.
+INCOTERM CIF Puerto Manzanillo: el más usado para importaciones desde China.""",
+"LA, SE Resoluciones Antidumping","China importación cuota compensatoria antidumping incoterm CIF Manzanillo NOM origen general",2026),
+
+("comercio_exterior","certificado_origen_general","Certificados de Origen — Tratados Comerciales México",
+"""México tiene tratados comerciales con tasa 0% o reducida para:
+T-MEC (EEUU, Canadá): 0% mayoría de productos manufacturados.
+  - Certificado: declaración en factura (desde 2020)
+TLC México-UE: 0% a reducida para productos de la Unión Europea.
+  - Certificado: EUR.1 o declaración en factura para exportadores certificados REX
+TLC México-Japón: reducciones escalonadas; muchos productos 0% ya.
+  - Certificado: formulario japonés oficial
+TLC México-Israel: 0% para la mayoría de bienes industriales.
+ACE México-Chile, Colombia, Perú (Alianza Pacífico): 0% para casi todo.
+Para productos fuera de tratado (China, India, Turquía): tasa general TIGIE.
+IMPORTANTE: siempre verificar la Lista de Desgravación del tratado para el capítulo específico.""",
+"SE Dirección General de Comercio Exterior","tratados comerciales T-MEC TLC UE Japón Israel Alianza Pacífico certificado origen EUR.1",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# CC. NÓMINA AVANZADA
+# ═══════════════════════════════════════════════════════════════════
+
+("isr","subsidio_empleo","Subsidio para el Empleo — Mecánica y Obligaciones",
+"""El subsidio para el empleo reduce el ISR retenido a trabajadores de bajos ingresos.
+Funciona: el patrón calcula el ISR según tarifa, luego aplica la tabla de subsidio al empleo.
+Si subsidio > ISR calculado: el patrón ENTREGA la diferencia al trabajador (subsidio enterado).
+El patrón lo recupera deduciéndolo de sus impuestos propios.
+LÍMITE: aplica solo para ingresos mensualmente hasta $10,172.64 (tabla 2026).
+OBLIGACIONES:
+  1. Comparar anualmente si se debió otorgar subsidio (ajuste en declaración anual del trabajador)
+  2. Llevar registro individual del subsidio entregado
+  3. Reportarlo en el CFDI de nómina (campo "OtrosPagos" tipo 002)
+Si el trabajador tiene dos empleos: solo UN patrón aplica el subsidio (el principal).""",
+"LISR Art. Décimo del Decreto 11-dic-2013","subsidio empleo ISR retenido trabajador tabla $10,172 CFDI nómina campo 002 OtrosPagos",2026),
+
+("imss","sbc_integracion_detalle","SBC — Integración Detallada para Aguinaldo y Vacaciones",
+"""Integración precisa del SBC con prestaciones variables (Art. 27 LSS):
+AGUINALDO: 15 días mínimo legales / 365 días × salario diario. Si la empresa da 30 días, se integran 30/365.
+PRIMA VACACIONAL: días de vacaciones × 25% / 365. Ej: 6 días vac × 25% = 1.5 días / 365 × SD.
+COMISIONES: promedio mensual = suma de comisiones del bimestre / días del bimestre.
+HORAS EXTRA HABITUALES: si se pagan regularmente, se integran (promedio).
+EJEMPLO (empleado $300/día, 15 días aguinaldo, 6 días vacaciones):
+  Factor aguinaldo: 15/365 = 0.04109
+  Factor prima vacacional: 6 × 0.25 / 365 = 0.00411
+  SBC = $300 × (1 + 0.04109 + 0.00411) = $300 × 1.0452 = $313.56/día
+  Tope: $313.56 < 25 SMGDF ($6,970) ✓""",
+"LSS Art. 27-29","SBC integración aguinaldo factor prima vacacional comisiones horas extra cálculo",2026),
+
+("imss","cfdi_nomina_complemento","Complemento de Nómina 1.2 — Campos Clave",
+"""El Complemento de Nómina 1.2 del CFDI incluye:
+CAMPOS OBLIGATORIOS:
+  - TipoNomina: O (Ordinaria) o E (Extraordinaria)
+  - FechaPago: fecha real del depósito al trabajador
+  - FechaInicialPago / FechaFinalPago: período cubierto
+  - TotalDeducciones / TotalPercepciones / TotalOtrosPagos
+  - NumDiasPagados: días que cubre la nómina
+DATOS DEL EMPLEADO: CURP, NSS, TipoContrato, TipoJornada, TipoRegimen (02=sueldos), NumEmpleado
+PERCEPCIONES: clave SAT (001=sueldos, 002=gratificación, 003=horas extra, etc.)
+DEDUCCIONES: clave SAT (001=ISR, 002=IMSS obrero, 003=crédito INFONAVIT, etc.)
+OTROS PAGOS: 001=reintegro ISR, 002=subsidio para el empleo
+El CFDI de nómina se timbra con el CSD de la empresa; el trabajador lo puede descargar del portal SAT.""",
+"SAT Complemento Nómina 1.2, Regla RMF 3.12","CFDI nómina complemento 1.2 percepciones deducciones CURP NSS clave SAT TipoNomina",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# DD. CIERRE MENSUAL — PROCEDIMIENTO COMPLETO
+# ═══════════════════════════════════════════════════════════════════
+
+("contabilidad","cierre_mensual_proceso","Cierre Mensual Contable — Procedimiento Paso a Paso",
+"""Procedimiento de cierre mensual para empresas importadoras (Fourgea, Triple R):
+1. CONCILIAR BANCOS: comparar estados de cuenta vs. libro de bancos. Detectar diferencias.
+2. REGISTRAR PEDIMENTOS: cada pedimento del mes → asiento de importación (inventario + IVA acreditable).
+3. VERIFICAR CFDIS: confirmar que todos los CFDI emitidos y recibidos están registrados en contabilidad.
+4. CALCULAR COSTO DE VENTAS: salidas del almacén × costo unitario de importación (PEPS o promedio).
+5. DEPRECIAR ACTIVOS FIJOS: cargo mensual (tasa anual / 12 meses).
+6. CALCULAR NÓMINA Y PROVISIONES: sueldo del mes + provisión aguinaldo (1/12 cada mes) + provisión vacaciones.
+7. CALCULAR IVA NETO: IVA trasladado cobrado - IVA acreditable pagado (incluye IVA de pedimentos).
+8. CALCULAR ISR PROVISIONAL: ingresos del mes × CU × 30%.
+9. CALCULAR RETENCIONES: ISR nómina + IVA retenido a proveedores personas físicas.
+10. EMITIR BALANZA DE COMPROBACIÓN: verificar que débitos = créditos.
+11. SUBIR BALANZA AL SAT: portal del SAT, a más tardar día 25 del mes siguiente.""",
+"CFF Art. 28, LISR Art. 14","cierre mensual procedimiento importación conciliación bancos pedimentos IVA ISR balanza SAT",2026),
+
+("contabilidad","provision_aguinaldo","Provisión de Aguinaldo — Registro Mensual",
+"""Para distribuir el costo del aguinaldo uniformemente durante el año:
+Cálculo mensual de la provisión:
+  Provisión mensual por empleado = (Salario mensual × días aguinaldo) / 12 meses
+  Ejemplo: empleado $20,000/mes, 15 días aguinaldo:
+    Días aguinaldo = 15 días × ($20,000/30 días) = $10,000 anual
+    Provisión mensual = $10,000 / 12 = $833.33/mes
+ASIENTO:
+  DEBE: 601 Gastos de administración (aguinaldo) .... $833.33
+  HABER: 215 Provisión aguinaldo por pagar .......... $833.33
+Al pagar en diciembre:
+  DEBE: 215 Provisión aguinaldo ..................... $10,000
+  HABER: 102 Bancos ................................. $10,000
+Fiscalmente: el aguinaldo pagado es deducible ISR en el ejercicio en que se paga (no cuando se provisiona).""",
+"CINIF NIF D-3","provisión aguinaldo mensual ISR deducible diciembre asiento contable empleado",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# EE. EXPORTACIÓN DE SERVICIOS
+# ═══════════════════════════════════════════════════════════════════
+
+("iva","servicios_exportacion","IVA en Exportación de Servicios",
+"""Los servicios se consideran exportados (tasa 0%) cuando son aprovechados en el extranjero (Art. 29 fracc. IV LIVA):
+Ejemplos de servicios gravados a 0% IVA:
+  - Asistencia técnica a empresas extranjeras pagada desde el extranjero
+  - Servicios de diseño o ingeniería contratados por empresa del extranjero
+  - Servicios de call center para clientes en el extranjero
+Para comprobar exportación de servicio:
+  1. Contrato con la empresa extranjera
+  2. Factura en moneda extranjera (o con cláusula de pago en el extranjero)
+  3. Transferencia SWIFT recibida del extranjero
+Si Sonora Digital Corp presta servicios de IA/software a empresas fuera de México: aplica tasa 0%, con derecho a devolución de IVA pagado en costos.
+Si el servicio se aprovecha en México (aunque el cliente sea extranjero): tasa 16%.""",
+"LIVA Art. 29 fracc. IV","IVA 0% exportación servicios aprovechados extranjero contrato SWIFT IA software",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# FF. DICTAMEN FISCAL / ISSIF
+# ═══════════════════════════════════════════════════════════════════
+
+("sat","dictamen_issif","ISSIF — Informe Sobre Situación Fiscal (antes Dictamen Fiscal)",
+"""El ISSIF (Art. 32-A CFF) sustituyó al Dictamen Fiscal tradicional.
+OBLIGADOS a presentar ISSIF (si en el ejercicio anterior):
+  - Ingresos > $1,650,490,600 (actualizado 2026)
+  - Acciones colocadas en bolsa
+  - Personas morales residentes en el extranjero con establecimiento permanente
+OPTATIVO para los demás contribuyentes.
+QUIÉN LO ELABORA: Contador Público Registrado (CPR) autorizado por el SAT.
+PLAZO: junto con la declaración anual (31 marzo para PM, 30 abril para PF).
+BENEFICIOS al presentar ISSIF:
+  - Los saldos a favor se devuelven más rápido
+  - Menor probabilidad de auditoría directa
+Para Fourgea y Triple R (con ingresos < $1,650 millones): el ISSIF es opcional pero recomendable si quieren agilizar devoluciones.""",
+"CFF Art. 32-A","ISSIF dictamen fiscal CPR contador público registrado declaración anual devolución auditoría",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# GG. OBLIGACIONES INFORMATIVAS ESPECIALES
+# ═══════════════════════════════════════════════════════════════════
+
+("sat","declaraciones_informativas","Declaraciones Informativas — Obligaciones Anuales",
+"""Declaraciones informativas que deben presentar personas morales importadoras:
+1. DIM (Declaración Informativa Múltiple) — Febrero:
+   Anexo 1: sueldos y salarios pagados
+   Anexo 2: honorarios a personas físicas
+   Anexo 3: arrendamiento pagado a personas físicas
+   Anexo 9: partes relacionadas (precios de transferencia)
+2. INFORMACIÓN DE PRÉSTAMOS, APORTACIONES Y DIVIDENDOS (Art. 76 LISR) — Febrero:
+   Dividendos pagados a extranjeros y residentes en México
+3. CONTABILIDAD ELECTRÓNICA (Balanza anual) — Marzo
+4. OPERACIONES CON PARTES RELACIONADAS RESIDENTES EN EL EXTRANJERO — Diciembre 31
+5. ICSOE (Información sobre Situación Fiscal para ciertas empresas) — Diciembre 31
+Para Fourgea/Triple R: principalmente DIM Anexo 1 (nómina), Anexo 9 si hay operaciones entre ellas, y contabilidad electrónica mensual.""",
+"CFF Art. 32, LISR Art. 76","declaraciones informativas DIM anexo nómina honorarios partes relacionadas contabilidad electrónica",2026),
+
+("sat","obligaciones_importador","Obligaciones Registrales del Importador",
+"""Todo importador habitual debe estar registrado en:
+1. RFC ACTIVO: con actividad de importación declarada.
+2. PADRÓN DE IMPORTADORES (SAT): obligatorio para importar cualquier mercancía.
+   - Solicitud en portal SAT con RFC, domicilio fiscal verificado, representante legal
+   - Se puede solicitar la suspensión temporal si se deja de importar
+3. PADRÓN DE IMPORTADORES DE SECTORES ESPECÍFICOS: para mercancías de alto riesgo (textiles, calzado, electrónicos, químicos, siderúrgicos).
+   - Fourgea: si importa filtros con componentes electrónicos → verificar si aplica sector específico
+   - Triple R: aceites generalmente no requieren sector específico
+4. REGISTRO DE EMPRESAS CERTIFICADAS: si se obtiene OEA o se opera bajo IMMEX.
+Si se cancela el padrón → no se puede importar hasta rehabilitación.""",
+"LA Art. 59-E, RGCE","padrón importadores SAT registro sectores específicos OEA IMMEX RFC activo",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# HH. OPERACIONES ESPECÍFICAS FOURGEA Y TRIPLE R
+# ═══════════════════════════════════════════════════════════════════
+
+("comercio_exterior","fourgea_proceso","Proceso de Importación Típico Fourgea Mexico",
+"""Flujo completo de una importación de filtros para Fourgea Mexico SA de CV (RFC: E080820LC2):
+1. NEGOCIACIÓN: acuerdo con proveedor en EEUU/China (precio FOB/CIF, tiempo de entrega, incoterm).
+2. ORDEN DE COMPRA: emisión de PO con detalle de productos (modelo, cantidad, precio).
+3. EMBARQUE: proveedor envía con BL marítimo o AWB aéreo + factura comercial + packing list + certificado de origen (si T-MEC).
+4. AVISO AL AGENTE ADUANAL: enviar documentos al agente para preparar pedimento.
+5. PAGO DE IMPUESTOS: agente calcula valor en aduana, IGI, DTA, IVA y paga electrónicamente.
+6. DESPACHO ADUANAL: aduana libera la mercancía (semáforo: verde=pasa, rojo=revisión física).
+7. TRANSPORTE NACIONAL: mercancía llega al almacén Fourgea con carta porte.
+8. RECEPCIÓN EN ALMACÉN: verificar vs. packing list, registrar en sistema (entrada a inventario).
+9. REGISTRO CONTABLE: asiento de importación (inventario + IVA acreditable + cuentas por pagar).
+10. PAGO AL PROVEEDOR: 30-60 días después por SWIFT.
+Tiempo total estimado: embarque marítimo EEUU → México: 10-15 días; aéreo: 3-5 días.""",
+"LA, INCOTERMS 2020","Fourgea importación proceso pedimento despacho aduanal inventario agente carta porte",2026),
+
+("comercio_exterior","triple_r_proceso","Proceso de Importación Típico Triple R Oil México",
+"""Flujo de importación de aceites lubricantes para Triple R Oil México (RFC: O150504GE3):
+PROVEEDOR TÍPICO: refinerías en EEUU o distribuidores de lubricantes.
+FRACCIÓN ARANCELARIA: 2710.19.xx (aceites lubricantes) — IGI libre, IVA 16%.
+INCOTERM: FOB Houston o CIF Laredo (por tierra).
+TRANSPORTE: autotransporte terrestre EEUU-México (cruce por Laredo o Nogales generalmente).
+DOCUMENTOS ESPECIALES PARA ACEITES:
+  - Ficha técnica del aceite (especificaciones técnicas, viscosidad, grado API)
+  - Certificado de análisis de composición (del fabricante)
+  - Safety Data Sheet (SDS/MSDS) — cumplimiento NOM-018-STPS
+PERMISOS:
+  - No requiere permiso SEMARNAT para aceites lubricantes vírgenes
+  - Si son aceites usados o reciclados: SÍ requiere autorización ambiental
+TIEMPO ESTIMADO: cruce terrestre 1-2 días (más rápido que marítimo).""",
+"LA, NOM-018-STPS","Triple R aceites importación terrestre Laredo Nogales SDS ficha técnica API",2026),
+
+("contabilidad","fourgea_cfdi_ventas","CFDI de Ventas Fourgea — Configuración Correcta",
+"""Para emitir CFDI de venta de filtros industriales (Fourgea):
+DATOS OBLIGATORIOS CFDI 4.0:
+  - Emisor: Fourgea Mexico SA de CV | RFC: E080820LC2
+  - Régimen fiscal emisor: 601 (General de Ley Personas Morales)
+  - Receptor: RFC del cliente, nombre completo según SAT, domicilio fiscal
+  - Régimen fiscal del receptor (según catálogo SAT)
+  - Uso del CFDI del receptor (catálogo: G03=Gastos en general, G01=Adquisición bienes)
+  - Descripción del producto: "Filtro industrial modelo XX — uso en maquinaria"
+  - Fracción arancelaria en CFDI: 8421.29.99 (si se vende a importador o exportador)
+  - Objeto de impuesto: 02 (Sí objeto de impuesto)
+  - IVA trasladado: 16% sobre el precio neto
+FORMA DE PAGO: PUE (pago en una sola exhibición si se paga en el mes) o PPD + Complemento de Pago.
+Si se paga a 30 días: emitir CFDI con método de pago PPD y después emitir complemento de pago.""",
+"CFF Art. 29-A, SAT CFDI 4.0","CFDI ventas Fourgea filtros 8421 régimen 601 receptor uso G03 G01 PPD complemento pago",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# II. DECLARACIÓN ANUAL ISR PERSONAS MORALES — DETALLE
+# ═══════════════════════════════════════════════════════════════════
+
+("isr","declaracion_anual_pm","Declaración Anual ISR Personas Morales — Procedimiento",
+"""Presentar declaración anual ISR personas morales (plazo: 31 marzo):
+HERRAMIENTA: Portal SAT — DEM (Declaración de Personas Morales).
+DATOS NECESARIOS:
+  1. Ingresos acumulables totales del ejercicio
+  2. Deducciones autorizadas (costo de ventas, gastos, depreciaciones)
+  3. Participación de los Trabajadores en las Utilidades (PTU) pagada
+  4. Pagos provisionales realizados (ISR mensual acumulado)
+  5. Retenciones que clientes le efectuaron (si aplica)
+  6. Créditos fiscales (si hay pérdidas de ejercicios anteriores actualizadas)
+CÁLCULO:
+  Ingresos - Deducciones = Utilidad bruta fiscal
+  Utilidad bruta - PTU = Utilidad fiscal
+  Utilidad fiscal × 30% = ISR del ejercicio
+  ISR ejercicio - Pagos provisionales - Retenciones = ISR a cargo (o saldo a favor)
+Si hay SALDO A FAVOR: puede pedirse en devolución o compensarse con declaraciones futuras.
+ERRORES COMUNES: no incluir todos los ingresos, no deducir gastos por falta de CFDI.""",
+"LISR Art. 9, CFF Art. 32","declaración anual personas morales ISR marzo DEM ingresos deducciones PTU pagos provisionales",2026),
+
+("isr","cufin_cuca","CUFIN y CUCA — Cuentas de Capital Fiscal",
+"""Cuentas de capital fiscal que toda persona moral debe llevar:
+CUFIN (Cuenta de Utilidad Fiscal Neta — Art. 77 LISR):
+  + Utilidades fiscales netas (después de ISR)
+  - Dividendos distribuidos
+  Cuando se distribuye dividendo desde CUFIN: no se paga ISR adicional.
+  Cuando se distribuye dividendo fuera de CUFIN: la empresa paga ISR (30% piramidado = 42.86% sobre el dividendo).
+CUCA (Cuenta de Capital de Aportación — Art. 78 LISR):
+  Registra las aportaciones de los socios.
+  Cuando se devuelven aportaciones (reducción de capital): hasta el saldo de CUCA no paga ISR.
+  El excedente sobre CUCA se trata como dividendo.
+Para Fourgea: llevar CUFIN actualizada con inflación (factor INPC anual) para distribuir utilidades sin costo fiscal adicional.""",
+"LISR Art. 77-78","CUFIN CUCA utilidad fiscal neta capital aportación dividendo ISR piramidación reducción capital",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# JJ. COMERCIO ELECTRÓNICO Y PLATAFORMAS DIGITALES
+# ═══════════════════════════════════════════════════════════════════
+
+("iva","plataformas_digitales","IVA en Plataformas Digitales y Marketplace",
+"""Desde 2020, las plataformas digitales retienen y entiran el IVA de las transacciones:
+OBLIGADAS A RETENER: Amazon, MercadoLibre, Shopify, Google, Uber, etc.
+  - Para personas físicas que venden en la plataforma: retención del 50% del IVA.
+  - Para personas morales (Fourgea, Triple R vendiendo en Amazon): la PM paga su propio IVA.
+REGLAS 2026:
+  Si Fourgea vende filtros en Amazon México:
+  - Fourgea emite CFDI y declara el IVA completo (Amazon no retiene a personas morales).
+  - Si vende exportando via Amazon FBA a clientes en EEUU: IVA 0%.
+Para servicios digitales del extranjero (Google Ads, Microsoft, HubSpot):
+  - El proveedor extranjero está obligado a registrarse ante el SAT y cobrar IVA 16%.
+  - Fourgea paga el IVA incluido en el servicio; puede acreditarlo si tiene CFDI.""",
+"LIVA Art. 18-D, 18-J","IVA plataformas digitales Amazon marketplace retención Google Microsoft CFDI extranjero",2026),
+
+# ═══════════════════════════════════════════════════════════════════
+# KK. AUDITORÍA INTERNA Y CONTROL
+# ═══════════════════════════════════════════════════════════════════
+
+("contabilidad","control_interno_importador","Control Interno para Importadores — Mejores Prácticas",
+"""Controles internos recomendados para Fourgea y Triple R como importadoras:
+1. AUTORIZACIÓN DE COMPRAS: toda orden de compra al extranjero requiere firma del gerente.
+2. EXPEDIENTE DE PEDIMENTO: conservar digitalmente (5 años): pedimento, factura, BL, packing list, MVE, certificado origen, CFDI de gastos.
+3. CONCILIACIÓN MENSUAL: comparar pedimentos importados vs. entradas al almacén vs. registro contable.
+4. VERIFICACIÓN DE FRACCIONES: revisar anualmente si la fracción usada sigue siendo correcta (el SAT actualiza la TIGIE).
+5. ACTUALIZACIÓN DE PROVEEDORES: verificar que los proveedores extranjeros sigan activos y que los precios sean de mercado (precios de transferencia si son relacionados).
+6. CONTROL DE PEDIMENTOS ABIERTOS: llevar registro de mercancías en tránsito aún no despachadas.
+7. CUMPLIMIENTO DE NOMs: verificar que todo producto importado cuenta con la etiqueta en español y cumple NOM aplicable.
+8. RESGUARDO DE CERTIFICADOS DE ORIGEN: al menos 5 años para demostrar que se aplicó T-MEC correctamente.""",
+"LA Art. 36, CFF Art. 30","control interno importador expediente pedimento conciliación NOM fracciones TIGIE 5 años",2026),
+
+("contabilidad","papeles_trabajo","Papeles de Trabajo Contable — Organización",
+"""Organización recomendada de papeles de trabajo para una importadora (por mes):
+CARPETA MENSUAL:
+  1. Balanza de comprobación del mes
+  2. Conciliación bancaria (una por cuenta bancaria)
+  3. Cédula de IVA acreditable (listado de CFDIs de compra + pedimentos)
+  4. Cédula de IVA trasladado (listado de CFDIs de venta emitidos)
+  5. Cálculo de pago provisional ISR
+  6. Nómina del mes + CFDI de nómina timbrados
+  7. Declaraciones presentadas (captura de pantalla o acuse)
+  8. Pedimentos del mes (copia del pedimento + factura del proveedor)
+HERRAMIENTAS RECOMENDADAS:
+  - Contpaq i / CONTPAQi: software contable local, integrado SAT
+  - Aspel COI: alternativa
+  - Excel: para cédulas de conciliación, cálculos ISR provisional
+  - Portal SAT: para verificar CFDIs recibidos (descargar masivamente)""",
+"CFF Art. 30, CINIF NIF A-4","papeles trabajo balanza conciliación bancaria cédula IVA ISR nómina pedimentos declaraciones",2026),
+
 ]
 
 # ──────────────────────────────────────────────────────────────────────────────
