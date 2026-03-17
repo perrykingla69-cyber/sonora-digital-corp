@@ -12,48 +12,42 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: production
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
-          timeout: 300s
-          script: |
-            set -e
-            cd /home/mystic/sonora-digital-corp
+      - name: Pull latest & rebuild API
+        run: |
+          set -e
+          cd /home/mystic/sonora-digital-corp
 
-            echo "==> Pull latest"
-            git pull origin main
+          echo "==> Pull latest"
+          git pull origin main
 
-            echo "==> Rebuild API"
-            cd infra
-            docker compose -f docker-compose.vps.yml --env-file .env build api --no-cache
-            docker compose -f docker-compose.vps.yml --env-file .env up -d api
+          echo "==> Rebuild API"
+          cd infra
+          docker compose -f docker-compose.vps.yml --env-file .env build api --no-cache
+          docker compose -f docker-compose.vps.yml --env-file .env up -d api
 
-            echo "==> Verify health"
-            sleep 5
-            STATUS=$(python3 -c "import urllib.request; r=urllib.request.urlopen('http://localhost:8000/status'); print(r.read().decode())" 2>/dev/null)
-            echo "API Status: $STATUS"
-            echo "$STATUS" | grep -q '"api":"ok"' && echo "DEPLOY OK" || exit 1
+          echo "==> Verify health"
+          sleep 6
+          STATUS=$(python3 -c "import urllib.request; r=urllib.request.urlopen('http://localhost:8000/status'); print(r.read().decode())" 2>/dev/null)
+          echo "API Status: $STATUS"
+          echo "$STATUS" | grep -q '"api":"ok"' && echo "✅ DEPLOY OK" || (echo "❌ HEALTH CHECK FAILED" && exit 1)
 
       - name: Notify Telegram
         if: always()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: |
-            ${{ job.status == 'success' && '✅' || '❌' }} *Deploy ${{ job.status }}*
-            Repo: `sonora-digital-corp`
-            Branch: `${{ github.ref_name }}`
-            Commit: `${{ github.sha }}`
-            Por: ${{ github.actor }}
+        run: |
+          STATUS="${{ job.status }}"
+          ICON=$([[ "$STATUS" == "success" ]] && echo "✅" || echo "❌")
+          MSG="${ICON} Deploy ${STATUS} — sonora-digital-corp @ ${{ github.sha }}"
+          python3 -c "
+          import urllib.request, json
+          data = json.dumps({'chat_id': '${{ secrets.TELEGRAM_CHAT_ID }}', 'text': '$MSG'}).encode()
+          req = urllib.request.Request('https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage', data=data, headers={'Content-Type': 'application/json'})
+          urllib.request.urlopen(req)
+          print('Telegram notified')
+          " 2>/dev/null || echo "Telegram notification skipped"

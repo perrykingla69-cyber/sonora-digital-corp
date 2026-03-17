@@ -7,40 +7,35 @@ on:
 
 jobs:
   backup:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Backup PostgreSQL en VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            set -e
-            DATE=$(date +%Y%m%d_%H%M%S)
-            BACKUP_DIR=/home/mystic/backups
-            mkdir -p $BACKUP_DIR
+      - name: Backup PostgreSQL
+        run: |
+          set -e
+          DATE=$(date +%Y%m%d_%H%M%S)
+          BACKUP_DIR=/home/mystic/backups
+          mkdir -p $BACKUP_DIR
 
-            docker exec mystic_postgres pg_dump \
-              -U mystic_user mystic_db \
-              > $BACKUP_DIR/backup_$DATE.sql
+          docker exec mystic_postgres pg_dump \
+            -U mystic_user mystic_db \
+            > $BACKUP_DIR/backup_$DATE.sql
 
-            gzip $BACKUP_DIR/backup_$DATE.sql
+          gzip $BACKUP_DIR/backup_$DATE.sql
+          ls -t $BACKUP_DIR/backup_*.sql.gz | tail -n +11 | xargs rm -f 2>/dev/null || true
 
-            # Retener últimos 10 backups
-            ls -t $BACKUP_DIR/backup_*.sql.gz | tail -n +11 | xargs rm -f
+          echo "Backup guardado: backup_$DATE.sql.gz"
+          ls -lh $BACKUP_DIR/backup_*.sql.gz | tail -3
 
-            echo "Backup guardado: backup_$DATE.sql.gz"
-            ls -lh $BACKUP_DIR/backup_*.sql.gz | tail -3
-
-      - name: Notificar resultado
+      - name: Notificar Telegram
         if: always()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: |
-            ${{ job.status == 'success' && '💾' || '❌' }} *Backup semanal ${{ job.status }}*
-            Base de datos: `mystic_db`
-            Fecha: ${{ github.run_started_at }}
+        run: |
+          STATUS="${{ job.status }}"
+          ICON=$([[ "$STATUS" == "success" ]] && echo "💾" || echo "❌")
+          python3 -c "
+          import urllib.request, json
+          msg = '${ICON} Backup semanal ${STATUS} — mystic_db'
+          data = json.dumps({'chat_id': '${{ secrets.TELEGRAM_CHAT_ID }}', 'text': msg}).encode()
+          req = urllib.request.Request('https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage', data=data, headers={'Content-Type': 'application/json'})
+          urllib.request.urlopen(req)
+          " 2>/dev/null || true
