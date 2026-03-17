@@ -1515,3 +1515,130 @@ def ai_mem_get(key: str, current_user=Depends(get_current_user)):
 @app.post("/ai/memory/knowledge/search", tags=["AI OS"])
 def ai_mem_search(req: _SearchReq, current_user=Depends(get_current_user)):
     return {"query": req.query, "results": _orch().knowledge_store.search(req.query)}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BRAIN — Ollama local (phi3:mini) + caché Redis
+# Endpoint usado por N8N workflows y Bot Telegram
+# Arquitectura: Determinístico($0) → Redis Cache($0) → Ollama($0) → Claude(5%)
+# ══════════════════════════════════════════════════════════════════════════════
+
+import hashlib as _hashlib
+import urllib.request as _urllib_req
+import json as _json
+
+_OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
+_BRAIN_CACHE_TTL = int(os.environ.get("BRAIN_CACHE_TTL", "3600"))  # 1h default
+
+# Contextos predefinidos para consultas frecuentes (capa determinística)
+_BRAIN_CONTEXTS = {
+    "aranceles-mexico": (
+        "Eres un experto en comercio exterior y aduanas de México. "
+        "Conoces el Sistema Armonizado de México (TIGIE), IGI, IVA importación, "
+        "cuotas compensatorias, NOM, permisos COFEPRIS y SEMARNAT. "
+        "Responde de forma concisa y estructurada en español."
+    ),
+    "contabilidad-mexico": (
+        "Eres un contador experto en fiscalidad mexicana. "
+        "Conoces ISR, IVA, IMSS, INFONAVIT, CFDI 4.0, SAT, LISR, LIVA. "
+        "Da respuestas precisas y cita el artículo legal cuando sea relevante."
+    ),
+    "default": (
+        "Eres Mystic, el asistente inteligente de Sonora Digital Corp. "
+        "Ayudas con contabilidad, comercio exterior y gestión empresarial en México. "
+        "Responde siempre en español de forma concisa."
+    ),
+}
+
+
+class _BrainRequest(BaseModel):
+    question: str
+    context: str = "default"
+    use_cache: bool = True
+
+
+class _BrainResponse(BaseModel):
+    answer: str
+    source: str  # "cache" | "ollama" | "error"
+    model: str = "phi3:mini"
+    cached: bool = False
+
+
+def _redis_client():
+    redis_url = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+    return redis.from_url(redis_url, decode_responses=True)
+
+
+def _cache_key(question: str, context: str) -> str:
+    raw = f"{context}:{question.strip().lower()}"
+    return "brain:" + _hashlib.md5(raw.encode()).hexdigest()
+
+
+def _ollama_ask(question: str, context: str) -> str:
+    system_prompt = _BRAIN_CONTEXTS.get(context, _BRAIN_CONTEXTS["default"])
+    payload = _json.dumps({
+        "model": "phi3:mini",
+        "prompt": question,
+        "system": system_prompt,
+        "stream": False,
+        "options": {"temperature": 0.3, "num_predict": 512},
+    }).encode()
+    req = _urllib_req.Request(
+        f"{_OLLAMA_URL}/api/generate",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with _urllib_req.urlopen(req, timeout=60) as r:
+        data = _json.loads(r.read())
+    return data.get("response", "").strip()
+
+
+@app.post("/api/brain/ask", response_model=_BrainResponse, tags=["Brain"])
+async def brain_ask(body: _BrainRequest):
+    """
+    Consulta al cerebro IA (Ollama phi3:mini local).
+    Usado por N8N workflows y Bot Telegram.
+    Incluye caché Redis para evitar llamadas repetidas.
+    """
+    key = _cache_key(body.question, body.context)
+
+    # Capa 2: Redis Cache
+    if body.use_cache:
+        try:
+            r = _redis_client()
+            cached = r.get(key)
+            if cached:
+                return _BrainResponse(answer=cached, source="cache", cached=True)
+        except Exception:
+            pass  # Si Redis falla, continúa a Ollama
+
+    # Capa 3: Ollama local
+    try:
+        answer = _ollama_ask(body.question, body.context)
+        if body.use_cache and answer:
+            try:
+                r = _redis_client()
+                r.setex(key, _BRAIN_CACHE_TTL, answer)
+            except Exception:
+                pass
+        return _BrainResponse(answer=answer, source="ollama", cached=False)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Brain no disponible: {str(e)}")
+
+
+@app.get("/api/brain/status", tags=["Brain"])
+async def brain_status():
+    """Estado del cerebro IA — verifica Ollama y modelos disponibles."""
+    try:
+        req = _urllib_req.Request(f"{_OLLAMA_URL}/api/tags")
+        with _urllib_req.urlopen(req, timeout=5) as r:
+            data = _json.loads(r.read())
+        models = [m["name"] for m in data.get("models", [])]
+        return {
+            "ollama": "ok",
+            "models": models,
+            "phi3_ready": "phi3:mini" in models,
+        }
+    except Exception as e:
+        return {"ollama": "error", "detail": str(e), "phi3_ready": False}
