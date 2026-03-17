@@ -68,6 +68,17 @@ services:
       timeout: 10s
       retries: 3
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mystic_ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - mystic_net
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+
   n8n:
     image: n8nio/n8n:latest
     container_name: mystic_n8n
@@ -100,6 +111,7 @@ volumes:
   postgres_data:
   redis_data:
   n8n_data:
+  ollama_data:
 
 networks:
   mystic_net:

@@ -1,0 +1,64 @@
+{
+  "name": "Alert Tarde — Resumen Diario 6pm",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 1 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-tarde",
+      "name": "Cron 6pm Hermosillo",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://127.0.0.1:8000/dashboard",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "get-dashboard-tarde",
+      "name": "GET Dashboard API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🌆 *Resumen Tarde — {{ $now.format('DD/MM/YYYY') }}*\n\n📊 Total facturas: {{ $json.resumen.total_facturas }}\n💰 Ingresos hoy: ${{ $json.resumen.ingresos_mes?.toFixed(2) }} MXN\n💸 Gastos hoy: ${{ $json.resumen.gastos_mes?.toFixed(2) }} MXN\n⏳ Por cobrar: ${{ $json.resumen.por_cobrar?.toFixed(2) }} MXN\n⏳ Por pagar: ${{ $json.resumen.por_pagar?.toFixed(2) }} MXN\n\n{{ $json.alertas.length > 0 ? '⚠️ Alertas:\\n' + $json.alertas.join('\\n') : '✅ Sin alertas críticas' }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-tarde",
+      "name": "Telegram Alerta Tarde",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Cron 6pm Hermosillo": {
+      "main": [[{"node": "GET Dashboard API", "type": "main", "index": 0}]]
+    },
+    "GET Dashboard API": {
+      "main": [[{"node": "Telegram Alerta Tarde", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["alertas", "telegram", "daily"]
+}

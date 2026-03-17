@@ -1,0 +1,64 @@
+{
+  "name": "Alert Mañana — Resumen Diario 6am",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 13 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-manana",
+      "name": "Cron 6am Hermosillo",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://127.0.0.1:8000/dashboard",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "get-dashboard",
+      "name": "GET Dashboard API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=☀️ *Resumen Mañana — {{ $now.format('DD/MM/YYYY') }}*\n\n📊 Facturas del mes: {{ $json.resumen.facturas_mes }}\n💰 Ingresos: ${{ $json.resumen.ingresos_mes?.toFixed(2) }} MXN\n💸 Gastos: ${{ $json.resumen.gastos_mes?.toFixed(2) }} MXN\n📋 Por cobrar: ${{ $json.resumen.por_cobrar?.toFixed(2) }} MXN\n\n{{ $json.alertas.length > 0 ? '⚠️ Alertas:\\n' + $json.alertas.join('\\n') : '✅ Sin alertas' }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-manana",
+      "name": "Telegram Alerta Mañana",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Cron 6am Hermosillo": {
+      "main": [[{"node": "GET Dashboard API", "type": "main", "index": 0}]]
+    },
+    "GET Dashboard API": {
+      "main": [[{"node": "Telegram Alerta Mañana", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["alertas", "telegram", "daily"]
+}
