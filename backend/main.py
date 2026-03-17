@@ -1566,8 +1566,8 @@ def _cache_key(question: str, context: str) -> str:
 def _rag_search(db: Session, question: str, limit: int = 4) -> list[dict]:
     """Full-text search en knowledge_base usando tsvector de PostgreSQL."""
     try:
-        # Limpiar pregunta para tsquery — palabras significativas
-        words = [w for w in question.replace("?","").replace(",","").split() if len(w) > 3]
+        # Limpiar pregunta para tsquery — palabras significativas (>2 para capturar IVA, DTA, IGI)
+        words = [w for w in question.replace("?","").replace(",","").split() if len(w) > 2]
         if not words:
             return []
         tsquery = " | ".join(words[:8])  # OR entre palabras clave
