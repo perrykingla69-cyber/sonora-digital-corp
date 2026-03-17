@@ -1560,7 +1560,7 @@ class _BrainRequest(BaseModel):
 class _BrainResponse(BaseModel):
     answer: str
     source: str  # "cache" | "ollama" | "error"
-    model: str = "phi3:mini"
+    model: str = "phi3-fast"
     cached: bool = False
 
 
@@ -1577,11 +1577,11 @@ def _cache_key(question: str, context: str) -> str:
 def _ollama_ask(question: str, context: str) -> str:
     system_prompt = _BRAIN_CONTEXTS.get(context, _BRAIN_CONTEXTS["default"])
     payload = _json.dumps({
-        "model": "phi3:mini",
+        "model": "phi3-fast",  # phi3:mini con num_ctx=1024 para caber en RAM del VPS
         "prompt": question,
         "system": system_prompt,
         "stream": False,
-        "options": {"temperature": 0.3, "num_predict": 512},
+        "options": {"temperature": 0.3, "num_predict": 256, "num_ctx": 1024},
     }).encode()
     req = _urllib_req.Request(
         f"{_OLLAMA_URL}/api/generate",
