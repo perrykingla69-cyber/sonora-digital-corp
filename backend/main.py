@@ -69,8 +69,8 @@ def _audit(db: Session, accion: str, usuario=None, tabla=None, datos=None):
         tenant_id=getattr(usuario, "tenant_id", None),
         usuario_id=getattr(usuario, "id", None),
         accion=accion,
-        tabla=tabla,
-        datos_nuevos=datos,
+        recurso=tabla,
+        detalle=datos,
     ))
 
 
@@ -104,7 +104,7 @@ async def login(body: LoginRequest, db: Session = Depends(get_db)):
         Usuario.email == body.email,
         Usuario.activo == True
     ).first()
-    if not usuario or not verify_password(body.password, usuario.password):
+    if not usuario or not verify_password(body.password, usuario.password_hash):
         raise HTTPException(status_code=401, detail="Credenciales invalidas")
     token = create_token(str(usuario.id), extra={"tenant": str(usuario.tenant_id), "rol": usuario.rol})
     _audit(db, "login", usuario)
@@ -119,10 +119,9 @@ async def registro(body: UsuarioCreate, db: Session = Depends(get_db)):
     usuario = Usuario(
         tenant_id=body.tenant_id,
         email=body.email,
-        password=hash_password(body.password),
+        password_hash=hash_password(body.password),
         nombre=body.nombre,
         rol=body.rol,
-        telegram_id=body.telegram_id,
     )
     db.add(usuario)
     db.commit()
