@@ -1597,7 +1597,21 @@ def _rag_search(db: Session, question: str, limit: int = 4) -> list[dict]:
         return []
 
 
-_MAX_CHUNK_CHARS = 600  # truncar chunks para no saturar contexto de phi3-fast
+_MAX_CHUNK_CHARS = 300   # truncar chunks para no saturar contexto phi3-fast (6.6 t/s)
+_RAG_LIMIT = 2           # máximo 2 chunks por consulta
+
+# Sistema compacto para minimizar tokens de entrada
+_BRAIN_SYSTEM_SHORT = (
+    "Eres Mystic, asistente fiscal mexicano. "
+    "Usa SOLO los datos del contexto dado. "
+    "Si no está en el contexto, di: 'No tengo información verificada.' "
+    "Sé conciso. No inventes cifras ni artículos."
+)
+
+_DIRECT_KEYWORDS = {
+    "iva", "tasa", "porcentaje", "cuánto", "cuando", "plazo", "fecha",
+    "artículo", "fracción", "igi", "dta", "imss", "rfc", "cfdi", "timbrar",
+}
 
 
 def _build_context(chunks: list[dict]) -> str:
@@ -1606,20 +1620,34 @@ def _build_context(chunks: list[dict]) -> str:
         content = c['content']
         if len(content) > _MAX_CHUNK_CHARS:
             content = content[:_MAX_CHUNK_CHARS] + "…"
-        parts.append(f"[{i}. {c['title']} | {c.get('source','')}]\n{content}")
+        parts.append(f"[{i}. {c['title']}]\n{content}")
     return "\n\n".join(parts)
 
 
+def _is_direct_lookup(question: str, chunks: list[dict]) -> bool:
+    """Detecta si la pregunta es un lookup simple que el RAG puede responder directamente."""
+    if not chunks:
+        return False
+    q_lower = question.lower()
+    # Si la pregunta tiene keywords de lookup Y el top chunk tiene rank alto
+    kw_hit = any(k in q_lower for k in _DIRECT_KEYWORDS)
+    # Si el título del primer chunk aparece parcialmente en la pregunta
+    title_words = set(chunks[0]['title'].lower().split())
+    q_words = set(q_lower.split())
+    title_hit = len(title_words & q_words) >= 2
+    return kw_hit or title_hit
+
+
 def _ollama_ask(question: str, rag_context: str) -> str:
-    system = _BRAIN_SYSTEM
+    system = _BRAIN_SYSTEM_SHORT
     if rag_context:
-        system += f"\n\nBASE DE CONOCIMIENTO:\n{rag_context}"
+        system += f"\n\nCONTEXTO:\n{rag_context}"
     payload = _json.dumps({
         "model": "phi3-fast",
-        "prompt": f"Pregunta: {question}",
+        "prompt": f"Responde brevemente: {question}",
         "system": system,
         "stream": False,
-        "options": {"temperature": 0.1, "num_predict": 300, "num_ctx": 1024},
+        "options": {"temperature": 0.1, "num_predict": 150, "num_ctx": 512},
     }).encode()
     req = _urllib_req.Request(
         f"{_OLLAMA_URL}/api/generate",
@@ -1627,7 +1655,7 @@ def _ollama_ask(question: str, rag_context: str) -> str:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with _urllib_req.urlopen(req, timeout=60) as r:
+    with _urllib_req.urlopen(req, timeout=45) as r:
         return _json.loads(r.read()).get("response", "").strip()
 
 
@@ -1649,11 +1677,32 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
         except Exception:
             pass
 
-    # Capa 2: RAG — buscar chunks relevantes
-    chunks = _rag_search(db, body.question)
+    # Capa 2: RAG — buscar chunks relevantes (máx 2 para caber en contexto phi3)
+    chunks = _rag_search(db, body.question, limit=_RAG_LIMIT)
     rag_ctx = _build_context(chunks)
 
-    # Capa 3: Ollama con contexto RAG
+    # Capa 2.5: Direct RAG — para lookups simples, responde directamente sin Ollama
+    if chunks and _is_direct_lookup(body.question, chunks):
+        # Extraer primera oración o primeras 2 líneas del chunk más relevante
+        top = chunks[0]['content']
+        lines = [l.strip() for l in top.split('\n') if l.strip()][:4]
+        answer = '\n'.join(lines)
+        if chunks[0].get('source'):
+            answer += f"\n[Fuente: {chunks[0]['source']}]"
+        result = _BrainResponse(
+            answer=answer,
+            source="rag_direct",
+            cached=False,
+            chunks_used=len(chunks),
+        )
+        if body.use_cache:
+            try:
+                _redis_client().setex(key, _BRAIN_CACHE_TTL, _json.dumps(result.model_dump()))
+            except Exception:
+                pass
+        return result
+
+    # Capa 3: Ollama con contexto RAG (síntesis para preguntas complejas)
     try:
         answer = _ollama_ask(body.question, rag_ctx)
         result = _BrainResponse(
@@ -1669,6 +1718,25 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
                 pass
         return result
     except Exception as e:
+        # Fallback: si Ollama falla, devolver el RAG directo
+        if chunks:
+            top = chunks[0]['content']
+            lines = [l.strip() for l in top.split('\n') if l.strip()][:4]
+            answer = '\n'.join(lines)
+            if chunks[0].get('source'):
+                answer += f"\n[Fuente: {chunks[0]['source']}]"
+            result = _BrainResponse(
+                answer=answer,
+                source="rag_fallback",
+                cached=False,
+                chunks_used=len(chunks),
+            )
+            if body.use_cache:
+                try:
+                    _redis_client().setex(key, _BRAIN_CACHE_TTL, _json.dumps(result.model_dump()))
+                except Exception:
+                    pass
+            return result
         raise HTTPException(status_code=503, detail=f"Brain no disponible: {str(e)}")
 
 
