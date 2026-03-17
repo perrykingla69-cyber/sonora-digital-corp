@@ -1,0 +1,243 @@
+version: '3.9'
+
+services:
+
+  # ========== INFRAESTRUCTURA COMPARTIDA ==========
+  
+  postgres:
+    image: postgres:16-alpine
+    container_name: mystic_postgres_master
+    environment:
+      POSTGRES_USER: mystic
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mystic_secure_2026}
+      POSTGRES_DB: mystic_unified
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init-schemas.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./database/multi-tenant.sql:/docker-entrypoint-initdb.d/02-multi-tenant.sql
+    networks:
+      - mystic_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mystic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mystic_redis_master
+    volumes:
+      - redis_data:/data
+    networks:
+      - mystic_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mystic_ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - mystic_network
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+
+  # ========== SONORA ERP API ==========
+
+  sonora-api:
+    build:
+      context: ./sonora-digital-corp
+      dockerfile: Dockerfile
+    container_name: sonora_api
+    environment:
+      DATABASE_URL: postgresql://mystic:${DB_PASSWORD:-mystic_secure_2026}@postgres:5432/mystic_unified
+      REDIS_URL: redis://redis:6379
+      ENVIRONMENT: production
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mystic_network
+    restart: unless-stopped
+    labels:
+      prometheus-job: sonora-api
+
+  # ========== MYSTIC BRAIN (IA + RAG) ==========
+
+  mystic-brain:
+    build:
+      context: ./mystic-core
+      dockerfile: Dockerfile
+    container_name: mystic_brain
+    environment:
+      DATABASE_URL: postgresql://mystic:${DB_PASSWORD:-mystic_secure_2026}@postgres:5432/mystic_unified
+      OLLAMA_URL: http://ollama:11434
+      REDIS_URL: redis://redis:6379
+      KIMI_API_KEY: ${KIMI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - mystic_network
+    restart: unless-stopped
+    labels:
+      prometheus-job: mystic-brain
+
+  # ========== MYSTIC PLATFORM (ORQUESTACIÓN + n8n) ==========
+
+  mystic-platform:
+    build:
+      context: ./mystic-platform
+      dockerfile: Dockerfile
+    container_name: mystic_platform
+    environment:
+      DATABASE_URL: postgresql://mystic:${DB_PASSWORD:-mystic_secure_2026}@postgres:5432/mystic_unified
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mystic_network
+    restart: unless-stopped
+    labels:
+      prometheus-job: mystic-platform
+
+  # ========== n8n (AUTOMATIZACIÓN) ==========
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: mystic_n8n
+    environment:
+      DB_TYPE: postgres
+      DB_POSTGRESDB_DATABASE: mystic_unified
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_USER: mystic
+      DB_POSTGRESDB_PASSWORD: ${DB_PASSWORD:-mystic_secure_2026}
+      N8N_HOST: 0.0.0.0
+      N8N_PORT: 5678
+      N8N_PROTOCOL: https
+      N8N_SECURE_COOKIE: true
+      WEBHOOK_TUNNEL_URL: https://${DOMAIN}/n8n/
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mystic_network
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+
+  # ========== NGINX API GATEWAY ==========
+
+  nginx:
+    image: nginx:alpine
+    container_name: mystic_nginx_master
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-master.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - sonora-api
+      - mystic-brain
+      - mystic-platform
+      - n8n
+    networks:
+      - mystic_network
+    restart: unless-stopped
+
+  # ========== MONITOREO: PROMETHEUS ==========
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mystic_prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - mystic_network
+    restart: unless-stopped
+
+  # ========== MONITOREO: GRAFANA ==========
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mystic_grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+    networks:
+      - mystic_network
+    restart: unless-stopped
+
+  # ========== LOGGING: LOKI ==========
+
+  loki:
+    image: grafana/loki:latest
+    container_name: mystic_loki
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yml
+    networks:
+      - mystic_network
+    restart: unless-stopped
+
+  # ========== BACKUP AUTOMÁTICO ==========
+
+  backup:
+    image: postgres:16-alpine
+    container_name: mystic_backup
+    environment:
+      PGPASSWORD: ${DB_PASSWORD:-mystic_secure_2026}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh
+    depends_on:
+      - postgres
+    networks:
+      - mystic_network
+    entrypoint: /bin/sh -c "while true; do /backup.sh; sleep 86400; done"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  n8n_data:
+
+networks:
+  mystic_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

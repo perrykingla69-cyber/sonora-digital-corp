@@ -1,0 +1,144 @@
+[
+  {
+    "task_id": "task-1",
+    "task": {
+      "agent": "infra_agent",
+      "payload": {
+        "skill": "shell",
+        "args": {
+          "command": "echo mystic_ok"
+        }
+      }
+    },
+    "result": {
+      "agent": "infra_agent",
+      "role": "Infrastructure operations, deployment, and reliability",
+      "skill": "shell",
+      "result": {
+        "skill": "shell",
+        "status": "ok",
+        "timestamp": "2026-03-13T10:40:18.320947+00:00",
+        "result": {
+          "stdout": "mystic_ok",
+          "stderr": "",
+          "returncode": 0
+        }
+      }
+    },
+    "timestamp": "2026-03-13T10:40:18.320986+00:00"
+  },
+  {
+    "task_id": "task-2",
+    "task": {
+      "agent": "dev_agent",
+      "payload": {
+        "skill": "filesystem",
+        "args": {
+          "action": "write",
+          "path": "/tmp/pytest-of-mystic/pytest-1/test_execute_task_filesystem0/api_test.txt",
+          "content": "desde API"
+        }
+      }
+    },
+    "result": {
+      "agent": "dev_agent",
+      "role": "Application development, code generation, and integration",
+      "skill": "filesystem",
+      "result": {
+        "skill": "filesystem",
+        "status": "ok",
+        "timestamp": "2026-03-13T10:40:18.327851+00:00",
+        "result": "Written 9 chars to /tmp/pytest-of-mystic/pytest-1/test_execute_task_filesystem0/api_test.txt"
+      }
+    },
+    "timestamp": "2026-03-13T10:40:18.327880+00:00"
+  },
+  {
+    "task_id": "task-3",
+    "task": {
+      "capability": "infrastructure",
+      "payload": {
+        "skill": "shell",
+        "args": {
+          "command": "echo infra"
+        }
+      }
+    },
+    "result": {
+      "agent": "infra_agent",
+      "role": "Infrastructure operations, deployment, and reliability",
+      "skill": "shell",
+      "result": {
+        "skill": "shell",
+        "status": "ok",
+        "timestamp": "2026-03-13T10:40:18.335331+00:00",
+        "result": {
+          "stdout": "infra",
+          "stderr": "",
+          "returncode": 0
+        }
+      }
+    },
+    "timestamp": "2026-03-13T10:40:18.335362+00:00"
+  },
+  {
+    "task_id": "task-4",
+    "task": {
+      "agent": "infra_agent",
+      "payload": {
+        "skill": "shell",
+        "args": {
+          "command": "echo task1"
+        }
+      }
+    },
+    "result": {
+      "agent": "infra_agent",
+      "role": "Infrastructure operations, deployment, and reliability",
+      "skill": "shell",
+      "result": {
+        "skill": "shell",
+        "status": "ok",
+        "timestamp": "2026-03-13T10:40:18.341756+00:00",
+        "result": {
+          "stdout": "task1",
+          "stderr": "",
+          "returncode": 0
+        }
+      }
+    },
+    "timestamp": "2026-03-13T10:40:18.341785+00:00"
+  },
+  {
+    "task_id": "task-5",
+    "task": {
+      "agent": "dev_agent",
+      "payload": {
+        "skill": "analysis",
+        "args": {
+          "action": "stats",
+          "text": "hola mundo test"
+        }
+      }
+    },
+    "result": {
+      "agent": "dev_agent",
+      "role": "Application development, code generation, and integration",
+      "skill": "analysis",
+      "result": {
+        "skill": "analysis",
+        "status": "ok",
+        "timestamp": "2026-03-13T10:40:18.342914+00:00",
+        "result": {
+          "chars": 15,
+          "words": 3,
+          "sentences": 1,
+          "paragraphs": 1,
+          "avg_word_length": 4.33,
+          "unique_words": 3
+        }
+      }
+    },
+    "timestamp": "2026-03-13T10:40:18.342935+00:00"
+  }
+]
