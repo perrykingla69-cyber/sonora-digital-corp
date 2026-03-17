@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pull latest & rebuild API
+      - name: Pull latest & rebuild
         run: |
           set -e
           cd /home/mystic/sonora-digital-corp
@@ -29,10 +29,32 @@ jobs:
           git reset --hard origin/main
           git clean -fd
 
-          echo "==> Rebuild API"
           cd infra
+
+          # Detectar qué cambió para rebuild selectivo
+          CHANGED=$(git -C /home/mystic/sonora-digital-corp diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")
+
+          echo "==> Rebuild API"
           docker compose -f docker-compose.vps.yml --env-file .env build api --no-cache
           docker compose -f docker-compose.vps.yml --env-file .env up -d api
+
+          # Rebuild frontend solo si cambió algo en frontend/
+          if echo "$CHANGED" | grep -q "^frontend/" || echo "$CHANGED" | grep -q "all" || [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+            echo "==> Rebuild Frontend"
+            docker compose -f docker-compose.vps.yml --env-file .env build frontend --no-cache
+            docker compose -f docker-compose.vps.yml --env-file .env up -d frontend
+          else
+            echo "==> Frontend sin cambios, skip"
+          fi
+
+          # Rebuild bot solo si cambió bot/
+          if echo "$CHANGED" | grep -q "^bot/" || [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+            echo "==> Rebuild Bot"
+            docker compose -f docker-compose.vps.yml --env-file .env build bot --no-cache
+            docker compose -f docker-compose.vps.yml --env-file .env up -d bot
+          else
+            echo "==> Bot sin cambios, skip"
+          fi
 
           echo "==> Verify health"
           sleep 6
