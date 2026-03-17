@@ -25,7 +25,9 @@ jobs:
           cd /home/mystic/sonora-digital-corp
 
           echo "==> Pull latest"
-          git pull origin main
+          git fetch origin
+          git reset --hard origin/main
+          git clean -fd
 
           echo "==> Rebuild API"
           cd infra
