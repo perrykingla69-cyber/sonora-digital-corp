@@ -1518,9 +1518,8 @@ def ai_mem_search(req: _SearchReq, current_user=Depends(get_current_user)):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# BRAIN — Ollama local (phi3:mini) + caché Redis
-# Endpoint usado por N8N workflows y Bot Telegram
-# Arquitectura: Determinístico($0) → Redis Cache($0) → Ollama($0) → Claude(5%)
+# BRAIN — RAG + Ollama local (phi3-fast) + caché Redis
+# Arquitectura: Redis Cache → RAG knowledge_base → Ollama+contexto → respuesta
 # ══════════════════════════════════════════════════════════════════════════════
 
 import hashlib as _hashlib
@@ -1528,27 +1527,17 @@ import urllib.request as _urllib_req
 import json as _json
 
 _OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
-_BRAIN_CACHE_TTL = int(os.environ.get("BRAIN_CACHE_TTL", "3600"))  # 1h default
+_BRAIN_CACHE_TTL = int(os.environ.get("BRAIN_CACHE_TTL", "3600"))
 
-# Contextos predefinidos para consultas frecuentes (capa determinística)
-_BRAIN_CONTEXTS = {
-    "aranceles-mexico": (
-        "Eres un experto en comercio exterior y aduanas de México. "
-        "Conoces el Sistema Armonizado de México (TIGIE), IGI, IVA importación, "
-        "cuotas compensatorias, NOM, permisos COFEPRIS y SEMARNAT. "
-        "Responde de forma concisa y estructurada en español."
-    ),
-    "contabilidad-mexico": (
-        "Eres un contador experto en fiscalidad mexicana. "
-        "Conoces ISR, IVA, IMSS, INFONAVIT, CFDI 4.0, SAT, LISR, LIVA. "
-        "Da respuestas precisas y cita el artículo legal cuando sea relevante."
-    ),
-    "default": (
-        "Eres Mystic, el asistente inteligente de Sonora Digital Corp. "
-        "Ayudas con contabilidad, comercio exterior y gestión empresarial en México. "
-        "Responde siempre en español de forma concisa."
-    ),
-}
+_BRAIN_SYSTEM = (
+    "Eres Mystic, el asistente fiscal y contable de Sonora Digital Corp. "
+    "Respondes preguntas sobre contabilidad, fiscalidad mexicana e importaciones. "
+    "REGLA CRÍTICA: usa SOLO los datos de la BASE DE CONOCIMIENTO proporcionada. "
+    "Si la respuesta está en el contexto, cítala con precisión (cifras, artículos, fechas). "
+    "Si NO está en el contexto, di exactamente: 'No tengo información verificada sobre esto.' "
+    "NO inventes cifras, tasas, artículos de ley ni fechas. "
+    "Responde siempre en español, de forma concisa y estructurada."
+)
 
 
 class _BrainRequest(BaseModel):
@@ -1559,29 +1548,72 @@ class _BrainRequest(BaseModel):
 
 class _BrainResponse(BaseModel):
     answer: str
-    source: str  # "cache" | "ollama" | "error"
+    source: str        # "cache" | "rag+ollama" | "rag_direct"
     model: str = "phi3-fast"
     cached: bool = False
+    chunks_used: int = 0
 
 
 def _redis_client():
-    redis_url = os.environ.get("REDIS_URL", "redis://redis:6379/0")
-    return redis.from_url(redis_url, decode_responses=True)
+    return redis.from_url(os.environ.get("REDIS_URL", "redis://redis:6379/0"), decode_responses=True)
 
 
 def _cache_key(question: str, context: str) -> str:
-    raw = f"{context}:{question.strip().lower()}"
-    return "brain:" + _hashlib.md5(raw.encode()).hexdigest()
+    return "brain:" + _hashlib.md5(f"{context}:{question.strip().lower()}".encode()).hexdigest()
 
 
-def _ollama_ask(question: str, context: str) -> str:
-    system_prompt = _BRAIN_CONTEXTS.get(context, _BRAIN_CONTEXTS["default"])
+# ── RAG: busca chunks relevantes en knowledge_base ────────────────────────────
+def _rag_search(db: Session, question: str, limit: int = 4) -> list[dict]:
+    """Full-text search en knowledge_base usando tsvector de PostgreSQL."""
+    try:
+        # Limpiar pregunta para tsquery — palabras significativas
+        words = [w for w in question.replace("?","").replace(",","").split() if len(w) > 3]
+        if not words:
+            return []
+        tsquery = " | ".join(words[:8])  # OR entre palabras clave
+        rows = db.execute(text("""
+            SELECT title, content, source, topic,
+                   ts_rank(to_tsvector('spanish', title||' '||content||' '||COALESCE(keywords,'')),
+                           to_tsquery('spanish', :q)) AS rank
+            FROM knowledge_base
+            WHERE to_tsvector('spanish', title||' '||content||' '||COALESCE(keywords,''))
+                  @@ to_tsquery('spanish', :q)
+            ORDER BY rank DESC
+            LIMIT :limit
+        """), {"q": tsquery, "limit": limit}).fetchall()
+
+        # Fallback: ILIKE si tsquery no da resultados
+        if not rows:
+            pattern = f"%{words[0]}%"
+            rows = db.execute(text("""
+                SELECT title, content, source, topic, 0.1 AS rank
+                FROM knowledge_base
+                WHERE content ILIKE :p OR title ILIKE :p OR keywords ILIKE :p
+                LIMIT :limit
+            """), {"p": pattern, "limit": limit}).fetchall()
+
+        return [{"title": r[0], "content": r[1], "source": r[2], "topic": r[3]} for r in rows]
+    except Exception:
+        return []
+
+
+def _build_context(chunks: list[dict]) -> str:
+    parts = []
+    for i, c in enumerate(chunks, 1):
+        parts.append(f"[FUENTE {i}: {c['title']} | {c.get('source','')}]\n{c['content']}")
+    return "\n\n".join(parts)
+
+
+def _ollama_ask(question: str, rag_context: str) -> str:
+    system = _BRAIN_SYSTEM
+    if rag_context:
+        system += f"\n\nBASE DE CONOCIMIENTO VERIFICADA:\n{rag_context}"
     payload = _json.dumps({
-        "model": "phi3-fast",  # phi3:mini con num_ctx=1024 para caber en RAM del VPS
-        "prompt": question,
-        "system": system_prompt,
+        "model": "phi3-fast",
+        "prompt": f"Pregunta: {question}",
+        "system": system,
         "stream": False,
-        "options": {"temperature": 0.3, "num_predict": 256, "num_ctx": 1024},
+        "options": {"temperature": 0.1, "num_predict": 400, "num_ctx": 2048},
     }).encode()
     req = _urllib_req.Request(
         f"{_OLLAMA_URL}/api/generate",
@@ -1589,56 +1621,73 @@ def _ollama_ask(question: str, context: str) -> str:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with _urllib_req.urlopen(req, timeout=60) as r:
-        data = _json.loads(r.read())
-    return data.get("response", "").strip()
+    with _urllib_req.urlopen(req, timeout=90) as r:
+        return _json.loads(r.read()).get("response", "").strip()
 
 
 @app.post("/api/brain/ask", response_model=_BrainResponse, tags=["Brain"])
-async def brain_ask(body: _BrainRequest):
+async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
     """
-    Consulta al cerebro IA (Ollama phi3:mini local).
-    Usado por N8N workflows y Bot Telegram.
-    Incluye caché Redis para evitar llamadas repetidas.
+    Brain RAG: busca en knowledge_base fiscal → Ollama con contexto verificado.
+    Respuestas precisas sin alucinaciones sobre tasas, artículos y trámites mexicanos.
     """
     key = _cache_key(body.question, body.context)
 
-    # Capa 2: Redis Cache
+    # Capa 1: Redis Cache
     if body.use_cache:
         try:
-            r = _redis_client()
-            cached = r.get(key)
+            cached = _redis_client().get(key)
             if cached:
-                return _BrainResponse(answer=cached, source="cache", cached=True)
+                d = _json.loads(cached)
+                return _BrainResponse(**d, cached=True)
         except Exception:
-            pass  # Si Redis falla, continúa a Ollama
+            pass
 
-    # Capa 3: Ollama local
+    # Capa 2: RAG — buscar chunks relevantes
+    chunks = _rag_search(db, body.question)
+    rag_ctx = _build_context(chunks)
+
+    # Capa 3: Ollama con contexto RAG
     try:
-        answer = _ollama_ask(body.question, body.context)
-        if body.use_cache and answer:
+        answer = _ollama_ask(body.question, rag_ctx)
+        result = _BrainResponse(
+            answer=answer,
+            source="rag+ollama",
+            cached=False,
+            chunks_used=len(chunks),
+        )
+        if body.use_cache:
             try:
-                r = _redis_client()
-                r.setex(key, _BRAIN_CACHE_TTL, answer)
+                _redis_client().setex(key, _BRAIN_CACHE_TTL, _json.dumps(result.model_dump()))
             except Exception:
                 pass
-        return _BrainResponse(answer=answer, source="ollama", cached=False)
+        return result
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Brain no disponible: {str(e)}")
 
 
 @app.get("/api/brain/status", tags=["Brain"])
-async def brain_status():
-    """Estado del cerebro IA — verifica Ollama y modelos disponibles."""
+async def brain_status(db: Session = Depends(get_db)):
+    """Estado del Brain: Ollama + knowledge_base."""
     try:
         req = _urllib_req.Request(f"{_OLLAMA_URL}/api/tags")
         with _urllib_req.urlopen(req, timeout=5) as r:
-            data = _json.loads(r.read())
-        models = [m["name"] for m in data.get("models", [])]
-        return {
-            "ollama": "ok",
-            "models": models,
-            "phi3_ready": "phi3:mini" in models,
-        }
+            models = [m["name"] for m in _json.loads(r.read()).get("models", [])]
+        ollama_ok = True
     except Exception as e:
-        return {"ollama": "error", "detail": str(e), "phi3_ready": False}
+        models, ollama_ok = [], False
+
+    try:
+        kb_count = db.execute(text("SELECT COUNT(*) FROM knowledge_base")).scalar()
+        topics = dict(db.execute(text(
+            "SELECT topic, COUNT(*) FROM knowledge_base GROUP BY topic ORDER BY topic"
+        )).fetchall())
+    except Exception:
+        kb_count, topics = 0, {}
+
+    return {
+        "ollama": "ok" if ollama_ok else "error",
+        "models": models,
+        "phi3_ready": any("phi3" in m for m in models),
+        "knowledge_base": {"total": kb_count, "topics": topics},
+    }
