@@ -19,7 +19,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('mystic_token')
-      window.location.href = '/login'
+      window.location.href = '/panel/login'
     }
     throw new Error('No autorizado')
   }

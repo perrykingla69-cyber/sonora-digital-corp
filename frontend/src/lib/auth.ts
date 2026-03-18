@@ -12,7 +12,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
 export function logout() {
   localStorage.removeItem('mystic_token')
   localStorage.removeItem('mystic_user')
-  window.location.href = '/login'
+  window.location.href = '/panel/login'
 }
 
 export function getUser() {
