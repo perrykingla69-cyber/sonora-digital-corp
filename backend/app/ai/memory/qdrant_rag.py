@@ -20,6 +20,7 @@ from qdrant_client.models import (
     Distance,
     PointStruct,
     VectorParams,
+    ScoreThreshold,
 )
 
 logger = logging.getLogger(__name__)
@@ -121,13 +122,15 @@ class QdrantRAG:
     ) -> list[dict[str, Any]]:
         """Búsqueda semántica. Devuelve lista de {text, score, metadata}."""
         query_vector = await self.embed(query)
-        results = await self._client.search(
+        # qdrant-client >= 1.7 usa query_points en lugar de search
+        response = await self._client.query_points(
             collection_name=collection,
-            query_vector=query_vector,
+            query=query_vector,
             limit=limit,
             score_threshold=score_threshold,
             with_payload=True,
         )
+        results = response.points
         return [
             {
                 "text": r.payload.get("text", ""),
