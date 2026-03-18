@@ -53,7 +53,7 @@ export default function Sidebar() {
       {user && (
         <div className="px-4 py-4 border-t border-gray-800">
           <p className="text-xs text-gray-500 truncate">{user.email}</p>
-          <p className="text-xs text-gray-400 font-medium truncate">{user.tenant}</p>
+          <p className="text-xs text-gray-400 font-medium truncate">{user.nombre || user.tenant_id}</p>
           <button
             onClick={logout}
             className="mt-3 flex items-center gap-2 text-xs text-gray-500 hover:text-red-400 transition-colors"

@@ -5,7 +5,7 @@ import { api, LoginResponse } from './api'
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const data = await api.post<LoginResponse>('/auth/login', { email, password })
   localStorage.setItem('mystic_token', data.access_token)
-  localStorage.setItem('mystic_user', JSON.stringify(data.user))
+  localStorage.setItem('mystic_user', JSON.stringify(data.usuario))
   return data
 }
 

@@ -44,13 +44,13 @@ export const api = {
 export interface LoginResponse {
   access_token: string
   token_type: string
-  user: {
+  usuario: {
     id: string
     email: string
     nombre: string
-    tenant: string
     tenant_id: string
-    role: string
+    rol: string
+    activo: boolean
   }
 }
 
