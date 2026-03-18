@@ -10,6 +10,7 @@
  */
 
 import express from 'express';
+import pino from 'pino';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -59,10 +60,10 @@ async function connect() {
     version,
     auth: {
       creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, { level: 'error' }),
+      keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' })),
     },
     printQRInTerminal: false,
-    logger: { level: 'error', child: () => ({ level: 'error', info: () => {}, debug: () => {}, warn: () => {}, error: (o, m) => log('error', m || '', o), trace: () => {}, fatal: () => {} }) },
+    logger: pino({ level: 'silent' }),
     browser: ['Mystic', 'Chrome', '120.0.6099.130'],
     connectTimeoutMs: 60000,
     keepAliveIntervalMs: 10000,
