@@ -196,7 +196,7 @@ async def crear_factura(
 
     # Invalidar cache de cierre del mes
     if REDIS_OK:
-        mes_key = f"cierre:{current_user.tenant_id}:{factura.fecha.year}:{factura.fecha.month}"
+        mes_key = f"cierre:{current_user.tenant_id}:{factura.fecha_emision.year}:{factura.fecha_emision.month}"
         _redis.delete(mes_key)
 
     return factura
@@ -733,7 +733,7 @@ async def cargar_cfdi_xml(
     db.refresh(factura)
 
     if REDIS_OK:
-        mes_key = f"cierre:{current_user.tenant_id}:{factura.fecha.year}:{factura.fecha.month}"
+        mes_key = f"cierre:{current_user.tenant_id}:{factura.fecha_emision.year}:{factura.fecha_emision.month}"
         _redis.delete(mes_key)
 
     return {**factura.__dict__, "cfdi_parseado": {k: v for k, v in datos.items() if k != "fecha"}}
