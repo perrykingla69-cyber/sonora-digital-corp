@@ -216,7 +216,7 @@ async def listar_facturas(
         q = q.filter(Factura.tipo == tipo)
     if estado:
         q = q.filter(Factura.estado == estado)
-    return q.order_by(Factura.fecha.desc()).offset(offset).limit(limit).all()
+    return q.order_by(Factura.fecha_emision.desc()).offset(offset).limit(limit).all()
 
 
 @app.get("/facturas/{factura_id}", response_model=FacturaResponse, tags=["Facturas"])
@@ -401,12 +401,12 @@ async def cierre_mes(
 
     facturas = db.query(Factura).filter(
         Factura.tenant_id == current_user.tenant_id,
-        Factura.fecha >= primer_dia,
-        Factura.fecha <= ultimo_dia,
+        Factura.fecha_emision >= primer_dia,
+        Factura.fecha_emision <= ultimo_dia,
     ).all()
 
-    ingresos = sum(f.total_mxn or f.total for f in facturas if f.tipo == "ingreso")
-    gastos = sum(f.total_mxn or f.total for f in facturas if f.tipo == "gasto")
+    ingresos = sum(f.total for f in facturas if f.tipo == "ingreso")
+    gastos = sum(f.total for f in facturas if f.tipo == "gasto")
     iva_cobrado = sum(f.iva for f in facturas if f.tipo == "ingreso")
     iva_pagado = sum(f.iva for f in facturas if f.tipo == "gasto")
 
@@ -498,11 +498,12 @@ async def dashboard(
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    ahora = datetime.utcnow()
-    inicio_mes = datetime(ahora.year, ahora.month, 1)
+    from datetime import timezone as _tz
+    ahora = datetime.now(_tz.utc)
+    inicio_mes = datetime(ahora.year, ahora.month, 1, tzinfo=_tz.utc)
 
     facturas = db.query(Factura).filter(Factura.tenant_id == current_user.tenant_id).all()
-    mes_actual = [f for f in facturas if f.fecha >= inicio_mes]
+    mes_actual = [f for f in facturas if f.fecha_emision and f.fecha_emision.replace(tzinfo=_tz.utc) >= inicio_mes]
 
     ingresos_mes = sum(f.total for f in mes_actual if f.tipo == "ingreso")
     gastos_mes = sum(f.total for f in mes_actual if f.tipo == "gasto")
@@ -704,10 +705,7 @@ async def cargar_cfdi_xml(
         if existe:
             raise HTTPException(409, f"CFDI ya registrado (UUID: {datos['uuid_cfdi']})")
 
-    isr = calcular_isr(datos["subtotal"])
-    ieps = calcular_ieps(datos["subtotal"], "otro")
-    total_calc = datos["subtotal"] + datos["iva"] - isr
-    total_mxn = total_calc * datos["tipo_cambio"] if datos["moneda"] != "MXN" else total_calc
+    total_calc = datos["subtotal"] + datos["iva"]
 
     factura = Factura(
         tenant_id=current_user.tenant_id,
@@ -715,17 +713,13 @@ async def cargar_cfdi_xml(
         rfc_receptor=datos["rfc_receptor"],
         subtotal=datos["subtotal"],
         iva=datos["iva"],
-        isr=isr,
-        ieps=ieps,
         total=total_calc,
-        total_mxn=total_mxn,
         tipo=datos["tipo"],
         moneda=datos["moneda"],
         tipo_cambio=datos["tipo_cambio"],
         concepto=datos["concepto"],
-        producto_tipo="otro",
         uuid_cfdi=datos["uuid_cfdi"] or None,
-        fecha=datos["fecha"] or datetime.utcnow(),
+        fecha_emision=datos["fecha"] or datetime.utcnow(),
     )
     db.add(factura)
     _audit(db, "cargar_cfdi_xml", current_user, "facturas", {"uuid": datos["uuid_cfdi"], "total": total_calc})
