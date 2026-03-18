@@ -1854,10 +1854,16 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
             cached=False,
             chunks_used=len(chunks),
             qdrant_used=qdrant_used,
+            session_id=body.session_id,
         )
         if body.use_cache:
             try:
                 _redis_client().setex(key, _BRAIN_CACHE_TTL, _json.dumps(result.model_dump()))
+            except Exception:
+                pass
+        if body.session_id:
+            try:
+                _session_save(db, body.session_id, body.channel, body.question, answer)
             except Exception:
                 pass
         return result
@@ -2106,25 +2112,52 @@ async def _wa_send(to: str, message: str) -> bool:
         return False
 
 
+# Números autorizados a usar Mystic por WhatsApp (whitelist)
+# Vacío = todos los contactos responden (modo demo)
+# Agregar números sin +52, ej: "6622681111", "6623538272"
+_WA_WHITELIST: set[str] = set(
+    n.strip() for n in os.getenv("WA_WHITELIST", "6622681111,6623538272").split(",") if n.strip()
+)
+
+# Grupos siempre ignorados (JIDs con @g.us)
+_WA_IGNORE_GROUPS = True
+
+# Respuesta cuando el brain devuelve texto vacío (DeepSeek sin respuesta visible)
+_WA_FALLBACK = (
+    "Hola, soy Mystic 🤖 Tu asistente fiscal. "
+    "Recibí tu pregunta pero necesito más contexto o no encontré información verificada al respecto. "
+    "¿Puedes ser más específico?"
+)
+
+
 @app.post("/api/wa/webhook", tags=["WhatsApp"])
 async def wa_webhook(body: dict, db: Session = Depends(get_db)):
     """
     Recibe mensajes de WhatsApp desde mystic-wa y responde con el Brain.
-    Detecta tenant por número de teléfono (busca en usuarios activos).
+    Solo responde a números en WA_WHITELIST. Ignora grupos.
     """
     from_number = body.get("from", "")
     message = body.get("message", "").strip()
     if not from_number or not message:
         return {"ok": False}
 
-    # Buscar tenant por número WA
-    user = db.query(Usuario).filter(
-        Usuario.activo == True,  # noqa: E712
-    ).first()
-    context = "fourgea" if user and "fourgea" in (user.email or "") else "fiscal"
+    # Ignorar grupos (@g.us) y lids (@lid son notificaciones de sistema)
+    if _WA_IGNORE_GROUPS and ("@g.us" in from_number or "@lid" in from_number):
+        return {"ok": False, "reason": "group_ignored"}
+
+    # Limpiar número para comparar (quitar 521 o 52 del prefijo internacional)
+    clean_number = from_number.replace("521", "", 1).replace("52", "", 1) if from_number.startswith("52") else from_number
+    # También intentar match directo
+    if _WA_WHITELIST and clean_number not in _WA_WHITELIST and from_number not in _WA_WHITELIST:
+        return {"ok": False, "reason": "not_whitelisted"}
+
+    # Detectar contexto por número conocido
+    # Nathaly (Fourgea): 6622681111
+    fourgea_numbers = {"6622681111"}
+    context = "fourgea" if clean_number in fourgea_numbers else "fiscal"
 
     # P2: session_id por número WhatsApp para memoria cross-session
-    session_id = f"whatsapp:{from_number}"
+    session_id = f"whatsapp:{clean_number}"
 
     # Llamar al Brain con memoria de sesión
     brain_body = _BrainRequest(
@@ -2133,9 +2166,13 @@ async def wa_webhook(body: dict, db: Session = Depends(get_db)):
     )
     try:
         resp = await brain_ask(brain_body, db)
-        answer = resp.answer
+        answer = resp.answer.strip()
     except Exception as e:
-        answer = f"Error al procesar: {str(e)[:100]}"
+        answer = ""
+
+    # Fallback si la respuesta quedó vacía (DeepSeek sin texto visible)
+    if not answer or len(answer) < 5:
+        answer = _WA_FALLBACK
 
     # Responder por WhatsApp
     await _wa_send(from_number, answer)
