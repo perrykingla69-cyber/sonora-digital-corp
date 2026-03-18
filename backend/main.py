@@ -187,7 +187,6 @@ async def crear_factura(
         tipo_cambio=body.tipo_cambio,
         estado=body.estado,
         concepto=body.concepto,
-        uuid_cfdi=body.uuid_cfdi,
         fecha_emision=body.fecha_emision or datetime.utcnow(),
     )
     db.add(factura)
