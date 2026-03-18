@@ -1624,7 +1624,7 @@ async def _rag_search_qdrant(question: str, context: str, limit: int = 3) -> lis
         results = await _qdrant_rag.search(collection, question, limit=limit, score_threshold=0.45)
         return [
             {
-                "title": r.get("doc_id", "Documento"),
+                "title": r.get("title", r.get("doc_id", "Documento")),
                 "content": r["text"],
                 "source": r.get("fuente", "qdrant"),
                 "topic": r.get("topic", context),
@@ -1667,10 +1667,10 @@ def _is_direct_lookup(question: str, chunks: list[dict]) -> bool:
     if not chunks:
         return False
     q_lower = question.lower()
-    # Si la pregunta tiene keywords de lookup Y el top chunk tiene rank alto
-    kw_hit = any(k in q_lower for k in _DIRECT_KEYWORDS)
+    # Whole-word matching para evitar falsos positivos ("definitiva" no es "iva")
+    kw_hit = any(_re.search(r'\b' + k + r'\b', q_lower) for k in _DIRECT_KEYWORDS)
     # Si el título del primer chunk aparece parcialmente en la pregunta
-    title_words = set(chunks[0]['title'].lower().split())
+    title_words = {w for w in chunks[0]['title'].lower().split() if len(w) > 3}
     q_words = set(q_lower.split())
     title_hit = len(title_words & q_words) >= 2
     return kw_hit or title_hit
