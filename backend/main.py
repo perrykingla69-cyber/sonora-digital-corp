@@ -1876,3 +1876,84 @@ async def brain_index_batch(body: _IndexBatchRequest, current_user=Depends(get_c
     collection = _CONTEXT_COLLECTION.get(body.context, "fiscal_mx")
     await _qdrant_rag.upsert_batch(collection, body.docs)
     return {"ok": True, "collection": collection, "indexed": len(body.docs)}
+
+
+# ── WHATSAPP WEBHOOK ──────────────────────────────────────────────────────────
+
+class _WAWebhook(BaseModel):
+    from_: str = ""
+    message: str = ""
+    timestamp: Optional[int] = None
+
+    model_config = {"populate_by_name": True}
+
+    @classmethod
+    def model_validate(cls, obj, *args, **kwargs):
+        if isinstance(obj, dict) and "from" in obj:
+            obj = dict(obj)
+            obj["from_"] = obj.pop("from")
+        return super().model_validate(obj, *args, **kwargs)
+
+
+_WA_API_KEY = os.getenv("WA_API_KEY", "MysticWA2026!")
+_WA_URL = os.getenv("WA_URL", "http://whatsapp:3001")
+
+
+async def _wa_send(to: str, message: str) -> bool:
+    """Envía mensaje WhatsApp vía mystic-wa."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=15) as http:
+            r = await http.post(
+                f"{_WA_URL}/send",
+                json={"to": to, "message": message},
+                headers={"x-api-key": _WA_API_KEY},
+            )
+            return r.status_code == 200
+    except Exception:
+        return False
+
+
+@app.post("/api/wa/webhook", tags=["WhatsApp"])
+async def wa_webhook(body: dict, db: Session = Depends(get_db)):
+    """
+    Recibe mensajes de WhatsApp desde mystic-wa y responde con el Brain.
+    Detecta tenant por número de teléfono (busca en usuarios activos).
+    """
+    from_number = body.get("from", "")
+    message = body.get("message", "").strip()
+    if not from_number or not message:
+        return {"ok": False}
+
+    # Buscar tenant por número WA
+    user = db.query(Usuario).filter(
+        Usuario.activo == True,  # noqa: E712
+    ).first()
+    context = "fourgea" if user and "fourgea" in (user.email or "") else "fiscal"
+
+    # Llamar al Brain
+    brain_body = _BrainRequest(question=message, context=context, use_cache=True)
+    try:
+        resp = await brain_ask(brain_body, db)
+        answer = resp.answer
+    except Exception as e:
+        answer = f"Error al procesar: {str(e)[:100]}"
+
+    # Responder por WhatsApp
+    await _wa_send(from_number, answer)
+    return {"ok": True, "answered": answer[:100]}
+
+
+@app.get("/api/wa/status", tags=["WhatsApp"])
+async def wa_status():
+    """Estado de la conexión WhatsApp."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=5) as http:
+            r = await http.get(
+                f"{_WA_URL}/status",
+                headers={"x-api-key": _WA_API_KEY},
+            )
+            return r.json()
+    except Exception as e:
+        return {"state": "unreachable", "error": str(e)}
