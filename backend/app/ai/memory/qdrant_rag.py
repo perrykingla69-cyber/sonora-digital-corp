@@ -20,7 +20,6 @@ from qdrant_client.models import (
     Distance,
     PointStruct,
     VectorParams,
-    ScoreThreshold,
 )
 
 logger = logging.getLogger(__name__)
