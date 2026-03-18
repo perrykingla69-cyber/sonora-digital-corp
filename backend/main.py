@@ -1566,7 +1566,7 @@ class _BrainRequest(BaseModel):
 class _BrainResponse(BaseModel):
     answer: str
     source: str        # "cache" | "qdrant+ollama" | "qdrant_direct" | "rag+ollama" | "rag_direct"
-    model: str = "phi3-fast"
+    model: str = "deepseek-r1:1.5b"
     cached: bool = False
     chunks_used: int = 0
     qdrant_used: bool = False
@@ -1676,16 +1676,32 @@ def _is_direct_lookup(question: str, chunks: list[dict]) -> bool:
     return kw_hit or title_hit
 
 
+_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "deepseek-r1:1.5b")
+_OLLAMA_FALLBACK = "phi3-fast"  # fallback si deepseek no está disponible
+
+import re as _re
+
+def _strip_think_tags(text: str) -> str:
+    """Elimina bloques <think>...</think> que genera DeepSeek-R1 (razonamiento interno)."""
+    return _re.sub(r"<think>.*?</think>", "", text, flags=_re.DOTALL).strip()
+
+
 def _ollama_ask(question: str, rag_context: str) -> str:
     system = _BRAIN_SYSTEM_SHORT
     if rag_context:
         system += f"\n\nCONTEXTO:\n{rag_context}"
+
+    # DeepSeek-R1 necesita más tokens (genera razonamiento + respuesta)
+    is_deepseek = "deepseek" in _OLLAMA_MODEL
+    num_predict = 400 if is_deepseek else 150
+    num_ctx = 2048 if is_deepseek else 512
+
     payload = _json.dumps({
-        "model": "phi3-fast",
-        "prompt": f"Responde brevemente: {question}",
+        "model": _OLLAMA_MODEL,
+        "prompt": f"Responde brevemente en español: {question}",
         "system": system,
         "stream": False,
-        "options": {"temperature": 0.1, "num_predict": 150, "num_ctx": 512},
+        "options": {"temperature": 0.1, "num_predict": num_predict, "num_ctx": num_ctx},
     }).encode()
     req = _urllib_req.Request(
         f"{_OLLAMA_URL}/api/generate",
@@ -1693,8 +1709,9 @@ def _ollama_ask(question: str, rag_context: str) -> str:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with _urllib_req.urlopen(req, timeout=45) as r:
-        return _json.loads(r.read()).get("response", "").strip()
+    with _urllib_req.urlopen(req, timeout=60) as r:
+        raw = _json.loads(r.read()).get("response", "").strip()
+    return _strip_think_tags(raw) if is_deepseek else raw
 
 
 @app.post("/api/brain/ask", response_model=_BrainResponse, tags=["Brain"])
@@ -1823,6 +1840,8 @@ async def brain_status(db: Session = Depends(get_db)):
         "ollama": "ok" if ollama_ok else "error",
         "models": models,
         "phi3_ready": any("phi3" in m for m in models),
+        "active_model": _OLLAMA_MODEL,
+        "deepseek_ready": any("deepseek-r1" in m for m in models),
         "knowledge_base": {"total": kb_count, "topics": topics},
         "qdrant": qdrant_status,
     }
