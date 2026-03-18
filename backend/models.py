@@ -196,3 +196,32 @@ class AuditLog(Base):
     detalle = Column(JSONB, nullable=True)
     ip = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_now)
+
+
+# ── BRAIN SWARM — Memoria y Aprendizaje ──────────────────────────────────────
+
+class BrainSession(Base):
+    """Memoria conversacional cross-session por canal (WhatsApp, Telegram, Dashboard)."""
+    __tablename__ = "brain_sessions"
+    id = Column(String, primary_key=True, default=_uuid)
+    session_id = Column(String, unique=True, nullable=False, index=True)
+    # session_id = "{channel}:{channel_id}"  ej: "whatsapp:5216622681111"
+    tenant_id = Column(String, nullable=True)
+    channel = Column(String, default="api")   # whatsapp | telegram | dashboard | api
+    messages = Column(JSONB, default=list)    # [{role, content, ts}] últimas 10
+    last_activity = Column(DateTime(timezone=True), default=_now, onupdate=_now)
+    created_at = Column(DateTime(timezone=True), default=_now)
+
+
+class BrainFeedback(Base):
+    """Auto-aprendizaje: Q&A que el usuario calificó como buenas/malas."""
+    __tablename__ = "brain_feedback"
+    id = Column(String, primary_key=True, default=_uuid)
+    session_id = Column(String, nullable=True)
+    tenant_id = Column(String, nullable=True)
+    question = Column(Text, nullable=False)
+    answer = Column(Text, nullable=False)
+    rating = Column(Integer, default=0)       # +1 buena | -1 mala
+    context = Column(String, default="fiscal")
+    indexed_qdrant = Column(Boolean, default=False)  # re-indexado como conocimiento
+    created_at = Column(DateTime(timezone=True), default=_now)

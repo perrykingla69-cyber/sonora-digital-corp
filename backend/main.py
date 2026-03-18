@@ -21,7 +21,8 @@ from sqlalchemy.orm import Session
 from calculos import calcular_iva, calcular_isr, calcular_ieps
 from calculos_completos_147 import CalculosCompletos147
 from database import Base, engine, get_db
-from models import (AuditLog, AlertaConfig, CierreMes, Empleado, Factura, Lead,
+from models import (AuditLog, AlertaConfig, BrainFeedback, BrainSession,
+                    CierreMes, Empleado, Factura, Lead,
                     MVE, Nomina, TipoCambio, Usuario, Tenant)
 from schemas import (CierreResponse, DashboardResponse, EmpleadoCreate,
                      EmpleadoResponse, FacturaCreate, FacturaResponse,
@@ -1528,6 +1529,14 @@ except Exception:
     _qdrant_rag = None
     _QDRANT_ENABLED = False
 
+# Queen-Worker Swarm — importación con fallback
+try:
+    from app.ai.swarm.queen import queen as _queen
+    _SWARM_ENABLED = True
+except Exception:
+    _queen = None
+    _SWARM_ENABLED = False
+
 # Mapeo context → colección Qdrant
 _CONTEXT_COLLECTION = {
     "default": "fiscal_mx",
@@ -1552,6 +1561,8 @@ class _BrainRequest(BaseModel):
     question: str
     context: str = "default"
     use_cache: bool = True
+    session_id: Optional[str] = None   # P2: memoria cross-session
+    channel: str = "api"               # whatsapp | telegram | dashboard | api
 
 
 class _BrainResponse(BaseModel):
@@ -1561,6 +1572,33 @@ class _BrainResponse(BaseModel):
     cached: bool = False
     chunks_used: int = 0
     qdrant_used: bool = False
+    session_id: Optional[str] = None
+    agents_used: Optional[list] = None  # P1: swarm
+
+
+class _SwarmRequest(BaseModel):
+    question: str
+    context: str = "default"
+    session_id: Optional[str] = None
+    channel: str = "api"
+
+
+class _SwarmResponse(BaseModel):
+    answer: str
+    agents_used: list[str]
+    confidences: dict
+    total_chunks: int
+    session_id: Optional[str] = None
+    source: str = "swarm"
+
+
+class _FeedbackRequest(BaseModel):
+    question: str
+    answer: str
+    rating: int          # +1 buena | -1 mala
+    context: str = "fiscal"
+    session_id: Optional[str] = None
+    tenant_id: Optional[str] = None
 
 
 def _redis_client():
@@ -1705,6 +1743,76 @@ def _ollama_ask(question: str, rag_context: str) -> str:
     return _strip_think_tags(raw) if is_deepseek else raw
 
 
+# ── P1: RAG por colección específica (para los workers del swarm) ─────────────
+async def _rag_search_by_collection(question: str, collection: str, limit: int = 2) -> list[dict]:
+    """Búsqueda en una colección Qdrant específica (usada por Queen workers)."""
+    if not _QDRANT_ENABLED or _qdrant_rag is None:
+        return []
+    try:
+        results = await _qdrant_rag.search(collection, question, limit=limit, score_threshold=0.4)
+        return [
+            {
+                "title": r.get("title", r.get("doc_id", "Documento")),
+                "content": r["text"],
+                "source": r.get("fuente", "qdrant"),
+                "topic": r.get("topic", collection),
+            }
+            for r in results
+        ]
+    except Exception:
+        return []
+
+
+# ── P2: Helpers de memoria cross-session ─────────────────────────────────────
+_SESSION_MAX_MSGS = 10   # Máximo mensajes a retener por sesión
+
+
+def _session_get(db: Session, session_id: str) -> BrainSession | None:
+    return db.query(BrainSession).filter(BrainSession.session_id == session_id).first()
+
+
+def _session_save(db: Session, session_id: str, channel: str,
+                  question: str, answer: str, tenant_id: str | None = None) -> None:
+    """Añade el par Q/A a la sesión, creándola si no existe. Mantiene últimos N mensajes."""
+    import datetime as _dt
+    now_str = _dt.datetime.now(_dt.timezone.utc).isoformat()
+    sess = _session_get(db, session_id)
+    if sess is None:
+        sess = BrainSession(
+            session_id=session_id,
+            channel=channel,
+            tenant_id=tenant_id,
+            messages=[],
+        )
+        db.add(sess)
+
+    msgs: list = list(sess.messages or [])
+    msgs.append({"role": "user", "content": question, "ts": now_str})
+    msgs.append({"role": "assistant", "content": answer, "ts": now_str})
+    # Mantener solo los últimos _SESSION_MAX_MSGS mensajes
+    sess.messages = msgs[-_SESSION_MAX_MSGS:]
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+
+
+def _session_history_text(db: Session, session_id: str | None) -> str:
+    """Devuelve texto con los últimos 5 intercambios para inyectar como contexto."""
+    if not session_id:
+        return ""
+    sess = _session_get(db, session_id)
+    if not sess or not sess.messages:
+        return ""
+    # Últimos 5 mensajes (puede ser 2-3 intercambios)
+    recent = sess.messages[-5:]
+    lines = []
+    for m in recent:
+        prefix = "Usuario" if m.get("role") == "user" else "Mystic"
+        lines.append(f"{prefix}: {m['content'][:200]}")
+    return "\n".join(lines)
+
+
 @app.post("/api/brain/ask", response_model=_BrainResponse, tags=["Brain"])
 async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
     """
@@ -1754,6 +1862,11 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
                 pass
         return result
 
+    # P2: Inyectar historial de sesión al contexto RAG
+    history_ctx = _session_history_text(db, body.session_id)
+    if history_ctx:
+        rag_ctx = f"CONVERSACIÓN PREVIA:\n{history_ctx}\n\nCONOCIMIENTO:\n{rag_ctx}" if rag_ctx else f"CONVERSACIÓN PREVIA:\n{history_ctx}"
+
     # Capa 3: Ollama con contexto RAG (síntesis para preguntas complejas)
     try:
         answer = _ollama_ask(body.question, rag_ctx)
@@ -1763,10 +1876,17 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
             cached=False,
             chunks_used=len(chunks),
             qdrant_used=qdrant_used,
+            session_id=body.session_id,
         )
         if body.use_cache:
             try:
                 _redis_client().setex(key, _BRAIN_CACHE_TTL, _json.dumps(result.model_dump()))
+            except Exception:
+                pass
+        # P2: Guardar en sesión (no bloqueante)
+        if body.session_id:
+            try:
+                _session_save(db, body.session_id, body.channel, body.question, answer)
             except Exception:
                 pass
         return result
@@ -1784,6 +1904,7 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
                 cached=False,
                 chunks_used=len(chunks),
                 qdrant_used=qdrant_used,
+                session_id=body.session_id,
             )
             if body.use_cache:
                 try:
@@ -1836,6 +1957,83 @@ async def brain_status(db: Session = Depends(get_db)):
         "knowledge_base": {"total": kb_count, "topics": topics},
         "qdrant": qdrant_status,
     }
+
+
+# ── P1: Queen-Worker Swarm ────────────────────────────────────────────────────
+
+@app.post("/api/brain/swarm", response_model=_SwarmResponse, tags=["Brain"])
+async def brain_swarm(body: _SwarmRequest, db: Session = Depends(get_db)):
+    """
+    Queen-Worker Swarm: despacha pregunta a 3 agentes especializados en paralelo
+    (AgentFacturas, AgentNomina, AgentIVA) y consolida respuestas por confianza.
+    Ideal para consultas fiscales complejas multi-dominio.
+    """
+    if not _SWARM_ENABLED or _queen is None:
+        raise HTTPException(503, "Swarm no disponible — queen.py no cargó correctamente")
+
+    # P2: Historial de sesión como prefijo de pregunta
+    history_ctx = _session_history_text(db, body.session_id)
+    question_with_ctx = body.question
+    if history_ctx:
+        question_with_ctx = f"Contexto conversación:\n{history_ctx}\n\nPregunta: {body.question}"
+
+    result = await _queen.run(question_with_ctx, _rag_search_by_collection, _ollama_ask)
+
+    # P2: Guardar en sesión
+    if body.session_id and result.get("answer"):
+        try:
+            _session_save(db, body.session_id, body.channel, body.question, result["answer"])
+        except Exception:
+            pass
+
+    return _SwarmResponse(
+        answer=result["answer"],
+        agents_used=result.get("agents_used", []),
+        confidences=result.get("confidences", {}),
+        total_chunks=result.get("total_chunks", 0),
+        session_id=body.session_id,
+    )
+
+
+# ── P3: Feedback y auto-aprendizaje ──────────────────────────────────────────
+
+@app.post("/api/brain/feedback", tags=["Brain"])
+async def brain_feedback(body: _FeedbackRequest, db: Session = Depends(get_db)):
+    """
+    Registra feedback del usuario (+1 buena / -1 mala).
+    Si rating=+1, re-indexa el Q&A en Qdrant como nuevo conocimiento verificado.
+    """
+    fb = BrainFeedback(
+        session_id=body.session_id,
+        tenant_id=body.tenant_id,
+        question=body.question,
+        answer=body.answer,
+        rating=body.rating,
+        context=body.context,
+    )
+    db.add(fb)
+    db.commit()
+    db.refresh(fb)
+
+    # Re-indexar en Qdrant si es respuesta buena y Qdrant está disponible
+    indexed = False
+    if body.rating == 1 and _QDRANT_ENABLED and _qdrant_rag is not None:
+        try:
+            collection = _CONTEXT_COLLECTION.get(body.context, "fiscal_mx")
+            doc_text = f"Pregunta: {body.question}\nRespuesta verificada: {body.answer}"
+            await _qdrant_rag.upsert(
+                collection,
+                f"feedback_{fb.id}",
+                doc_text,
+                {"source": "user_feedback", "context": body.context, "rating": 1},
+            )
+            fb.indexed_qdrant = True
+            db.commit()
+            indexed = True
+        except Exception:
+            pass
+
+    return {"ok": True, "id": fb.id, "rating": body.rating, "indexed_qdrant": indexed}
 
 
 # ── Indexación en Qdrant ───────────────────────────────────────────────────────
@@ -1925,8 +2123,14 @@ async def wa_webhook(body: dict, db: Session = Depends(get_db)):
     ).first()
     context = "fourgea" if user and "fourgea" in (user.email or "") else "fiscal"
 
-    # Llamar al Brain
-    brain_body = _BrainRequest(question=message, context=context, use_cache=True)
+    # P2: session_id por número WhatsApp para memoria cross-session
+    session_id = f"whatsapp:{from_number}"
+
+    # Llamar al Brain con memoria de sesión
+    brain_body = _BrainRequest(
+        question=message, context=context, use_cache=True,
+        session_id=session_id, channel="whatsapp",
+    )
     try:
         resp = await brain_ask(brain_body, db)
         answer = resp.answer

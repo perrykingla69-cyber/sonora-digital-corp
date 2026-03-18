@@ -1,10 +1,12 @@
 FROM node:20-alpine
 
+RUN apk add --no-cache git python3 make g++
+
 WORKDIR /app
 
 # Deps
 COPY package.json .
-RUN npm install --production
+RUN npm install --omit=dev
 
 # App
 COPY server.js .
