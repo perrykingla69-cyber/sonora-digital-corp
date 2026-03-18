@@ -81,6 +81,7 @@ class FacturaCreate(BaseModel):
     fecha_emision: Optional[datetime] = None
     concepto: Optional[str] = None
     producto_tipo: Optional[str] = None
+    folio_sat: Optional[str] = None
 
 
 class FacturaResponse(BaseModel):

@@ -167,30 +167,28 @@ async def crear_factura(
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    iva = calcular_iva(body.subtotal)
-    isr = calcular_isr(body.subtotal)
-    ieps = calcular_ieps(body.subtotal, body.producto_tipo or "otro")
-    total = body.subtotal + iva - isr
-    total_mxn = total * body.tipo_cambio if body.moneda != "MXN" else total
+    # Calcular IVA si no viene en el body
+    iva = body.iva if body.iva else calcular_iva(body.subtotal)
+    total = body.total if body.total else (body.subtotal + iva)
 
     factura = Factura(
         tenant_id=current_user.tenant_id,
+        folio=body.folio,
+        uuid_cfdi=body.uuid_cfdi,
         rfc_emisor=body.rfc_emisor,
         rfc_receptor=body.rfc_receptor,
+        nombre_emisor=body.nombre_emisor,
+        nombre_receptor=body.nombre_receptor,
         subtotal=body.subtotal,
         iva=iva,
-        isr=isr,
-        ieps=ieps,
         total=total,
-        total_mxn=total_mxn,
         tipo=body.tipo,
         moneda=body.moneda,
         tipo_cambio=body.tipo_cambio,
+        estado=body.estado,
         concepto=body.concepto,
-        producto_tipo=body.producto_tipo,
-        folio_sat=body.folio_sat,
         uuid_cfdi=body.uuid_cfdi,
-        fecha=body.fecha or datetime.utcnow(),
+        fecha_emision=body.fecha_emision or datetime.utcnow(),
     )
     db.add(factura)
     _audit(db, "crear_factura", current_user, "facturas", {"total": total, "tipo": body.tipo})
