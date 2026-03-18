@@ -109,14 +109,54 @@ export interface CierreData {
 
 export interface MVE {
   id: string
-  numero_pedimento: string
-  fecha: string
-  descripcion_mercancia: string
-  valor_factura: number
+  proveedor_nombre: string
+  proveedor_pais: string
+  proveedor_tax_id?: string
+  numero_factura: string
+  fecha_factura: string
+  descripcion_mercancias: string
+  fraccion_arancelaria?: string
+  cantidad: number
+  unidad_medida: string
   incoterm: string
+  valor_factura: number
   moneda: string
-  valor_aduana: number
-  estado: 'pendiente' | 'presentada' | 'pagada'
+  tipo_cambio: number
+  valor_factura_mxn: number
+  flete: number
+  seguro: number
+  valor_en_aduana: number
+  tasa_igi: number
+  igi: number
+  iva_importacion: number
+  dta: number
+  metodo_valoracion: number
+  justificacion_metodo?: string
+  hay_vinculacion: boolean
+  justificacion_vinculacion?: string
+  pedimento_numero?: string
+  folio_vucem?: string
+  notas?: string
+  semaforo?: 'red' | 'yellow' | 'green'
+  semaforo_errores?: SemaforoError[]
+  estado: 'borrador' | 'lista' | 'presentada' | 'pagada'
+  created_at: string
+}
+
+export interface SemaforoError {
+  nivel: 'red' | 'yellow'
+  codigo: string
+  mensaje: string
+  campo?: string
+}
+
+export interface SemaforoResult {
+  semaforo: 'red' | 'yellow' | 'green'
+  errores: SemaforoError[]
+  puede_presentar: boolean
+  resumen: string
+  total_errores: number
+  total_advertencias: number
 }
 
 export interface GSDTask {

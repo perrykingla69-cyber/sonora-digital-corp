@@ -124,26 +124,52 @@ class MVE(Base):
     __tablename__ = "mves"
     id = Column(String, primary_key=True, default=_uuid)
     tenant_id = Column(String, nullable=False)
-    numero_pedimento = Column(String)
-    aduana = Column(String)
-    fecha_entrada = Column(DateTime(timezone=True), nullable=True)
-    valor_comercial = Column(Float, default=0.0)
+    # Proveedor
+    proveedor_nombre = Column(String, nullable=False)
+    proveedor_pais = Column(String)
+    proveedor_tax_id = Column(String)
+    proveedor_direccion = Column(Text)
+    # Factura comercial
+    numero_factura = Column(String)
+    fecha_factura = Column(DateTime(timezone=True), nullable=True)
+    descripcion_mercancias = Column(Text)
+    fraccion_arancelaria = Column(String)
+    cantidad = Column(Float, default=1.0)
+    unidad_medida = Column(String)
+    # Valores
+    incoterm = Column(String)
+    valor_factura = Column(Float, default=0.0)
     moneda = Column(String, default="USD")
     tipo_cambio = Column(Float, default=1.0)
-    valor_aduana_mxn = Column(Float, default=0.0)
-    fraccion_arancelaria = Column(String)
-    descripcion = Column(Text)
-    igi_porcentaje = Column(Float, default=0.0)
-    igi_monto = Column(Float, default=0.0)
+    valor_factura_mxn = Column(Float, default=0.0)
+    flete = Column(Float, default=0.0)
+    seguro = Column(Float, default=0.0)
+    otros_cargos = Column(Float, default=0.0)
+    descuentos = Column(Float, default=0.0)
+    regalias = Column(Float, default=0.0)
+    asistencias = Column(Float, default=0.0)
+    valor_en_aduana = Column(Float, default=0.0)
+    # Contribuciones
+    tasa_igi = Column(Float, default=0.0)
+    igi = Column(Float, default=0.0)
     iva_importacion = Column(Float, default=0.0)
     dta = Column(Float, default=0.0)
-    total_contribuciones = Column(Float, default=0.0)
-    incoterm = Column(String)
-    estado = Column(String, default="borrador")
+    # Método valoración (Art. 45-50 Ley Aduanera)
+    metodo_valoracion = Column(Integer, default=1)
+    justificacion_metodo = Column(Text)
+    hay_vinculacion = Column(Boolean, default=False)
+    justificacion_vinculacion = Column(Text)
+    # Semáforo anti-multa
+    semaforo = Column(String, nullable=True)       # red | yellow | green
+    semaforo_errores = Column(JSONB, nullable=True)
+    semaforo_validado_at = Column(DateTime(timezone=True), nullable=True)
+    # Estado y VUCEM
+    estado = Column(String, default="borrador")    # borrador | lista | presentada | pagada
     folio_vucem = Column(String, nullable=True)
-    fecha_presentacion_vucem = Column(DateTime(timezone=True), nullable=True)
-    metadata_json = Column(JSONB, nullable=True)
+    pedimento_numero = Column(String, nullable=True)
+    notas = Column(Text)
     created_at = Column(DateTime(timezone=True), default=_now)
+    updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now)
 
 
 class Lead(Base):
@@ -224,4 +250,29 @@ class BrainFeedback(Base):
     rating = Column(Integer, default=0)       # +1 buena | -1 mala
     context = Column(String, default="fiscal")
     indexed_qdrant = Column(Boolean, default=False)  # re-indexado como conocimiento
+    created_at = Column(DateTime(timezone=True), default=_now)
+
+
+class AccessLog(Base):
+    """Registro de accesos: quién entró, desde qué IP, en qué canal."""
+    __tablename__ = "access_logs"
+    id = Column(String, primary_key=True, default=_uuid)
+    usuario_id = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    tenant_id = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
+    accion = Column(String)   # login_ok | login_fail | logout
+    canal = Column(String, default="web")
+    detalle = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_now)
+
+
+class PasswordResetToken(Base):
+    """Tokens de recuperación de contraseña (válidos 1h, uso único)."""
+    __tablename__ = "password_reset_tokens"
+    id = Column(String, primary_key=True, default=_uuid)
+    usuario_id = Column(String, ForeignKey("usuarios.id"), nullable=False)
+    token = Column(String, unique=True, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=_now)

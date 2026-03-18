@@ -903,6 +903,8 @@ class MVEResponse(BaseModel):
     hay_vinculacion: bool
     folio_vucem: Optional[str]
     pedimento_numero: Optional[str]
+    semaforo: Optional[str] = None
+    semaforo_errores: Optional[list] = None
     estado: str
     created_at: datetime
 
@@ -1037,6 +1039,30 @@ async def detalle_mve(
     if not mve:
         raise HTTPException(404, "MVE no encontrada")
     return mve
+
+
+@app.post("/mve/{mve_id}/validar", tags=["MVE"])
+async def validar_mve_endpoint(
+    mve_id: str,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Valida la MVE contra RGCE y Ley Aduanera. Devuelve semáforo rojo/amarillo/verde."""
+    from models import MVE as MVEModel
+    from mve_validator import validar_mve
+    mve = db.query(MVEModel).filter(
+        MVEModel.id == mve_id, MVEModel.tenant_id == str(current_user.tenant_id)
+    ).first()
+    if not mve:
+        raise HTTPException(404, "MVE no encontrada")
+    resultado = validar_mve(mve)
+    mve.semaforo = resultado["semaforo"]
+    mve.semaforo_errores = resultado["errores"]
+    mve.semaforo_validado_at = datetime.utcnow()
+    if resultado["puede_presentar"] and mve.estado == "borrador":
+        mve.estado = "lista"
+    db.commit()
+    return resultado
 
 
 @app.patch("/mve/{mve_id}/presentar", tags=["MVE"])
