@@ -1518,7 +1518,7 @@ def ai_mem_search(req: _SearchReq, current_user=Depends(get_current_user)):
 
 # ══════════════════════════════════════════════════════════════════════════════
 # BRAIN — RAG + Ollama local (phi3-fast) + caché Redis
-# Arquitectura: Redis Cache → RAG knowledge_base → Ollama+contexto → respuesta
+# Arquitectura: Redis Cache → Qdrant semántico → PostgreSQL full-text → Ollama+contexto → respuesta
 # ══════════════════════════════════════════════════════════════════════════════
 
 import hashlib as _hashlib
@@ -1527,6 +1527,24 @@ import json as _json
 
 _OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
 _BRAIN_CACHE_TTL = int(os.environ.get("BRAIN_CACHE_TTL", "3600"))
+
+# Qdrant RAG — importación con fallback si el servicio no está disponible aún
+try:
+    from app.ai.memory.qdrant_rag import QdrantRAG as _QdrantRAG
+    _qdrant_rag = _QdrantRAG()
+    _QDRANT_ENABLED = True
+except Exception:
+    _qdrant_rag = None
+    _QDRANT_ENABLED = False
+
+# Mapeo context → colección Qdrant
+_CONTEXT_COLLECTION = {
+    "default": "fiscal_mx",
+    "fiscal": "fiscal_mx",
+    "fiscal_mx": "fiscal_mx",
+    "fourgea": "fourgea_docs",
+    "tripler": "tripler_docs",
+}
 
 _BRAIN_SYSTEM = (
     "Eres Mystic, el asistente fiscal y contable de Sonora Digital Corp. "
@@ -1547,10 +1565,11 @@ class _BrainRequest(BaseModel):
 
 class _BrainResponse(BaseModel):
     answer: str
-    source: str        # "cache" | "rag+ollama" | "rag_direct"
+    source: str        # "cache" | "qdrant+ollama" | "qdrant_direct" | "rag+ollama" | "rag_direct"
     model: str = "phi3-fast"
     cached: bool = False
     chunks_used: int = 0
+    qdrant_used: bool = False
 
 
 def _redis_client():
@@ -1592,6 +1611,26 @@ def _rag_search(db: Session, question: str, limit: int = 4) -> list[dict]:
             """), {"p": pattern, "limit": limit}).fetchall()
 
         return [{"title": r[0], "content": r[1], "source": r[2], "topic": r[3]} for r in rows]
+    except Exception:
+        return []
+
+
+async def _rag_search_qdrant(question: str, context: str, limit: int = 3) -> list[dict]:
+    """Búsqueda semántica en Qdrant. Devuelve lista compatible con _rag_search."""
+    if not _QDRANT_ENABLED or _qdrant_rag is None:
+        return []
+    try:
+        collection = _CONTEXT_COLLECTION.get(context, "fiscal_mx")
+        results = await _qdrant_rag.search(collection, question, limit=limit, score_threshold=0.45)
+        return [
+            {
+                "title": r.get("doc_id", "Documento"),
+                "content": r["text"],
+                "source": r.get("fuente", "qdrant"),
+                "topic": r.get("topic", context),
+            }
+            for r in results
+        ]
     except Exception:
         return []
 
@@ -1676,13 +1715,18 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
         except Exception:
             pass
 
-    # Capa 2: RAG — buscar chunks relevantes (máx 2 para caber en contexto phi3)
-    chunks = _rag_search(db, body.question, limit=_RAG_LIMIT)
+    # Capa 2: Qdrant semántico (prioritario) → fallback PostgreSQL full-text
+    qdrant_chunks = await _rag_search_qdrant(body.question, body.context, limit=_RAG_LIMIT)
+    if qdrant_chunks:
+        chunks = qdrant_chunks
+        qdrant_used = True
+    else:
+        chunks = _rag_search(db, body.question, limit=_RAG_LIMIT)
+        qdrant_used = False
     rag_ctx = _build_context(chunks)
 
     # Capa 2.5: Direct RAG — para lookups simples, responde directamente sin Ollama
     if chunks and _is_direct_lookup(body.question, chunks):
-        # Extraer primera oración o primeras 2 líneas del chunk más relevante
         top = chunks[0]['content']
         lines = [l.strip() for l in top.split('\n') if l.strip()][:4]
         answer = '\n'.join(lines)
@@ -1690,9 +1734,10 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
             answer += f"\n[Fuente: {chunks[0]['source']}]"
         result = _BrainResponse(
             answer=answer,
-            source="rag_direct",
+            source="qdrant_direct" if qdrant_used else "rag_direct",
             cached=False,
             chunks_used=len(chunks),
+            qdrant_used=qdrant_used,
         )
         if body.use_cache:
             try:
@@ -1706,9 +1751,10 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
         answer = _ollama_ask(body.question, rag_ctx)
         result = _BrainResponse(
             answer=answer,
-            source="rag+ollama",
+            source="qdrant+ollama" if qdrant_used else "rag+ollama",
             cached=False,
             chunks_used=len(chunks),
+            qdrant_used=qdrant_used,
         )
         if body.use_cache:
             try:
@@ -1726,9 +1772,10 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
                 answer += f"\n[Fuente: {chunks[0]['source']}]"
             result = _BrainResponse(
                 answer=answer,
-                source="rag_fallback",
+                source="qdrant_fallback" if qdrant_used else "rag_fallback",
                 cached=False,
                 chunks_used=len(chunks),
+                qdrant_used=qdrant_used,
             )
             if body.use_cache:
                 try:
@@ -1758,9 +1805,58 @@ async def brain_status(db: Session = Depends(get_db)):
     except Exception:
         kb_count, topics = 0, {}
 
+    # Estado Qdrant
+    qdrant_status = {"enabled": _QDRANT_ENABLED, "collections": []}
+    if _QDRANT_ENABLED and _qdrant_rag is not None:
+        try:
+            cols = await _qdrant_rag._client.get_collections()
+            qdrant_status["collections"] = [
+                {"name": c.name, "status": "ok"} for c in cols.collections
+            ]
+            qdrant_status["status"] = "ok"
+        except Exception:
+            qdrant_status["status"] = "error"
+    else:
+        qdrant_status["status"] = "disabled"
+
     return {
         "ollama": "ok" if ollama_ok else "error",
         "models": models,
         "phi3_ready": any("phi3" in m for m in models),
         "knowledge_base": {"total": kb_count, "topics": topics},
+        "qdrant": qdrant_status,
     }
+
+
+# ── Indexación en Qdrant ───────────────────────────────────────────────────────
+
+class _IndexRequest(BaseModel):
+    doc_id: str
+    text: str
+    context: str = "default"
+    metadata: dict = {}
+
+
+class _IndexBatchRequest(BaseModel):
+    docs: List[dict]  # [{id, text, metadata?}]
+    context: str = "default"
+
+
+@app.post("/api/brain/index", tags=["Brain"])
+async def brain_index(body: _IndexRequest, current_user=Depends(get_current_user)):
+    """Indexa un documento en Qdrant para búsqueda semántica."""
+    if not _QDRANT_ENABLED or _qdrant_rag is None:
+        raise HTTPException(503, "Qdrant no disponible")
+    collection = _CONTEXT_COLLECTION.get(body.context, "fiscal_mx")
+    await _qdrant_rag.upsert(collection, body.doc_id, body.text, body.metadata)
+    return {"ok": True, "collection": collection, "doc_id": body.doc_id}
+
+
+@app.post("/api/brain/index/batch", tags=["Brain"])
+async def brain_index_batch(body: _IndexBatchRequest, current_user=Depends(get_current_user)):
+    """Indexa múltiples documentos en Qdrant en un solo request."""
+    if not _QDRANT_ENABLED or _qdrant_rag is None:
+        raise HTTPException(503, "Qdrant no disponible")
+    collection = _CONTEXT_COLLECTION.get(body.context, "fiscal_mx")
+    await _qdrant_rag.upsert_batch(collection, body.docs)
+    return {"ok": True, "collection": collection, "indexed": len(body.docs)}

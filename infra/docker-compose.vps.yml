@@ -144,11 +144,64 @@ services:
       - mystic_net
     restart: unless-stopped
 
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: mystic_qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - mystic_net
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+
+  evolution:
+    image: atendai/evolution-api:latest
+    container_name: mystic_evolution
+    ports:
+      - "8081:8080"
+    environment:
+      SERVER_URL: https://sonoradigitalcorp.com/whatsapp
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-MysticEvolution2026}
+      QRCODE_LIMIT: 30
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER:-mystic_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-mystic_db}?schema=evolution
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+      REDIS_ENABLED: "true"
+      REDIS_URI: redis://:MysticRedis2026%21@redis:6379/2
+      REDIS_PREFIX_KEY: "evo"
+      WEBHOOK_GLOBAL_ENABLED: "false"
+      CONFIG_SESSION_PHONE_CLIENT: "Mystic"
+      CONFIG_SESSION_PHONE_NAME: "Chrome"
+      LOG_LEVEL: WARN
+      LOG_COLOR: "false"
+      LOG_BAILEYS: "error"
+    volumes:
+      - evolution_data:/evolution/instances
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mystic_net
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
   n8n_data:
   ollama_data:
+  evolution_data:
+  qdrant_data:
 
 networks:
   mystic_net:
