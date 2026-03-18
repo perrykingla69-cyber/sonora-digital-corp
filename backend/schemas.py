@@ -80,6 +80,7 @@ class FacturaCreate(BaseModel):
     estado: str = "pendiente"
     fecha_emision: Optional[datetime] = None
     concepto: Optional[str] = None
+    producto_tipo: Optional[str] = None
 
 
 class FacturaResponse(BaseModel):

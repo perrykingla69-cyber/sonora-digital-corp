@@ -68,22 +68,12 @@ def _post(url: str, data: dict, token: str = "") -> dict:
         raise RuntimeError(f"HTTP {e.code}: {body[:200]}")
 
 
-def login(api_url: str, email: str, password: str) -> str:
+def login(api_url: str, email: str, password: str) -> tuple[str, str]:
+    """Devuelve (access_token, tenant_id)."""
     r = _post(f"{api_url}/auth/login", {"email": email, "password": password})
-    return r["access_token"]
-
-
-def get_tenant_id(api_url: str, token: str, rfc: str) -> str:
-    req = urllib.request.Request(
-        f"{api_url}/tenants",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    with urllib.request.urlopen(req, timeout=10) as r:
-        tenants = json.loads(r.read())
-    for t in tenants:
-        if t["rfc"].upper() == rfc.upper():
-            return t["id"]
-    raise ValueError(f"Tenant con RFC '{rfc}' no encontrado. Tenants disponibles: {[t['rfc'] for t in tenants]}")
+    token = r["access_token"]
+    tenant_id = r["usuario"]["tenant_id"]
+    return token, tenant_id
 
 
 # ── Parser XML CFDI 4.0 ───────────────────────────────────────────────────────
@@ -388,19 +378,12 @@ def main():
     if not args.dry_run:
         print("[1/4] Autenticando...")
         try:
-            token = login(args.api_url, args.email, args.password)
-            print("      Token OK")
+            token, tenant_id = login(args.api_url, args.email, args.password)
+            print(f"      Token OK | tenant_id: {tenant_id}")
         except Exception as e:
             print(f"      ERROR: {e}")
             sys.exit(1)
-
-        print("[2/4] Obteniendo tenant...")
-        try:
-            tenant_id = get_tenant_id(args.api_url, token, args.tenant_rfc)
-            print(f"      tenant_id: {tenant_id[:8]}...")
-        except Exception as e:
-            print(f"      ERROR: {e}")
-            sys.exit(1)
+        print("[2/4] Tenant verificado via login ✓")
     else:
         token = ""
         tenant_id = "dry-run-tenant-id"
