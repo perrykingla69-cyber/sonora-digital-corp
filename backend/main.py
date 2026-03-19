@@ -14,7 +14,7 @@ import redis
 from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sqlalchemy import text, Column, String, Boolean, SmallInteger, Date, Text, DateTime as SADateTime
+from sqlalchemy import text, Column, String, Boolean, SmallInteger, Date, Text, DateTime as SADateTime, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Session
 
@@ -458,7 +458,7 @@ async def guardar_cierre(
 ):
     existente = db.query(CierreMes).filter(
         CierreMes.tenant_id == current_user.tenant_id,
-        CierreMes.ano == ano,
+        getattr(CierreMes, "año") == ano,
         CierreMes.mes == mes,
     ).first()
     if existente and existente.estado == "cerrado":
@@ -466,28 +466,88 @@ async def guardar_cierre(
 
     datos = await cierre_mes(ano, mes, current_user, db)
 
-    cierre = existente or CierreMes(tenant_id=current_user.tenant_id, ano=ano, mes=mes)
-    cierre.total_ingresos = datos["ingresos"]
-    cierre.total_gastos = datos["gastos"]
+    cierre = existente or CierreMes(tenant_id=current_user.tenant_id, mes=mes)
+    setattr(cierre, "año", ano)
+    cierre.ingresos_total = datos["ingresos"]
+    cierre.egresos_total = datos["gastos"]
     cierre.utilidad_bruta = datos["utilidad_bruta"]
-    cierre.utilidad_neta = datos["utilidad_neta"]
     cierre.iva_cobrado = datos["iva_cobrado"]
     cierre.iva_pagado = datos["iva_pagado"]
     cierre.iva_neto = datos["iva_neto"]
-    cierre.isr_total = datos["isr_estimado"]
-    cierre.ptu = datos["ptu"]
-    cierre.ebitda = datos["ebitda"]
-    cierre.margen_neto = datos["margen_neto_pct"]
-    cierre.num_facturas = datos["num_facturas"]
-    cierre.calculos_completos = datos["calculos_147"]
+    cierre.isr_estimado = datos["isr_estimado"]
+    cierre.resumen_json = datos
     cierre.estado = "cerrado"
-    cierre.fecha_cierre = datetime.utcnow()
 
     if not existente:
         db.add(cierre)
     db.commit()
     db.refresh(cierre)
     return cierre
+
+
+@app.post("/cierre/{ano}/{mes}/borrador", response_model=CierreResponse, tags=["Cierre"])
+async def guardar_pre_cierre(
+    ano: int,
+    mes: int,
+    current_user: Usuario = Depends(require_role("admin", "contador", "ceo")),
+    db: Session = Depends(get_db),
+):
+    """Guarda un pre-cierre como borrador (puede sobrescribirse hasta que se cierre oficialmente)."""
+    existente = db.query(CierreMes).filter(
+        CierreMes.tenant_id == current_user.tenant_id,
+        getattr(CierreMes, "año") == ano,
+        CierreMes.mes == mes,
+    ).first()
+    if existente and existente.estado == "cerrado":
+        raise HTTPException(status_code=400, detail="Ya existe un cierre oficial. No se puede modificar.")
+
+    datos = await cierre_mes(ano, mes, current_user, db)
+
+    cierre = existente or CierreMes(tenant_id=current_user.tenant_id, mes=mes)
+    setattr(cierre, "año", ano)
+    cierre.ingresos_total = datos["ingresos"]
+    cierre.egresos_total = datos["gastos"]
+    cierre.utilidad_bruta = datos["utilidad_bruta"]
+    cierre.iva_cobrado = datos["iva_cobrado"]
+    cierre.iva_pagado = datos["iva_pagado"]
+    cierre.iva_neto = datos["iva_neto"]
+    cierre.isr_estimado = datos["isr_estimado"]
+    cierre.resumen_json = datos
+    cierre.estado = "borrador"
+
+    if not existente:
+        db.add(cierre)
+    db.commit()
+    db.refresh(cierre)
+    return cierre
+
+
+@app.get("/cierre/{ano}/{mes}/estado", tags=["Cierre"])
+async def cierre_estado(
+    ano: int,
+    mes: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Devuelve si hay un cierre guardado para el periodo y su estado."""
+    registro = db.query(CierreMes).filter(
+        CierreMes.tenant_id == current_user.tenant_id,
+        getattr(CierreMes, "año") == ano,
+        CierreMes.mes == mes,
+    ).first()
+    if not registro:
+        return {"estado": "sin_registro", "periodo": f"{ano}-{mes:02d}"}
+    return {
+        "estado": registro.estado,
+        "periodo": f"{ano}-{mes:02d}",
+        "id": registro.id,
+        "ingresos_total": registro.ingresos_total,
+        "egresos_total": registro.egresos_total,
+        "utilidad_bruta": registro.utilidad_bruta,
+        "iva_neto": registro.iva_neto,
+        "isr_estimado": registro.isr_estimado,
+        "created_at": str(registro.created_at),
+    }
 
 
 # ═══════════════════════════════════════════════
@@ -610,68 +670,109 @@ CFDI_NS = {
 }
 
 def _parsear_cfdi(xml_bytes: bytes) -> dict:
-    """Parsea CFDI 4.0 y 3.3, extrae campos clave."""
+    """
+    Parsea CFDI 4.0 y 3.3. Extrae:
+    - Campos base: emisor, receptor, subtotal, total, moneda, UUID
+    - IVA trasladado (16%) desde nodo Traslados
+    - Retenciones: ISR (001) y IVA (002) — clave para RESICO 1.25%
+    - RegimenFiscal del Emisor (621=RESICO PF, 626=RESICO PM, 601=General)
+    - Tipo de comprobante: I=ingreso, E=egreso, N=nómina
+    """
     root = ET.fromstring(xml_bytes)
     ns = "cfdi" if root.tag.startswith("{http://www.sat.gob.mx/cfd/4}") else "cfdi3"
-    tag = lambda t: root.tag.split("}")[0] + "}" + t
 
     def attr(node, name, default=""):
-        return node.get(name, default)
+        return (node.get(name) or default) if node is not None else default
 
-    subtotal = float(attr(root, "SubTotal", "0"))
-    total = float(attr(root, "Total", "0"))
+    subtotal = float(attr(root, "SubTotal", "0") or "0")
+    total = float(attr(root, "Total", "0") or "0")
     moneda = attr(root, "Moneda", "MXN")
     tipo_cambio = float(attr(root, "TipoCambio", "1") or "1")
     tipo_comprobante = attr(root, "TipoDeComprobante", "I")
     uuid_cfdi = ""
     fecha_str = attr(root, "Fecha", "")
 
-    # Complemento timbrado
+    # UUID del timbre
     for comp in root.iter():
         if "TimbreFiscalDigital" in comp.tag:
             uuid_cfdi = comp.get("UUID", "")
             break
 
     # Emisor y Receptor
-    emisor = root.find(f"{{{CFDI_NS.get(ns,'')}}}" + "Emisor") or root.find(".//{http://www.sat.gob.mx/cfd/4}Emisor") or root.find(".//{http://www.sat.gob.mx/cfd/3}Emisor")
-    receptor = root.find(".//{http://www.sat.gob.mx/cfd/4}Receptor") or root.find(".//{http://www.sat.gob.mx/cfd/3}Receptor")
+    emisor = (root.find(".//{http://www.sat.gob.mx/cfd/4}Emisor")
+              or root.find(".//{http://www.sat.gob.mx/cfd/3}Emisor"))
+    receptor = (root.find(".//{http://www.sat.gob.mx/cfd/4}Receptor")
+                or root.find(".//{http://www.sat.gob.mx/cfd/3}Receptor"))
 
-    rfc_emisor = emisor.get("Rfc", "") if emisor is not None else ""
-    nombre_emisor = emisor.get("Nombre", "") if emisor is not None else ""
-    rfc_receptor = receptor.get("Rfc", "") if receptor is not None else ""
+    rfc_emisor = attr(emisor, "Rfc")
+    nombre_emisor = attr(emisor, "Nombre")
+    rfc_receptor = attr(receptor, "Rfc")
+    nombre_receptor = attr(receptor, "Nombre")
+    # RegimenFiscal: 621=RESICO PF, 626=RESICO PM, 601=General, 612=Honorarios
+    regimen_emisor = attr(emisor, "RegimenFiscal", "601")
 
-    # Conceptos
-    conceptos = []
-    for c in root.iter():
-        if "Concepto" in c.tag and "Conceptos" not in c.tag:
-            conceptos.append(c.get("Descripcion", ""))
+    # Conceptos (descripción del primer concepto)
+    conceptos = [c.get("Descripcion", "") for c in root.iter()
+                 if "Concepto" in c.tag and "Conceptos" not in c.tag]
+    concepto = (conceptos[0] if conceptos else "CFDI importado")[:500]
 
-    concepto = conceptos[0] if conceptos else "CFDI importado"
-
-    # Calcular IVA desde traslados
+    # IVA trasladado 16% desde nodo Traslado
     iva = 0.0
     for t in root.iter():
-        if "Traslado" in t.tag:
-            tasa = float(t.get("TasaOCuota", "0"))
-            base = float(t.get("Base", subtotal))
+        if "Traslado" in t.tag and "Retenciones" not in (t.tag or ""):
+            tasa = float(t.get("TasaOCuota", "0") or "0")
             if abs(tasa - 0.16) < 0.001:
-                iva = round(base * 0.16, 2)
+                importe = t.get("Importe")
+                if importe:
+                    iva = round(float(importe), 2)
+                else:
+                    base = float(t.get("Base", subtotal) or subtotal)
+                    iva = round(base * 0.16, 2)
                 break
-    if iva == 0:
-        iva = round(subtotal * 0.16, 2)
 
-    tipo = "ingreso" if tipo_comprobante in ("I",) else "gasto"
+    # Retenciones: ISR (001) y IVA (002)
+    # ISR retenido 1.25% → aplica en RESICO PF cuando cobra a PM
+    isr_retenido = 0.0
+    iva_retenido = 0.0
+    for ret in root.iter():
+        if "Retencion" in ret.tag and "Retenciones" not in ret.tag:
+            impuesto = ret.get("Impuesto", "")
+            importe = float(ret.get("Importe", "0") or "0")
+            if impuesto == "001":  # ISR
+                isr_retenido = round(importe, 2)
+            elif impuesto == "002":  # IVA
+                iva_retenido = round(importe, 2)
+
+    # Determinar tipo: I=ingreso, E/N/P=gasto
+    tipo = "ingreso" if tipo_comprobante == "I" else "gasto"
+
+    # Determinar régimen fiscal del emisor
+    REGIMENES = {
+        "621": "resico_pf",
+        "626": "resico_pm",
+        "601": "general",
+        "612": "honorarios",
+        "616": "sin_obligaciones",
+        "625": "coordinados",
+    }
+    regimen = REGIMENES.get(regimen_emisor, f"otro_{regimen_emisor}")
+
     fecha = None
     try:
-        fecha = datetime.fromisoformat(fecha_str.replace("T", " ").split(".")[0]) if fecha_str else None
+        if fecha_str:
+            fecha = datetime.fromisoformat(fecha_str.replace("T", " ").split(".")[0])
     except Exception:
         pass
 
     return {
         "rfc_emisor": rfc_emisor,
+        "nombre_emisor": nombre_emisor,
         "rfc_receptor": rfc_receptor,
+        "nombre_receptor": nombre_receptor,
         "subtotal": subtotal,
         "iva": iva,
+        "isr_retenido": isr_retenido,
+        "iva_retenido": iva_retenido,
         "total": total,
         "moneda": moneda,
         "tipo_cambio": tipo_cambio,
@@ -679,7 +780,8 @@ def _parsear_cfdi(xml_bytes: bytes) -> dict:
         "uuid_cfdi": uuid_cfdi,
         "tipo": tipo,
         "fecha": fecha,
-        "nombre_emisor": nombre_emisor,
+        "regimen_fiscal": regimen,
+        "regimen_codigo": regimen_emisor,
     }
 
 
@@ -711,9 +813,13 @@ async def cargar_cfdi_xml(
     factura = Factura(
         tenant_id=current_user.tenant_id,
         rfc_emisor=datos["rfc_emisor"],
+        nombre_emisor=datos["nombre_emisor"],
         rfc_receptor=datos["rfc_receptor"],
+        nombre_receptor=datos.get("nombre_receptor", ""),
         subtotal=datos["subtotal"],
         iva=datos["iva"],
+        isr_retenido=datos["isr_retenido"],
+        iva_retenido=datos["iva_retenido"],
         total=total_calc,
         tipo=datos["tipo"],
         moneda=datos["moneda"],
@@ -721,9 +827,16 @@ async def cargar_cfdi_xml(
         concepto=datos["concepto"],
         uuid_cfdi=datos["uuid_cfdi"] or None,
         fecha_emision=datos["fecha"] or datetime.utcnow(),
+        regimen_fiscal=datos["regimen_fiscal"],
+        tipo_pago="pendiente",
+        estado="pendiente",
+        xml_cfdi=xml_bytes.decode("utf-8", errors="ignore")[:50000],
     )
     db.add(factura)
-    _audit(db, "cargar_cfdi_xml", current_user, "facturas", {"uuid": datos["uuid_cfdi"], "total": total_calc})
+    _audit(db, "cargar_cfdi_xml", current_user, "facturas", {
+        "uuid": datos["uuid_cfdi"], "total": total_calc,
+        "isr_retenido": datos["isr_retenido"], "regimen": datos["regimen_fiscal"]
+    })
     db.commit()
     db.refresh(factura)
 
@@ -1409,6 +1522,7 @@ from pathlib import Path as _Path
 
 _APP = _Path(__file__).parent  # /app en Docker, backend/ en local
 _sys.path.insert(0, str(_APP))
+_sys.path.insert(0, str(_APP / "app" / "ai"))  # expone orchestrator/, memory/, agents/, skills/
 
 _orchestrator = None
 
@@ -1422,7 +1536,7 @@ def _init_orchestrator():
         from memory.knowledge_store import KnowledgeStore
         _data = _APP / ".data"
         _data.mkdir(exist_ok=True)
-        _configs = _APP / "configs"
+        _configs = _APP / "app" / "ai" / "configs"
         _orchestrator = Orchestrator.from_config(
             agents_config=str(_configs / "agents.yaml"),
             skills_config=str(_configs / "skills.yaml"),
@@ -2218,3 +2332,620 @@ async def wa_status():
             return r.json()
     except Exception as e:
         return {"state": "unreachable", "error": str(e)}
+
+
+# ═══════════════════════════════════════════════
+#  RESICO — REPORTES FISCALES
+# ═══════════════════════════════════════════════
+
+@app.patch("/facturas/{factura_id}/tipo-pago", tags=["Facturas"])
+async def actualizar_tipo_pago(
+    factura_id: str,
+    body: dict,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Actualiza el estado de pago de una factura: prepagado | pendiente | pagado | cancelado."""
+    factura = db.query(Factura).filter(
+        Factura.id == factura_id,
+        Factura.tenant_id == current_user.tenant_id,
+    ).first()
+    if not factura:
+        raise HTTPException(404, "Factura no encontrada")
+
+    tipo_pago = body.get("tipo_pago", "pendiente")
+    if tipo_pago not in ("prepagado", "pendiente", "pagado", "cancelado"):
+        raise HTTPException(400, "tipo_pago inválido. Usa: prepagado, pendiente, pagado, cancelado")
+
+    factura.tipo_pago = tipo_pago
+    if tipo_pago == "pagado":
+        factura.estado = "pagada"
+        factura.fecha_pago = datetime.utcnow()
+    elif tipo_pago == "cancelado":
+        factura.estado = "cancelada"
+
+    db.commit()
+    return {"ok": True, "factura_id": factura_id, "tipo_pago": tipo_pago}
+
+
+@app.get("/resico/reporte-iva/{ano}/{mes}", tags=["RESICO"])
+async def resico_reporte_iva(
+    ano: int,
+    mes: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Reporte IVA mensual (aplica a cualquier régimen):
+    - IVA cobrado = suma IVA de facturas de INGRESO
+    - IVA acreditable = suma IVA de facturas de EGRESO (gastos deducibles con CFDI)
+    - IVA retenido cobrado = IVA que retuvieron al emisor (ingresos)
+    - IVA neto a pagar al SAT = cobrado - acreditable - retenido_a_favor
+    """
+    primer_dia = datetime(ano, mes, 1)
+    ultimo_dia = datetime(ano, mes, calendar.monthrange(ano, mes)[1], 23, 59, 59)
+
+    facturas = db.query(Factura).filter(
+        Factura.tenant_id == current_user.tenant_id,
+        Factura.fecha_emision >= primer_dia,
+        Factura.fecha_emision <= ultimo_dia,
+        Factura.estado != "cancelada",
+    ).all()
+
+    ingresos = [f for f in facturas if f.tipo == "ingreso"]
+    egresos = [f for f in facturas if f.tipo == "gasto"]
+
+    iva_cobrado = round(sum(f.iva or 0 for f in ingresos), 2)
+    iva_acreditable = round(sum(f.iva or 0 for f in egresos), 2)
+    iva_retenido_ingresos = round(sum(getattr(f, "iva_retenido", 0) or 0 for f in ingresos), 2)
+    iva_neto = round(iva_cobrado - iva_acreditable - iva_retenido_ingresos, 2)
+
+    detalle_ingresos = [{
+        "folio": f.folio, "uuid": f.uuid_cfdi, "rfc_receptor": f.rfc_receptor,
+        "nombre_receptor": getattr(f, "nombre_receptor", ""),
+        "subtotal": f.subtotal, "iva": f.iva,
+        "iva_retenido": getattr(f, "iva_retenido", 0) or 0,
+        "total": f.total, "fecha": str(f.fecha_emision)[:10],
+        "tipo_pago": getattr(f, "tipo_pago", "pendiente") or "pendiente",
+        "concepto": (f.concepto or "")[:60],
+    } for f in ingresos]
+
+    detalle_egresos = [{
+        "folio": f.folio, "uuid": f.uuid_cfdi, "rfc_emisor": f.rfc_emisor,
+        "nombre_emisor": getattr(f, "nombre_emisor", ""),
+        "subtotal": f.subtotal, "iva": f.iva,
+        "total": f.total, "fecha": str(f.fecha_emision)[:10],
+        "tipo_pago": getattr(f, "tipo_pago", "pendiente") or "pendiente",
+        "concepto": (f.concepto or "")[:60],
+    } for f in egresos]
+
+    return {
+        "periodo": f"{ano}-{mes:02d}",
+        "tenant_id": current_user.tenant_id,
+        "resumen": {
+            "iva_cobrado": iva_cobrado,
+            "iva_acreditable": iva_acreditable,
+            "iva_retenido_a_favor": iva_retenido_ingresos,
+            "iva_neto_a_pagar": iva_neto,
+            "num_facturas_ingreso": len(ingresos),
+            "num_facturas_egreso": len(egresos),
+        },
+        "detalle_ingresos": detalle_ingresos,
+        "detalle_egresos": detalle_egresos,
+    }
+
+
+@app.get("/resico/reporte-isr-retenido/{ano}/{mes}", tags=["RESICO"])
+async def resico_reporte_isr_retenido(
+    ano: int,
+    mes: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Reporte ISR Retenido mensual (RESICO PF — Art. 113-J LISR):
+    Cuando una Persona Moral paga a un RESICO PF, le retiene 1.25% de ISR.
+    Este reporte muestra todas las retenciones recibidas en el período.
+    El ISR retenido se acredita contra el ISR mensual del RESICO.
+    """
+    primer_dia = datetime(ano, mes, 1)
+    ultimo_dia = datetime(ano, mes, calendar.monthrange(ano, mes)[1], 23, 59, 59)
+
+    facturas = db.query(Factura).filter(
+        Factura.tenant_id == current_user.tenant_id,
+        Factura.fecha_emision >= primer_dia,
+        Factura.fecha_emision <= ultimo_dia,
+        Factura.tipo == "ingreso",
+        Factura.estado != "cancelada",
+    ).all()
+
+    con_retencion = [f for f in facturas if (getattr(f, "isr_retenido", 0) or 0) > 0]
+    total_isr_retenido = round(sum(getattr(f, "isr_retenido", 0) or 0 for f in con_retencion), 2)
+    total_ingresos_con_ret = round(sum(f.subtotal or 0 for f in con_retencion), 2)
+
+    # Verificación: 1.25% de los ingresos con retención
+    tasa_efectiva = round((total_isr_retenido / total_ingresos_con_ret * 100), 4) if total_ingresos_con_ret > 0 else 0
+
+    detalle = [{
+        "uuid": f.uuid_cfdi, "folio": f.folio,
+        "rfc_receptor": f.rfc_receptor,
+        "nombre_receptor": getattr(f, "nombre_receptor", ""),
+        "subtotal": f.subtotal,
+        "isr_retenido": getattr(f, "isr_retenido", 0) or 0,
+        "tasa_pct": round(((getattr(f, "isr_retenido", 0) or 0) / f.subtotal * 100), 4) if f.subtotal else 0,
+        "iva": f.iva,
+        "total": f.total,
+        "fecha": str(f.fecha_emision)[:10],
+        "regimen": getattr(f, "regimen_fiscal", "general"),
+        "tipo_pago": getattr(f, "tipo_pago", "pendiente") or "pendiente",
+    } for f in con_retencion]
+
+    return {
+        "periodo": f"{ano}-{mes:02d}",
+        "tenant_id": current_user.tenant_id,
+        "regimen_aplicable": "RESICO PF — Art. 113-J LISR",
+        "resumen": {
+            "total_isr_retenido": total_isr_retenido,
+            "total_ingresos_con_retencion": total_ingresos_con_ret,
+            "tasa_efectiva_pct": tasa_efectiva,
+            "num_cfdi_con_retencion": len(con_retencion),
+            "num_cfdi_sin_retencion": len(facturas) - len(con_retencion),
+        },
+        "detalle": detalle,
+    }
+
+
+@app.get("/resico/resumen/{ano}/{mes}", tags=["RESICO"])
+async def resico_resumen_fiscal(
+    ano: int,
+    mes: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Dashboard fiscal RESICO: ingresos, ISR, IVA y estados de pago en un solo endpoint."""
+    iva_rep = await resico_reporte_iva(ano, mes, current_user, db)
+    isr_rep = await resico_reporte_isr_retenido(ano, mes, current_user, db)
+
+    # Estados de pago del mes
+    primer_dia = datetime(ano, mes, 1)
+    ultimo_dia = datetime(ano, mes, calendar.monthrange(ano, mes)[1], 23, 59, 59)
+    facturas = db.query(Factura).filter(
+        Factura.tenant_id == current_user.tenant_id,
+        Factura.fecha_emision >= primer_dia,
+        Factura.fecha_emision <= ultimo_dia,
+    ).all()
+
+    def _sum(lst, key="total"): return round(sum(getattr(f, key, 0) or 0 for f in lst), 2)
+
+    ing = [f for f in facturas if f.tipo == "ingreso" and f.estado != "cancelada"]
+    egr = [f for f in facturas if f.tipo == "gasto" and f.estado != "cancelada"]
+
+    pagadas = [f for f in ing if (getattr(f, "tipo_pago", "") or "") == "pagado"]
+    pendientes = [f for f in ing if (getattr(f, "tipo_pago", "") or "") in ("pendiente", "")]
+    prepagadas = [f for f in ing if (getattr(f, "tipo_pago", "") or "") == "prepagado"]
+
+    return {
+        "periodo": f"{ano}-{mes:02d}",
+        "tenant_id": current_user.tenant_id,
+        "ingresos": {
+            "total": _sum(ing),
+            "pagado": _sum(pagadas),
+            "pendiente": _sum(pendientes),
+            "prepagado": _sum(prepagadas),
+            "num_cfdi": len(ing),
+        },
+        "egresos": {
+            "total": _sum(egr),
+            "num_cfdi": len(egr),
+        },
+        "iva": iva_rep["resumen"],
+        "isr_retenido": isr_rep["resumen"],
+    }
+
+
+# ═══════════════════════════════════════════════
+#  ADMIN — MULTI-TENANT
+# ═══════════════════════════════════════════════
+
+@app.get("/admin/tenants", tags=["Admin"])
+async def admin_list_tenants(
+    current_user: Usuario = Depends(require_role("admin", "ceo")),
+    db: Session = Depends(get_db),
+):
+    """Lista todos los tenants con métricas básicas (solo admin/ceo)."""
+    tenants = db.query(Tenant).filter(Tenant.activo == True).all()
+    result = []
+    for t in tenants:
+        usuarios = db.query(Usuario).filter(Usuario.tenant_id == t.id, Usuario.activo == True).count()
+        facturas = db.query(Factura).filter(Factura.tenant_id == t.id).count()
+        ingresos = db.query(Factura).filter(
+            Factura.tenant_id == t.id, Factura.tipo == "ingreso"
+        ).with_entities(func.sum(Factura.total)).scalar() or 0
+        result.append({
+            "id": t.id,
+            "nombre": t.nombre,
+            "rfc": t.rfc,
+            "plan": t.plan,
+            "activo": t.activo,
+            "usuarios": usuarios,
+            "facturas": facturas,
+            "ingresos_total": round(ingresos, 2),
+            "created_at": str(t.created_at),
+        })
+    return result
+
+
+@app.patch("/admin/tenants/{tenant_id}/plan", tags=["Admin"])
+async def admin_update_plan(
+    tenant_id: str,
+    body: dict,
+    current_user: Usuario = Depends(require_role("admin", "ceo")),
+    db: Session = Depends(get_db),
+):
+    """Actualiza el plan de un tenant."""
+    tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant no encontrado")
+    plan = body.get("plan", tenant.plan)
+    if plan not in ("basico", "business", "pro", "magia"):
+        raise HTTPException(status_code=400, detail="Plan inválido. Usa: basico, business, pro, magia")
+    tenant.plan = plan
+    db.commit()
+    return {"ok": True, "tenant_id": tenant_id, "plan": plan}
+
+
+@app.get("/admin/tenants/{tenant_id}/cierre/{ano}/{mes}", tags=["Admin"])
+async def admin_tenant_cierre(
+    tenant_id: str,
+    ano: int,
+    mes: int,
+    current_user: Usuario = Depends(require_role("admin", "ceo")),
+    db: Session = Depends(get_db),
+):
+    """Cierre de cualquier tenant (solo admin/ceo)."""
+    # Simular usuario del tenant
+    fake_user = type("U", (), {"tenant_id": tenant_id, "rol": "admin"})()
+    return await cierre_mes(ano, mes, fake_user, db)
+
+
+# ═══════════════════════════════════════════════
+#  MERCADO PAGO — SUSCRIPCIONES
+# ═══════════════════════════════════════════════
+
+_MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN", "")
+_PLANES_PRECIOS = {
+    "basico":   {"mxn": 499,  "label": "Básico"},
+    "business": {"mxn": 999,  "label": "Business"},
+    "pro":      {"mxn": 1999, "label": "Pro"},
+    "magia":    {"mxn": 3999, "label": "Magia IA"},
+}
+
+
+@app.post("/payments/mp/preference", tags=["Pagos"])
+async def mp_create_preference(
+    body: dict,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Crea una preferencia de pago en Mercado Pago para suscripción mensual."""
+    plan = body.get("plan", "basico")
+    if plan not in _PLANES_PRECIOS:
+        raise HTTPException(status_code=400, detail=f"Plan inválido: {plan}")
+
+    precio = _PLANES_PRECIOS[plan]
+    tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant no encontrado")
+
+    if not _MP_ACCESS_TOKEN:
+        return {
+            "error": "MP_ACCESS_TOKEN no configurado",
+            "hint": "Agrega MP_ACCESS_TOKEN al docker-compose.vps.yml"
+        }
+
+    import httpx
+    payload = {
+        "items": [{
+            "title": f"Mystic AI — Plan {precio['label']}",
+            "quantity": 1,
+            "unit_price": precio["mxn"],
+            "currency_id": "MXN",
+        }],
+        "payer": {
+            "email": current_user.email,
+            "name": current_user.nombre,
+        },
+        "external_reference": f"{current_user.tenant_id}:{plan}",
+        "notification_url": f"{os.environ.get('API_BASE_URL', 'https://sonoradigitalcorp.com/api')}/payments/mp/webhook",
+        "back_urls": {
+            "success": f"{os.environ.get('FRONTEND_URL', 'https://sonoradigitalcorp.com')}/panel/billing?status=success",
+            "failure": f"{os.environ.get('FRONTEND_URL', 'https://sonoradigitalcorp.com')}/panel/billing?status=failure",
+            "pending": f"{os.environ.get('FRONTEND_URL', 'https://sonoradigitalcorp.com')}/panel/billing?status=pending",
+        },
+        "auto_return": "approved",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as http:
+            r = await http.post(
+                "https://api.mercadopago.com/checkout/preferences",
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {_MP_ACCESS_TOKEN}",
+                    "Content-Type": "application/json",
+                },
+            )
+            data = r.json()
+            if r.status_code == 201:
+                return {
+                    "preference_id": data["id"],
+                    "init_point": data["init_point"],
+                    "sandbox_init_point": data.get("sandbox_init_point"),
+                    "plan": plan,
+                    "monto": precio["mxn"],
+                }
+            return {"error": data.get("message", "Error MP"), "detail": data}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/payments/mp/webhook", tags=["Pagos"])
+async def mp_webhook(
+    body: dict,
+    db: Session = Depends(get_db),
+):
+    """Recibe notificaciones de pago de Mercado Pago y actualiza el plan del tenant."""
+    mp_type = body.get("type") or body.get("action", "")
+    mp_data = body.get("data", {})
+    payment_id = mp_data.get("id") or body.get("id")
+
+    if mp_type not in ("payment", "payment.created", "payment.updated"):
+        return {"ok": True, "skipped": True}
+
+    if not _MP_ACCESS_TOKEN or not payment_id:
+        return {"ok": False, "reason": "no token or id"}
+
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=10) as http:
+            r = await http.get(
+                f"https://api.mercadopago.com/v1/payments/{payment_id}",
+                headers={"Authorization": f"Bearer {_MP_ACCESS_TOKEN}"},
+            )
+            pago = r.json()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+    status = pago.get("status")
+    external_ref = pago.get("external_reference", "")
+
+    if status == "approved" and ":" in external_ref:
+        tenant_id, plan = external_ref.split(":", 1)
+        tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+        if tenant and plan in _PLANES_PRECIOS:
+            tenant.plan = plan
+            db.commit()
+            logger.info(f"[MP] Tenant {tenant_id} actualizado a plan {plan} — pago {payment_id}")
+
+    return {"ok": True, "status": status}
+
+
+@app.get("/payments/planes", tags=["Pagos"])
+async def get_planes():
+    """Retorna los planes disponibles y sus precios."""
+    return [
+        {"id": k, "label": v["label"], "precio_mxn": v["mxn"]}
+        for k, v in _PLANES_PRECIOS.items()
+    ]
+
+
+# ═══════════════════════════════════════════════
+#  CONTADOR — DASHBOARD MULTI-CLIENTE
+# ═══════════════════════════════════════════════
+
+@app.get("/contador/clientes", tags=["Contador"])
+async def contador_list_clientes(
+    current_user: Usuario = Depends(require_role("contador", "admin", "ceo")),
+    db: Session = Depends(get_db),
+):
+    """Lista todos los clientes del contador con métricas fiscales del mes actual."""
+    now = datetime.now(timezone.utc)
+    mes_inicio = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+
+    tenants = db.query(Tenant).filter(Tenant.activo == True).all()
+    result = []
+    for t in tenants:
+        facturas_mes = db.query(Factura).filter(
+            Factura.tenant_id == t.id,
+            Factura.fecha_emision >= mes_inicio,
+        ).count()
+
+        ingresos_mes = db.query(func.sum(Factura.total)).filter(
+            Factura.tenant_id == t.id, Factura.tipo == "ingreso",
+            Factura.fecha_emision >= mes_inicio,
+        ).scalar() or 0
+
+        egresos_mes = db.query(func.sum(Factura.total)).filter(
+            Factura.tenant_id == t.id, Factura.tipo == "egreso",
+            Factura.fecha_emision >= mes_inicio,
+        ).scalar() or 0
+
+        iva_cobrado = db.query(func.sum(Factura.iva)).filter(
+            Factura.tenant_id == t.id, Factura.tipo == "ingreso",
+            Factura.fecha_emision >= mes_inicio,
+        ).scalar() or 0
+
+        iva_acreditable = db.query(func.sum(Factura.iva)).filter(
+            Factura.tenant_id == t.id, Factura.tipo == "egreso",
+            Factura.fecha_emision >= mes_inicio,
+        ).scalar() or 0
+
+        isr_ret = db.query(func.sum(Factura.isr_retenido)).filter(
+            Factura.tenant_id == t.id, Factura.tipo == "ingreso",
+            Factura.fecha_emision >= mes_inicio,
+        ).scalar() or 0
+
+        # Facturas sin pago asignado (pendientes de tipo_pago)
+        pendientes_pago = db.query(Factura).filter(
+            Factura.tenant_id == t.id,
+            Factura.tipo_pago == "pendiente",
+            Factura.tipo == "ingreso",
+        ).count()
+
+        cierre = db.query(CierreMes).filter(
+            CierreMes.tenant_id == t.id,
+            getattr(CierreMes, "año") == now.year,
+            CierreMes.mes == now.month,
+        ).first()
+
+        # Semáforo fiscal
+        if facturas_mes > 0 and cierre and cierre.estado == "cerrado":
+            semaforo = "green"
+        elif facturas_mes > 0:
+            semaforo = "yellow"
+        else:
+            semaforo = "red"
+
+        result.append({
+            "id": t.id,
+            "nombre": t.nombre,
+            "rfc": t.rfc,
+            "plan": t.plan,
+            "facturas_mes": facturas_mes,
+            "ingresos_mes": round(ingresos_mes, 2),
+            "egresos_mes": round(egresos_mes, 2),
+            "iva_neto_mes": round(iva_cobrado - iva_acreditable, 2),
+            "isr_retenido_mes": round(isr_ret, 2),
+            "pendientes_pago": pendientes_pago,
+            "tiene_cierre": cierre is not None,
+            "estado_cierre": cierre.estado if cierre else None,
+            "semaforo": semaforo,
+        })
+    return result
+
+
+@app.post("/contador/xmls/bulk", tags=["Contador"])
+async def contador_bulk_xml(
+    files: List[UploadFile] = File(...),
+    current_user: Usuario = Depends(require_role("contador", "admin", "ceo")),
+    db: Session = Depends(get_db),
+):
+    """Carga múltiples XMLs CFDI y los asigna automáticamente por RFC del emisor/receptor."""
+    results = []
+    for file in files:
+        try:
+            content = await file.read()
+            xml_str = content.decode("utf-8", errors="ignore")
+            parsed = _parsear_cfdi(xml_str)
+
+            rfc_emisor = parsed.get("rfc_emisor", "")
+            rfc_receptor = parsed.get("rfc_receptor", "")
+
+            # Auto-asignar tenant por RFC
+            tenant = db.query(Tenant).filter(
+                Tenant.activo == True
+            ).filter(
+                (Tenant.rfc == rfc_emisor) | (Tenant.rfc == rfc_receptor)
+            ).first()
+
+            if not tenant:
+                results.append({
+                    "file": file.filename, "ok": False,
+                    "error": f"Sin tenant para RFC {rfc_emisor}/{rfc_receptor}",
+                })
+                continue
+
+            tipo = "ingreso" if tenant.rfc == rfc_emisor else "egreso"
+
+            # Verificar duplicado
+            if parsed.get("uuid_cfdi") and db.query(Factura).filter(
+                Factura.tenant_id == tenant.id,
+                Factura.uuid_cfdi == parsed.get("uuid_cfdi"),
+            ).first():
+                results.append({
+                    "file": file.filename, "ok": False,
+                    "error": "UUID duplicado", "tenant": tenant.nombre,
+                })
+                continue
+
+            factura = Factura(
+                tenant_id=tenant.id, tipo=tipo,
+                uuid_cfdi=parsed.get("uuid_cfdi"),
+                rfc_emisor=rfc_emisor, rfc_receptor=rfc_receptor,
+                nombre_emisor=parsed.get("nombre_emisor"),
+                nombre_receptor=parsed.get("nombre_receptor"),
+                subtotal=parsed.get("subtotal", 0),
+                iva=parsed.get("iva", 0),
+                total=parsed.get("total", 0),
+                moneda=parsed.get("moneda", "MXN"),
+                tipo_cambio=parsed.get("tipo_cambio", 1.0),
+                fecha_emision=parsed.get("fecha_emision"),
+                concepto=parsed.get("concepto"),
+                isr_retenido=parsed.get("isr_retenido", 0),
+                iva_retenido=parsed.get("iva_retenido", 0),
+                regimen_fiscal=parsed.get("regimen_fiscal", "general"),
+                tipo_pago="pendiente",
+                xml_cfdi=xml_str,
+            )
+            db.add(factura)
+            db.commit()
+
+            results.append({
+                "file": file.filename, "ok": True,
+                "tenant": tenant.nombre, "rfc": tenant.rfc,
+                "tipo": tipo,
+                "total": parsed.get("total", 0),
+                "uuid": parsed.get("uuid_cfdi"),
+            })
+        except Exception as e:
+            results.append({"file": file.filename, "ok": False, "error": str(e)})
+
+    ok_count = sum(1 for r in results if r.get("ok"))
+    return {"total": len(results), "ok": ok_count, "errores": len(results) - ok_count, "detalle": results}
+
+
+@app.get("/contador/clientes/{tenant_id}/facturas", tags=["Contador"])
+async def contador_cliente_facturas(
+    tenant_id: str,
+    mes: Optional[int] = None,
+    ano: Optional[int] = None,
+    current_user: Usuario = Depends(require_role("contador", "admin", "ceo")),
+    db: Session = Depends(get_db),
+):
+    """Facturas de un cliente específico con filtro de mes/año."""
+    now = datetime.now(timezone.utc)
+    ano = ano or now.year
+    mes = mes or now.month
+    mes_inicio = datetime(ano, mes, 1, tzinfo=timezone.utc)
+    import calendar as _cal
+    mes_fin = datetime(ano, mes, _cal.monthrange(ano, mes)[1], 23, 59, 59, tzinfo=timezone.utc)
+
+    facturas = db.query(Factura).filter(
+        Factura.tenant_id == tenant_id,
+        Factura.fecha_emision >= mes_inicio,
+        Factura.fecha_emision <= mes_fin,
+    ).order_by(Factura.fecha_emision.desc()).all()
+
+    return [
+        {
+            "id": f.id,
+            "tipo": f.tipo,
+            "folio": f.folio,
+            "uuid_cfdi": f.uuid_cfdi,
+            "rfc_emisor": f.rfc_emisor,
+            "nombre_emisor": f.nombre_emisor,
+            "rfc_receptor": f.rfc_receptor,
+            "nombre_receptor": f.nombre_receptor,
+            "subtotal": f.subtotal,
+            "iva": f.iva,
+            "total": f.total,
+            "isr_retenido": f.isr_retenido,
+            "iva_retenido": f.iva_retenido,
+            "tipo_pago": f.tipo_pago,
+            "regimen_fiscal": f.regimen_fiscal,
+            "estado": f.estado,
+            "fecha_emision": str(f.fecha_emision),
+            "concepto": f.concepto,
+        }
+        for f in facturas
+    ]

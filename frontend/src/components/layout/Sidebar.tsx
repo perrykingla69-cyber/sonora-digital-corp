@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Calculator,
   Package, CheckSquare, LogOut, Zap,
-  MessageCircle, Send, Brain,
+  MessageCircle, Send, Brain, ShieldCheck, CreditCard, Receipt,
 } from 'lucide-react'
 import { logout, getUser } from '@/lib/auth'
 import clsx from 'clsx'
@@ -13,6 +13,7 @@ import clsx from 'clsx'
 const NAV = [
   { href: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/facturas',   icon: FileText,         label: 'Facturas' },
+  { href: '/resico',     icon: Receipt,           label: 'RESICO' },
   { href: '/nomina',     icon: Users,             label: 'Nómina' },
   { href: '/cierre',     icon: Calculator,        label: 'Cierre' },
   { href: '/mve',        icon: Package,           label: 'MVE' },
@@ -23,6 +24,11 @@ const NAV_CANALES = [
   { href: '/brain',      icon: Brain,             label: 'Brain IA' },
   { href: '/whatsapp',   icon: MessageCircle,     label: 'WhatsApp' },
   { href: '/telegram',   icon: Send,              label: 'Telegram' },
+]
+
+const NAV_ADMIN = [
+  { href: '/admin',      icon: ShieldCheck,       label: 'Admin' },
+  { href: '/billing',    icon: CreditCard,        label: 'Suscripción' },
 ]
 
 export default function Sidebar() {
@@ -58,6 +64,23 @@ export default function Sidebar() {
 
         <p className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Canales</p>
         {NAV_CANALES.map(({ href, icon: Icon, label }) => (
+          <Link
+            key={href}
+            href={href}
+            className={clsx(
+              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              path.startsWith(href)
+                ? 'bg-brand-600 text-white'
+                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+            )}
+          >
+            <Icon size={18} />
+            {label}
+          </Link>
+        ))}
+
+        <p className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Sistema</p>
+        {NAV_ADMIN.map(({ href, icon: Icon, label }) => (
           <Link
             key={href}
             href={href}

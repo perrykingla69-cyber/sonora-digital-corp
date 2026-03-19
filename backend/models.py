@@ -55,6 +55,10 @@ class Factura(Base):
     moneda = Column(String, default="MXN")
     tipo_cambio = Column(Float, default=1.0)
     estado = Column(String, default="pendiente")  # pendiente, pagada, cancelada
+    tipo_pago = Column(String, default="pendiente")  # prepagado, pendiente, pagado, cancelado
+    regimen_fiscal = Column(String, default="general")  # resico_pf, resico_pm, general, honorarios
+    isr_retenido = Column(Float, default=0.0)   # ISR retenido 1.25% (RESICO Art. 113-J)
+    iva_retenido = Column(Float, default=0.0)   # IVA retenido (si aplica)
     fecha_emision = Column(DateTime(timezone=True))
     fecha_pago = Column(DateTime(timezone=True), nullable=True)
     concepto = Column(Text)

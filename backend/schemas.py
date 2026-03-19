@@ -186,3 +186,4 @@ class DashboardResponse(BaseModel):
     periodo: str
     resumen: Dict[str, Any]
     alertas: List[str] = []
+    kpis: Dict[str, Any] = {}

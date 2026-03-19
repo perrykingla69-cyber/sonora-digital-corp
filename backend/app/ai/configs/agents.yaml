@@ -1,0 +1,28 @@
+agents:
+  - name: business_agent
+    capabilities:
+      - planning
+      - market_analysis
+      - reporting
+      - strategy
+
+  - name: dev_agent
+    capabilities:
+      - coding
+      - debugging
+      - testing
+      - architecture
+
+  - name: infra_agent
+    capabilities:
+      - deployment
+      - monitoring
+      - docker
+      - database
+
+  - name: knowledge_agent
+    capabilities:
+      - search
+      - summarize
+      - rag
+      - qa
