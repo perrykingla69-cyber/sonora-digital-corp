@@ -5,17 +5,24 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Calculator,
   Package, CheckSquare, LogOut, Zap,
+  MessageCircle, Send, Brain,
 } from 'lucide-react'
 import { logout, getUser } from '@/lib/auth'
 import clsx from 'clsx'
 
 const NAV = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/facturas',  icon: FileText,        label: 'Facturas' },
-  { href: '/nomina',    icon: Users,            label: 'Nómina' },
-  { href: '/cierre',    icon: Calculator,       label: 'Cierre' },
-  { href: '/mve',       icon: Package,          label: 'MVE' },
-  { href: '/tasks',     icon: CheckSquare,      label: 'Tareas' },
+  { href: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/facturas',   icon: FileText,         label: 'Facturas' },
+  { href: '/nomina',     icon: Users,             label: 'Nómina' },
+  { href: '/cierre',     icon: Calculator,        label: 'Cierre' },
+  { href: '/mve',        icon: Package,           label: 'MVE' },
+  { href: '/tasks',      icon: CheckSquare,       label: 'Tareas' },
+]
+
+const NAV_CANALES = [
+  { href: '/brain',      icon: Brain,             label: 'Brain IA' },
+  { href: '/whatsapp',   icon: MessageCircle,     label: 'WhatsApp' },
+  { href: '/telegram',   icon: Send,              label: 'Telegram' },
 ]
 
 export default function Sidebar() {
@@ -30,9 +37,27 @@ export default function Sidebar() {
         <span className="text-white font-bold text-lg tracking-tight">Mystic</span>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      {/* Nav principal */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <p className="px-3 pt-1 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Operación</p>
         {NAV.map(({ href, icon: Icon, label }) => (
+          <Link
+            key={href}
+            href={href}
+            className={clsx(
+              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              path.startsWith(href)
+                ? 'bg-brand-600 text-white'
+                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+            )}
+          >
+            <Icon size={18} />
+            {label}
+          </Link>
+        ))}
+
+        <p className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Canales</p>
+        {NAV_CANALES.map(({ href, icon: Icon, label }) => (
           <Link
             key={href}
             href={href}

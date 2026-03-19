@@ -115,10 +115,10 @@ async def cmd_login(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     data = _api("POST", "/auth/login", {"email": email, "password": password})
     if "access_token" in data:
         _user_tokens[update.effective_user.id] = data["access_token"]
-        user_info = data.get("user", {})
+        user_info = data.get("usuario", {})  # API retorna "usuario", no "user"
         await update.message.reply_text(
             f"✅ Login exitoso\n👤 {user_info.get('nombre', email)}\n"
-            f"🏢 Tenant: {user_info.get('tenant', '-')}",
+            f"🏢 Tenant: {user_info.get('tenant_id', '-')}",
         )
     else:
         await update.message.reply_text(
@@ -314,18 +314,57 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# ── Mensajes de texto ─────────────────────────────────────────────────────────
+# ── Mensajes de texto → Brain IA ─────────────────────────────────────────────
 
 async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.lower().strip()
-    if "status" in text or "estado" in text:
+    text = update.message.text.strip()
+    text_lower = text.lower()
+    user_id = update.effective_user.id
+
+    # Atajos rápidos sin brain
+    if text_lower in ("status", "estado"):
         await cmd_status(update, ctx)
-    elif "dashboard" in text or "resumen" in text:
+        return
+    if text_lower in ("dashboard", "resumen"):
         await cmd_dashboard(update, ctx)
-    else:
-        await update.message.reply_text(
-            "No entendí. Usa /ayuda para ver los comandos disponibles."
-        )
+        return
+
+    # Todo lo demás → Brain IA
+    token = _check_auth(user_id)
+    # Determinar contexto del tenant a partir del token si existe
+    context = "fiscal"
+    if token:
+        try:
+            import base64, json as _json
+            payload_b64 = token.split(".")[1]
+            payload_b64 += "=" * (4 - len(payload_b64) % 4)
+            payload = _json.loads(base64.b64decode(payload_b64))
+            context = payload.get("tenant_id", "fiscal")
+        except Exception:
+            pass
+
+    session_id = f"telegram:{user_id}"
+    await update.message.chat.send_action("typing")
+
+    resp = _api("POST", "/api/brain/ask", {
+        "question": text,
+        "context": context,
+        "session_id": session_id,
+    })
+
+    if "error" in resp:
+        await update.message.reply_text(f"❌ Brain IA no disponible: {resp['error']}\nUsa /ayuda para ver comandos.")
+        return
+
+    respuesta = resp.get("respuesta", "Sin respuesta")
+    fuente = resp.get("fuente", "")
+    cached = resp.get("cached", False)
+
+    footer = f"\n\n_Fuente: {fuente}{'  ·  caché' if cached else ''}_"
+    await update.message.reply_text(
+        f"{respuesta}{footer}",
+        parse_mode="Markdown",
+    )
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
