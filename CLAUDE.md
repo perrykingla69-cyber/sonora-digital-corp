@@ -96,7 +96,7 @@ git -C /home/mystic/sonora-digital-corp <comando>
 ## CLIENTES ACTIVOS
 
 ### Fourgea Mexico SA de CV
-- RFC: E080820LC2 | Filtración fluidos industriales
+- RFC: FME080820LC2 | Filtración fluidos industriales
 - Contacto: **Nathaly** — cp.nathalyhermosillo@gmail.com / Nathaly2026!
 - WhatsApp: 6622681111
 - tenant_id: fourgea
