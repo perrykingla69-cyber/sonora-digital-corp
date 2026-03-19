@@ -111,11 +111,29 @@ class FacturaResponse(BaseModel):
 
 class EmpleadoCreate(BaseModel):
     nombre: str
+    curp: Optional[str] = None
     rfc: Optional[str] = None
     nss: Optional[str] = None
+    numero_empleado: Optional[str] = None
     puesto: Optional[str] = None
-    salario_mensual: float = 0.0
+    departamento: Optional[str] = None
     tipo_contrato: str = "indefinido"
+    regimen_imss: str = "sueldos_salarios"
+    fecha_ingreso: Optional[datetime] = None
+    tipo_salario: str = "mensual"
+    salario_mensual: float = 0.0
+    factor_integracion: float = 1.0452
+    prima_riesgo_trabajo: float = 0.005
+    tiene_infonavit: bool = False
+    numero_credito_infonavit: Optional[str] = None
+    descuento_infonavit: float = 0.0
+    tipo_descuento_infonavit: str = "vsm"
+    banco: Optional[str] = None
+    clabe: Optional[str] = None
+    caja_ahorro_pct: float = 0.0
+    prestamos: float = 0.0
+    vales_despensa: float = 0.0
+    notas: Optional[str] = None
 
 
 class EmpleadoResponse(BaseModel):
@@ -124,13 +142,33 @@ class EmpleadoResponse(BaseModel):
     id: str
     tenant_id: str
     nombre: str
+    curp: Optional[str] = None
     rfc: Optional[str] = None
     nss: Optional[str] = None
+    numero_empleado: Optional[str] = None
     puesto: Optional[str] = None
-    salario_mensual: float
-    tipo_contrato: str
-    activo: bool
+    departamento: Optional[str] = None
+    tipo_contrato: str = "indefinido"
+    regimen_imss: Optional[str] = None
     fecha_ingreso: Optional[datetime] = None
+    fecha_baja: Optional[datetime] = None
+    tipo_salario: Optional[str] = None
+    salario_mensual: float = 0.0
+    salario_diario: float = 0.0
+    salario_integrado: float = 0.0
+    factor_integracion: float = 1.0452
+    prima_riesgo_trabajo: float = 0.005
+    tiene_infonavit: bool = False
+    numero_credito_infonavit: Optional[str] = None
+    descuento_infonavit: float = 0.0
+    tipo_descuento_infonavit: Optional[str] = None
+    banco: Optional[str] = None
+    clabe: Optional[str] = None
+    caja_ahorro_pct: float = 0.0
+    prestamos: float = 0.0
+    vales_despensa: float = 0.0
+    notas: Optional[str] = None
+    activo: bool = True
 
 
 # ── NOMINA ──
@@ -139,7 +177,7 @@ class NominaCreate(BaseModel):
     empleado_id: str
     periodo_inicio: datetime
     periodo_fin: datetime
-    salario_bruto: float = 0.0
+    percepciones_extra: float = 0.0
 
 
 class NominaResponse(BaseModel):
@@ -150,12 +188,86 @@ class NominaResponse(BaseModel):
     empleado_id: str
     periodo_inicio: Optional[datetime] = None
     periodo_fin: Optional[datetime] = None
-    salario_bruto: float
-    isr_retenido: float
-    imss_retenido: float
-    subsidio_empleo: float
-    salario_neto: float
-    estado: str
+    salario_bruto: float = 0.0
+    isr_retenido: float = 0.0
+    imss_retenido: float = 0.0
+    subsidio_empleo: float = 0.0
+    salario_neto: float = 0.0
+    estado: str = "pendiente"
+    created_at: Optional[datetime] = None
+
+
+# ── CONTACTOS (Clientes/Proveedores/Agentes) ──
+
+class ContactoCreate(BaseModel):
+    tipo: str  # cliente|proveedor|agente_aduanal|importador|ambos
+    razon_social: str
+    rfc: Optional[str] = None
+    curp: Optional[str] = None
+    regimen_fiscal: Optional[str] = None
+    uso_cfdi: str = "G03"
+    pais: str = "México"
+    contacto_nombre: Optional[str] = None
+    email: Optional[str] = None
+    email2: Optional[str] = None
+    telefono: Optional[str] = None
+    celular: Optional[str] = None
+    whatsapp: Optional[str] = None
+    direccion_fiscal: Optional[str] = None
+    ciudad: Optional[str] = None
+    estado_mx: Optional[str] = None
+    cp: Optional[str] = None
+    condicion_pago: int = 30
+    limite_credito: float = 0.0
+    moneda: str = "MXN"
+    banco: Optional[str] = None
+    cuenta: Optional[str] = None
+    clabe: Optional[str] = None
+    patente_aduanal: Optional[str] = None
+    aduana_habitual: Optional[str] = None
+    tax_id: Optional[str] = None
+    direccion_extranjero: Optional[str] = None
+    notas: Optional[str] = None
+
+
+class ContactoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    tenant_id: str
+    tipo: str
+    razon_social: str
+    rfc: Optional[str] = None
+    curp: Optional[str] = None
+    regimen_fiscal: Optional[str] = None
+    uso_cfdi: Optional[str] = None
+    pais: Optional[str] = None
+    contacto_nombre: Optional[str] = None
+    email: Optional[str] = None
+    email2: Optional[str] = None
+    telefono: Optional[str] = None
+    celular: Optional[str] = None
+    whatsapp: Optional[str] = None
+    direccion_fiscal: Optional[str] = None
+    ciudad: Optional[str] = None
+    estado_mx: Optional[str] = None
+    cp: Optional[str] = None
+    condicion_pago: int = 30
+    limite_credito: float = 0.0
+    moneda: Optional[str] = None
+    banco: Optional[str] = None
+    cuenta: Optional[str] = None
+    clabe: Optional[str] = None
+    patente_aduanal: Optional[str] = None
+    aduana_habitual: Optional[str] = None
+    tax_id: Optional[str] = None
+    direccion_extranjero: Optional[str] = None
+    total_facturas: int = 0
+    monto_total_compras: float = 0.0
+    monto_total_ventas: float = 0.0
+    ultima_operacion: Optional[datetime] = None
+    activo: bool = True
+    notas: Optional[str] = None
     created_at: Optional[datetime] = None
 
 

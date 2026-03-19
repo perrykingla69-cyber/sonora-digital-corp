@@ -71,14 +71,41 @@ class Empleado(Base):
     __tablename__ = "empleados"
     id = Column(String, primary_key=True, default=_uuid)
     tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False)
+    # Datos personales
     nombre = Column(String, nullable=False)
+    curp = Column(String)
     rfc = Column(String)
-    nss = Column(String)
+    nss = Column(String)                         # Número Seguro Social IMSS
+    numero_empleado = Column(String)
+    # Datos laborales
     puesto = Column(String)
-    salario_mensual = Column(Float, default=0.0)
-    tipo_contrato = Column(String, default="indefinido")
-    activo = Column(Boolean, default=True)
+    departamento = Column(String)
+    tipo_contrato = Column(String, default="indefinido")  # indefinido|temporal|obra|honorarios
+    regimen_imss = Column(String, default="sueldos_salarios")  # sueldos_salarios|honorarios|asimilados
     fecha_ingreso = Column(DateTime(timezone=True), default=_now)
+    fecha_baja = Column(DateTime(timezone=True), nullable=True)
+    activo = Column(Boolean, default=True)
+    # Salarios
+    tipo_salario = Column(String, default="mensual")  # mensual|quincenal|semanal|diario
+    salario_mensual = Column(Float, default=0.0)
+    salario_diario = Column(Float, default=0.0)       # salario_mensual / 30.4
+    salario_integrado = Column(Float, default=0.0)    # salario_diario * factor_integracion
+    factor_integracion = Column(Float, default=1.0452) # 1 + (vacac+prima+aguinaldo)/365
+    # INFONAVIT
+    tiene_infonavit = Column(Boolean, default=False)
+    numero_credito_infonavit = Column(String)
+    descuento_infonavit = Column(Float, default=0.0)
+    tipo_descuento_infonavit = Column(String, default="vsm")  # vsm|porcentaje|fijo
+    # IMSS — prima de riesgo de trabajo
+    prima_riesgo_trabajo = Column(Float, default=0.005)  # 0.5% mínimo clase I
+    # Datos bancarios
+    banco = Column(String)
+    clabe = Column(String)                        # 18 dígitos CLABE interbancaria
+    # Prestaciones adicionales
+    caja_ahorro_pct = Column(Float, default=0.0)
+    prestamos = Column(Float, default=0.0)        # Descuento por préstamos activos
+    vales_despensa = Column(Float, default=0.0)   # Exento hasta 40% UMA mensual
+    notas = Column(Text)
 
 
 class Nomina(Base):
@@ -172,6 +199,60 @@ class MVE(Base):
     folio_vucem = Column(String, nullable=True)
     pedimento_numero = Column(String, nullable=True)
     notas = Column(Text)
+    created_at = Column(DateTime(timezone=True), default=_now)
+    updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now)
+
+
+class Contacto(Base):
+    """Directorio: clientes, proveedores, agentes aduanales, importadores."""
+    __tablename__ = "contactos"
+    id = Column(String, primary_key=True, default=_uuid)
+    tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False)
+    # Tipo y categorías
+    tipo = Column(String, nullable=False)  # cliente|proveedor|agente_aduanal|importador|ambos
+    categorias = Column(JSONB, default=list)  # ["cliente","proveedor"]
+    # Datos fiscales
+    razon_social = Column(String, nullable=False)
+    rfc = Column(String)
+    curp = Column(String)
+    regimen_fiscal = Column(String)        # 601, 612, 626, etc.
+    uso_cfdi = Column(String, default="G03")
+    pais = Column(String, default="México")
+    # Datos de contacto
+    contacto_nombre = Column(String)
+    email = Column(String)
+    email2 = Column(String)
+    telefono = Column(String)
+    celular = Column(String)
+    whatsapp = Column(String)
+    # Dirección
+    direccion_fiscal = Column(Text)
+    ciudad = Column(String)
+    estado_mx = Column(String)
+    cp = Column(String)
+    # Comercial
+    condicion_pago = Column(Integer, default=30)  # días de crédito
+    limite_credito = Column(Float, default=0.0)
+    moneda = Column(String, default="MXN")
+    # Bancario
+    banco = Column(String)
+    cuenta = Column(String)
+    clabe = Column(String)
+    # Agente aduanal (solo si tipo=agente_aduanal)
+    patente_aduanal = Column(String)          # 5 dígitos
+    aduana_habitual = Column(String)          # Nogales, Tijuana, etc.
+    # Proveedor USA / extranjero
+    tax_id = Column(String)                   # EIN/SSN para USA
+    direccion_extranjero = Column(Text)
+    # Métricas (auto-calculadas)
+    total_facturas = Column(Integer, default=0)
+    monto_total_compras = Column(Float, default=0.0)
+    monto_total_ventas = Column(Float, default=0.0)
+    ultima_operacion = Column(DateTime(timezone=True), nullable=True)
+    # Estado
+    activo = Column(Boolean, default=True)
+    notas = Column(Text)
+    metadata_json = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_now)
     updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now)
 

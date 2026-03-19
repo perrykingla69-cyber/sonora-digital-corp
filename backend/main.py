@@ -22,9 +22,10 @@ from calculos import calcular_iva, calcular_isr, calcular_ieps
 from calculos_completos_147 import CalculosCompletos147
 from database import Base, engine, get_db
 from models import (AuditLog, AlertaConfig, BrainFeedback, BrainSession,
-                    CierreMes, Empleado, Factura, Lead,
+                    CierreMes, Contacto, Empleado, Factura, Lead,
                     MVE, Nomina, TipoCambio, Usuario, Tenant)
-from schemas import (CierreResponse, DashboardResponse, EmpleadoCreate,
+from schemas import (CierreResponse, ContactoCreate, ContactoResponse,
+                     DashboardResponse, EmpleadoCreate,
                      EmpleadoResponse, FacturaCreate, FacturaResponse,
                      LoginRequest, LoginResponse, NominaCreate, NominaResponse,
                      TenantCreate, TenantResponse, UsuarioCreate,
@@ -133,6 +134,41 @@ async def registro(body: UsuarioCreate, db: Session = Depends(get_db)):
 @app.get("/auth/me", response_model=UsuarioResponse, tags=["Auth"])
 async def me(current_user: Usuario = Depends(get_current_user)):
     return current_user
+
+
+@app.post("/auth/forgot-password", tags=["Auth"])
+async def forgot_password(body: dict, db: Session = Depends(get_db)):
+    email = body.get("email", "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email requerido")
+    usuario = db.query(Usuario).filter(Usuario.email == email).first()
+    # Siempre responder igual para no revelar si el email existe
+    if not usuario:
+        return {"ok": True, "mensaje": "Si el correo existe, recibirás la nueva contraseña por WhatsApp"}
+
+    import secrets, string
+    chars = string.ascii_letters + string.digits
+    temp_pass = "".join(secrets.choice(chars) for _ in range(10))
+    usuario.password_hash = hash_password(temp_pass)
+    db.commit()
+
+    # Enviar por WhatsApp si hay número registrado
+    wa_sent = False
+    wa_numbers = {"cp.nathalyhermosillo@gmail.com": "526622681111", "marco@fourgea.mx": "526623538272"}
+    wa_num = wa_numbers.get(email)
+    if wa_num:
+        try:
+            import urllib.request as _ur, json as _j
+            payload = _j.dumps({"to": wa_num, "message": f"🔐 Mystic — Contraseña temporal: *{temp_pass}*\nCámbiala después de ingresar."}).encode()
+            req = _ur.Request("http://localhost:3001/send", data=payload,
+                              headers={"Content-Type": "application/json", "x-api-key": "MysticWA2026!"})
+            _ur.urlopen(req, timeout=5)
+            wa_sent = True
+        except Exception:
+            pass
+
+    return {"ok": True, "wa_sent": wa_sent,
+            "mensaje": "Contraseña enviada por WhatsApp" if wa_sent else "Contacta a tu administrador: sonoradigitalcorp@gmail.com"}
 
 
 # ═══════════════════════════════════════════════
@@ -279,10 +315,18 @@ async def cancelar_factura(
 @app.post("/empleados", response_model=EmpleadoResponse, tags=["Nomina"])
 async def crear_empleado(
     body: EmpleadoCreate,
-    current_user: Usuario = Depends(require_role("admin", "rh")),
+    current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    empleado = Empleado(tenant_id=current_user.tenant_id, **body.model_dump())
+    data = body.model_dump()
+    # Calcular salario_diario y salario_integrado automáticamente
+    sal_mensual = data.get("salario_mensual", 0.0)
+    fi = data.get("factor_integracion", 1.0452)
+    sal_diario = round(sal_mensual / 30.4, 4)
+    sal_integrado = round(sal_diario * fi, 4)
+    data["salario_diario"] = sal_diario
+    data["salario_integrado"] = sal_integrado
+    empleado = Empleado(tenant_id=current_user.tenant_id, **data)
     db.add(empleado)
     db.commit()
     db.refresh(empleado)
@@ -291,13 +335,285 @@ async def crear_empleado(
 
 @app.get("/empleados", response_model=List[EmpleadoResponse], tags=["Nomina"])
 async def listar_empleados(
+    incluir_bajas: bool = False,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return db.query(Empleado).filter(
-        Empleado.tenant_id == current_user.tenant_id,
-        Empleado.activo == True,
-    ).all()
+    q = db.query(Empleado).filter(Empleado.tenant_id == current_user.tenant_id)
+    if not incluir_bajas:
+        q = q.filter(Empleado.activo == True)
+    return q.order_by(Empleado.nombre).all()
+
+
+@app.get("/empleados/{empleado_id}", response_model=EmpleadoResponse, tags=["Nomina"])
+async def obtener_empleado(
+    empleado_id: str,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    e = db.query(Empleado).filter(Empleado.id == empleado_id, Empleado.tenant_id == current_user.tenant_id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+    return e
+
+
+@app.patch("/empleados/{empleado_id}", response_model=EmpleadoResponse, tags=["Nomina"])
+async def actualizar_empleado(
+    empleado_id: str,
+    body: dict,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    e = db.query(Empleado).filter(Empleado.id == empleado_id, Empleado.tenant_id == current_user.tenant_id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+    for k, v in body.items():
+        if hasattr(e, k):
+            setattr(e, k, v)
+    # Recalcular salarios si se actualiza salario_mensual
+    if "salario_mensual" in body:
+        fi = getattr(e, "factor_integracion", 1.0452) or 1.0452
+        e.salario_diario = round(e.salario_mensual / 30.4, 4)
+        e.salario_integrado = round(e.salario_diario * fi, 4)
+    db.commit()
+    db.refresh(e)
+    return e
+
+
+@app.delete("/empleados/{empleado_id}", tags=["Nomina"])
+async def dar_baja_empleado(
+    empleado_id: str,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from datetime import timezone as _tz
+    e = db.query(Empleado).filter(Empleado.id == empleado_id, Empleado.tenant_id == current_user.tenant_id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+    e.activo = False
+    e.fecha_baja = datetime.now(_tz.utc)
+    db.commit()
+    return {"ok": True, "mensaje": f"{e.nombre} dado de baja"}
+
+
+@app.get("/nomina/calculos/{empleado_id}", tags=["Nomina"])
+async def preview_nomina(
+    empleado_id: str,
+    dias: int = 30,
+    percepciones_extra: float = 0.0,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cálculo en tiempo real de nómina: IMSS, ISR, INFONAVIT, neto."""
+    e = db.query(Empleado).filter(Empleado.id == empleado_id, Empleado.tenant_id == current_user.tenant_id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+
+    UMA_2026 = 108.57
+    SMG_2026 = 278.80
+
+    sal_bruto = round((e.salario_diario or 0) * dias + percepciones_extra, 2)
+    sal_integrado_dia = e.salario_integrado or e.salario_diario or 0
+
+    # ── IMSS cuotas obreras (trabajador) 2026 ──
+    # Enfermedad y maternidad cuota fija
+    cuota_fija = round(UMA_2026 * 0.204 * (dias / 30), 2)
+    # Excedente sobre 3 UMA
+    excedente_base = max(0, sal_integrado_dia - UMA_2026 * 3) * dias
+    cuota_excedente = round(excedente_base * 0.004, 2)
+    # Invalidez y vida
+    invalidez_vida = round(sal_integrado_dia * dias * 0.00625, 2)
+    # Cesantía y vejez
+    cesantia = round(sal_integrado_dia * dias * 0.01125, 2)
+    imss_trabajador = round(cuota_fija + cuota_excedente + invalidez_vida + cesantia, 2)
+
+    # ── IMSS cuotas patronales ──
+    em_mat_patron = round(sal_integrado_dia * dias * 0.1005, 2)
+    riesgo_trabajo = round(sal_integrado_dia * dias * (e.prima_riesgo_trabajo or 0.005), 2)
+    invalidez_patron = round(sal_integrado_dia * dias * 0.01750, 2)
+    guarderias = round(sal_integrado_dia * dias * 0.01, 2)
+    cesantia_patron = round(sal_integrado_dia * dias * 0.03150, 2)
+    imss_patron = round(em_mat_patron + riesgo_trabajo + invalidez_patron + guarderias + cesantia_patron, 2)
+
+    # ── INFONAVIT patronal ──
+    infonavit_patron = round(sal_integrado_dia * dias * 0.05, 2)
+
+    # ── INFONAVIT descuento trabajador ──
+    infonavit_trabajador = 0.0
+    if e.tiene_infonavit and e.descuento_infonavit:
+        if e.tipo_descuento_infonavit == "vsm":
+            infonavit_trabajador = round(e.descuento_infonavit * SMG_2026, 2)
+        elif e.tipo_descuento_infonavit == "porcentaje":
+            infonavit_trabajador = round(sal_bruto * e.descuento_infonavit / 100, 2)
+        else:
+            infonavit_trabajador = e.descuento_infonavit
+
+    # ── ISR ──
+    isr = round(_calcular_isr_tabla(sal_bruto), 2)
+
+    # ── Subsidio al empleo ──
+    subsidio = _calcular_subsidio_empleo(sal_bruto)
+
+    isr_neto = max(0, isr - subsidio)
+
+    # ── Otras deducciones ──
+    caja_ahorro = round(sal_bruto * (e.caja_ahorro_pct or 0) / 100, 2)
+    prestamos = e.prestamos or 0.0
+
+    total_deducciones = round(imss_trabajador + isr_neto + infonavit_trabajador + caja_ahorro + prestamos, 2)
+    salario_neto = round(sal_bruto - total_deducciones, 2)
+
+    # ── Costo total empresa ──
+    costo_empresa = round(sal_bruto + imss_patron + infonavit_patron, 2)
+
+    # ── PTU proporcional ──
+    ptu_anual = round(sal_bruto * 12 * 0.10, 2)  # estimado 10% utilidad
+
+    # ── Aguinaldo ──
+    aguinaldo_anual = round(e.salario_diario * 15, 2) if e.salario_diario else 0
+
+    # ── Prima vacacional ──
+    prima_vacacional = round(e.salario_diario * 6 * 0.25, 2) if e.salario_diario else 0  # 6 días base + 25%
+
+    return {
+        "empleado": e.nombre,
+        "puesto": e.puesto,
+        "periodo_dias": dias,
+        "percepciones": {
+            "salario_bruto": sal_bruto,
+            "percepciones_extra": percepciones_extra,
+            "vales_despensa": e.vales_despensa or 0,
+            "total": round(sal_bruto + (e.vales_despensa or 0), 2),
+        },
+        "deducciones_trabajador": {
+            "imss": imss_trabajador,
+            "isr_causado": isr,
+            "subsidio_empleo": subsidio,
+            "isr_neto": isr_neto,
+            "infonavit_credito": infonavit_trabajador,
+            "caja_ahorro": caja_ahorro,
+            "prestamos": prestamos,
+            "total": total_deducciones,
+        },
+        "cuotas_patronales": {
+            "imss_patron": imss_patron,
+            "infonavit_patron": infonavit_patron,
+            "total": round(imss_patron + infonavit_patron, 2),
+        },
+        "salario_neto": salario_neto,
+        "costo_total_empresa": costo_empresa,
+        "prestaciones_anuales": {
+            "aguinaldo": aguinaldo_anual,
+            "prima_vacacional": prima_vacacional,
+            "ptu_estimado": ptu_anual,
+        },
+        "info": {
+            "uma_2026": UMA_2026,
+            "smg_2026": SMG_2026,
+            "salario_diario": e.salario_diario,
+            "salario_integrado": e.salario_integrado,
+            "factor_integracion": e.factor_integracion,
+        }
+    }
+
+
+# ═══════════════════════════════════════════════
+#  DIRECTORIO — Clientes / Proveedores / Agentes
+# ═══════════════════════════════════════════════
+
+@app.post("/contactos", response_model=ContactoResponse, tags=["Directorio"])
+async def crear_contacto(
+    body: ContactoCreate,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    contacto = Contacto(tenant_id=current_user.tenant_id, **body.model_dump())
+    db.add(contacto)
+    db.commit()
+    db.refresh(contacto)
+    return contacto
+
+
+@app.get("/contactos", response_model=List[ContactoResponse], tags=["Directorio"])
+async def listar_contactos(
+    tipo: Optional[str] = None,
+    buscar: Optional[str] = None,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    q = db.query(Contacto).filter(
+        Contacto.tenant_id == current_user.tenant_id,
+        Contacto.activo == True,
+    )
+    if tipo:
+        q = q.filter(Contacto.tipo == tipo)
+    if buscar:
+        term = f"%{buscar}%"
+        q = q.filter(
+            (Contacto.razon_social.ilike(term)) |
+            (Contacto.rfc.ilike(term)) |
+            (Contacto.contacto_nombre.ilike(term))
+        )
+    return q.order_by(Contacto.razon_social).all()
+
+
+@app.get("/contactos/{contacto_id}", response_model=ContactoResponse, tags=["Directorio"])
+async def obtener_contacto(
+    contacto_id: str,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    c = db.query(Contacto).filter(Contacto.id == contacto_id, Contacto.tenant_id == current_user.tenant_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Contacto no encontrado")
+    # Calcular métricas en tiempo real desde facturas
+    from sqlalchemy import func
+    ventas = db.query(func.sum(Factura.total), func.count(Factura.id)).filter(
+        Factura.tenant_id == current_user.tenant_id,
+        Factura.rfc_receptor == c.rfc,
+        Factura.tipo == "ingreso",
+    ).first()
+    compras = db.query(func.sum(Factura.total), func.count(Factura.id)).filter(
+        Factura.tenant_id == current_user.tenant_id,
+        Factura.rfc_emisor == c.rfc,
+        Factura.tipo == "gasto",
+    ).first()
+    c.monto_total_ventas = float(ventas[0] or 0)
+    c.monto_total_compras = float(compras[0] or 0)
+    c.total_facturas = int((ventas[1] or 0) + (compras[1] or 0))
+    return c
+
+
+@app.patch("/contactos/{contacto_id}", response_model=ContactoResponse, tags=["Directorio"])
+async def actualizar_contacto(
+    contacto_id: str,
+    body: dict,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    c = db.query(Contacto).filter(Contacto.id == contacto_id, Contacto.tenant_id == current_user.tenant_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Contacto no encontrado")
+    for k, v in body.items():
+        if hasattr(c, k):
+            setattr(c, k, v)
+    db.commit()
+    db.refresh(c)
+    return c
+
+
+@app.delete("/contactos/{contacto_id}", tags=["Directorio"])
+async def eliminar_contacto(
+    contacto_id: str,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    c = db.query(Contacto).filter(Contacto.id == contacto_id, Contacto.tenant_id == current_user.tenant_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Contacto no encontrado")
+    c.activo = False
+    db.commit()
+    return {"ok": True}
 
 
 # ═══════════════════════════════════════════════
@@ -354,6 +670,21 @@ async def calcular_nomina(
     db.commit()
     db.refresh(nomina)
     return nomina
+
+
+def _calcular_subsidio_empleo(salario: float) -> float:
+    """Subsidio al empleo mensual 2026 (Art. 1 Decreto subsidio)"""
+    if salario <= 1768.96:   return 407.02
+    elif salario <= 2653.38: return 406.83
+    elif salario <= 3472.84: return 406.62
+    elif salario <= 3537.87: return 392.77
+    elif salario <= 4446.15: return 382.46
+    elif salario <= 4717.18: return 354.23
+    elif salario <= 5335.42: return 324.87
+    elif salario <= 6224.67: return 294.63
+    elif salario <= 7113.90: return 253.54
+    elif salario <= 7382.33: return 217.61
+    else:                    return 0.0
 
 
 def _calcular_isr_tabla(salario: float) -> float:
@@ -434,10 +765,10 @@ async def cierre_mes(
         "iva_cobrado": iva_cobrado,
         "iva_pagado": iva_pagado,
         "iva_neto": iva_cobrado - iva_pagado,
-        "isr_estimado": calculos["isr"],
-        "ptu": calculos["ptu"],
+        "isr_estimado": calculos["isr_estimado"],
+        "ptu": calculos["ptu_estimada"],
         "ebitda": calculos["ebitda"],
-        "margen_neto_pct": calculos["margen_neto"],
+        "margen_neto_pct": calculos["margen_neto_pct"],
         "num_facturas": len(facturas),
         "calculos_147": calculos,
     }
