@@ -11,7 +11,7 @@ from typing import Any
 from skills.base_skill import BaseSkill
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "phi3:mini"
+OLLAMA_MODEL = "deepseek-r1:1.5b"
 
 
 class Skill(BaseSkill):
