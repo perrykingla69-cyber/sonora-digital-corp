@@ -10,15 +10,36 @@ import {
 import { logout, getUser } from '@/lib/auth'
 import clsx from 'clsx'
 
-const NAV = [
+// Navegación por rol
+const NAV_CONTADOR = [
   { href: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/contador',   icon: BookUser,         label: 'Mis Clientes' },
   { href: '/facturas',   icon: FileText,         label: 'Facturas' },
-  { href: '/resico',     icon: Receipt,           label: 'RESICO' },
+  { href: '/nomina',     icon: Users,             label: 'Nómina' },
+  { href: '/cierre',     icon: Calculator,        label: 'Cierre' },
+  { href: '/mve',        icon: Package,           label: 'MVE' },
+  { href: '/tasks',      icon: CheckSquare,       label: 'Tareas' },
+]
+
+const NAV_CEO = [
+  { href: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/facturas',   icon: FileText,         label: 'Facturas' },
   { href: '/nomina',     icon: Users,             label: 'Nómina' },
   { href: '/directorio', icon: Building2,         label: 'Directorio' },
   { href: '/cierre',     icon: Calculator,        label: 'Cierre' },
   { href: '/mve',        icon: Package,           label: 'MVE' },
+  { href: '/resico',     icon: Receipt,           label: 'RESICO' },
+  { href: '/tasks',      icon: CheckSquare,       label: 'Tareas' },
+]
+
+const NAV_ADMIN_PANEL = [
+  { href: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/facturas',   icon: FileText,         label: 'Facturas' },
+  { href: '/nomina',     icon: Users,             label: 'Nómina' },
+  { href: '/directorio', icon: Building2,         label: 'Directorio' },
+  { href: '/cierre',     icon: Calculator,        label: 'Cierre' },
+  { href: '/mve',        icon: Package,           label: 'MVE' },
+  { href: '/resico',     icon: Receipt,           label: 'RESICO' },
+  { href: '/contador',   icon: BookUser,          label: 'Mis Clientes' },
   { href: '/tasks',      icon: CheckSquare,       label: 'Tareas' },
 ]
 
@@ -28,7 +49,8 @@ const NAV_CANALES = [
   { href: '/telegram',   icon: Send,              label: 'Telegram' },
 ]
 
-const NAV_ADMIN = [
+// Canales solo para ceo/admin
+const NAV_SISTEMA = [
   { href: '/admin',      icon: ShieldCheck,       label: 'Admin' },
   { href: '/billing',    icon: CreditCard,        label: 'Suscripción' },
 ]
@@ -36,6 +58,11 @@ const NAV_ADMIN = [
 export default function Sidebar() {
   const path = usePathname()
   const user = getUser()
+  const rol = user?.rol || 'contador'
+
+  const navPrincipal = rol === 'admin' ? NAV_ADMIN_PANEL : rol === 'ceo' ? NAV_CEO : NAV_CONTADOR
+  const mostrarCanales = rol === 'ceo' || rol === 'admin'
+  const mostrarSistema = rol === 'ceo' || rol === 'admin'
 
   return (
     <aside className="fixed inset-y-0 left-0 w-56 bg-gray-900 flex flex-col">
@@ -48,7 +75,7 @@ export default function Sidebar() {
       {/* Nav principal */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <p className="px-3 pt-1 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Operación</p>
-        {NAV.map(({ href, icon: Icon, label }) => (
+        {navPrincipal.map(({ href, icon: Icon, label }) => (
           <Link
             key={href}
             href={href}
@@ -64,46 +91,62 @@ export default function Sidebar() {
           </Link>
         ))}
 
-        <p className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Canales</p>
-        {NAV_CANALES.map(({ href, icon: Icon, label }) => (
-          <Link
-            key={href}
-            href={href}
-            className={clsx(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              path.startsWith(href)
-                ? 'bg-brand-600 text-white'
-                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            <Icon size={18} />
-            {label}
-          </Link>
-        ))}
+        {mostrarCanales && (
+          <>
+            <p className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Canales IA</p>
+            {NAV_CANALES.map(({ href, icon: Icon, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={clsx(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  path.startsWith(href)
+                    ? 'bg-brand-600 text-white'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                )}
+              >
+                <Icon size={18} />
+                {label}
+              </Link>
+            ))}
+          </>
+        )}
 
-        <p className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Sistema</p>
-        {NAV_ADMIN.map(({ href, icon: Icon, label }) => (
-          <Link
-            key={href}
-            href={href}
-            className={clsx(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              path.startsWith(href)
-                ? 'bg-brand-600 text-white'
-                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            <Icon size={18} />
-            {label}
-          </Link>
-        ))}
+        {mostrarSistema && (
+          <>
+            <p className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Sistema</p>
+            {NAV_SISTEMA.map(({ href, icon: Icon, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={clsx(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  path.startsWith(href)
+                    ? 'bg-brand-600 text-white'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                )}
+              >
+                <Icon size={18} />
+                {label}
+              </Link>
+            ))}
+          </>
+        )}
       </nav>
 
       {/* User + logout */}
       {user && (
         <div className="px-4 py-4 border-t border-gray-800">
-          <p className="text-xs text-gray-500 truncate">{user.email}</p>
-          <p className="text-xs text-gray-400 font-medium truncate">{user.nombre || user.tenant_id}</p>
+          <p className="text-xs text-gray-500 truncate">{user.nombre || user.email}</p>
+          <p className="text-xs text-gray-600 truncate">{user.email}</p>
+          <span className={clsx(
+            'inline-block mt-1 px-2 py-0.5 rounded text-xs font-semibold',
+            rol === 'admin' ? 'bg-purple-900 text-purple-300' :
+            rol === 'ceo'   ? 'bg-brand-900 text-brand-300' :
+                              'bg-gray-800 text-gray-400'
+          )}>
+            {rol.toUpperCase()}
+          </span>
           <button
             onClick={logout}
             className="mt-3 flex items-center gap-2 text-xs text-gray-500 hover:text-red-400 transition-colors"
