@@ -28,12 +28,19 @@ class MemoryService:
             value = self.documents.get(key)
             if value:
                 docs.append(MemoryDocument(**value))
+        docs.sort(key=lambda document: document.created_at, reverse=True)
         return docs
 
     def search(self, query: str, limit: int = 5) -> list[MemorySearchResult]:
         results = self.vectors.similarity_search(query, limit=limit)
+        needle = query.strip().lower()
         return [
-            MemorySearchResult(key=record.key, text=record.text, metadata=record.metadata)
+            MemorySearchResult(
+                key=record.key,
+                text=record.text,
+                metadata=record.metadata,
+                score=1.0 if needle and needle in record.text.lower() else None,
+            )
             for record in results
         ]
 
