@@ -4,7 +4,18 @@ from pathlib import Path
 from typing import Any
 
 from .contracts import MemoryDocument, MemoryFeedback, MemorySearchResult, MemoryStats
-from .stores import DocumentStore, FeedbackStore, JsonDocumentStore, JsonFeedbackStore, JsonVectorStore, VectorStore
+from .stores import (
+    DocumentStore,
+    FeedbackStore,
+    JsonDocumentStore,
+    JsonFeedbackStore,
+    JsonSearchAnalyticsStore,
+    JsonVectorStore,
+    SearchAnalyticsStore,
+    VectorStore,
+)
+
+SEARCH_EVENTS_KEY = "events"
 
 
 class MemoryService:
@@ -14,12 +25,14 @@ class MemoryService:
         *,
         documents: DocumentStore | None = None,
         feedback: FeedbackStore | None = None,
+        search_analytics: SearchAnalyticsStore | None = None,
         vectors: VectorStore | None = None,
     ) -> None:
         data_dir = Path(data_dir)
         data_dir.mkdir(parents=True, exist_ok=True)
         self.documents = documents or JsonDocumentStore(data_dir / "v2_memory_documents.json")
         self.feedback = feedback or JsonFeedbackStore(data_dir / "v2_memory_feedback.json")
+        self.search_analytics = search_analytics or JsonSearchAnalyticsStore(data_dir / "v2_memory_search_analytics.json")
         self.vectors = vectors or JsonVectorStore(data_dir / "v2_memory_vectors.json")
 
     def ingest(
@@ -103,6 +116,7 @@ class MemoryService:
             filtered.append(result)
             if len(filtered) >= limit:
                 break
+        self._record_search(query=query, tenant_id=tenant_id, kind=kind, source=source, result_count=len(filtered))
         return filtered
 
     def save_feedback(self, key: str, rating: int, comment: str | None = None) -> MemoryFeedback:
@@ -128,6 +142,11 @@ class MemoryService:
             feedback_count += len(bucket)
             ratings.extend(item["rating"] for item in bucket if isinstance(item, dict) and "rating" in item)
 
+        search_events = self._search_events(tenant_id=tenant_id)
+        search_queries = len(search_events)
+        searches_with_results = sum(1 for item in search_events if item.get("result_count", 0) > 0)
+        search_hit_rate = round(searches_with_results / search_queries, 2) if search_queries else None
+        feedback_coverage = round(feedback_count / len(documents), 2) if documents else None
         avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else None
         vectors_count = len(doc_keys)
 
@@ -135,8 +154,39 @@ class MemoryService:
             documents=len(documents),
             feedback_items=feedback_count,
             vectors=vectors_count,
+            search_queries=search_queries,
+            searches_with_results=searches_with_results,
+            search_hit_rate=search_hit_rate,
+            feedback_coverage=feedback_coverage,
             avg_feedback_rating=avg_rating,
         )
+
+    def _record_search(
+        self,
+        *,
+        query: str,
+        tenant_id: str | None,
+        kind: str | None,
+        source: str | None,
+        result_count: int,
+    ) -> None:
+        events = self.search_analytics.get(SEARCH_EVENTS_KEY, []) or []
+        events.append(
+            {
+                "query": query,
+                "tenant_id": tenant_id,
+                "kind": kind,
+                "source": source,
+                "result_count": result_count,
+            }
+        )
+        self.search_analytics.put(SEARCH_EVENTS_KEY, events)
+
+    def _search_events(self, *, tenant_id: str | None = None) -> list[dict[str, Any]]:
+        events = self.search_analytics.get(SEARCH_EVENTS_KEY, []) or []
+        if tenant_id:
+            return [event for event in events if event.get("tenant_id") == tenant_id]
+        return events
 
     @staticmethod
     def _matches_filters(item: MemoryDocument | MemorySearchResult, *, tenant_id: str | None, kind: str | None, source: str | None) -> bool:

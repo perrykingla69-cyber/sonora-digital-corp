@@ -7,13 +7,23 @@ from .contracts import (
     MemoryStats,
 )
 from .service import MemoryService
-from .stores import DocumentStore, FeedbackStore, JsonDocumentStore, JsonFeedbackStore, JsonVectorStore, VectorStore
+from .stores import (
+    DocumentStore,
+    FeedbackStore,
+    JsonDocumentStore,
+    JsonFeedbackStore,
+    JsonSearchAnalyticsStore,
+    JsonVectorStore,
+    SearchAnalyticsStore,
+    VectorStore,
+)
 
 __all__ = [
     "DocumentStore",
     "FeedbackStore",
     "JsonDocumentStore",
     "JsonFeedbackStore",
+    "JsonSearchAnalyticsStore",
     "JsonVectorStore",
     "MemoryDocument",
     "MemoryFeedback",
@@ -22,5 +32,6 @@ __all__ = [
     "MemorySearchResult",
     "MemoryService",
     "MemoryStats",
+    "SearchAnalyticsStore",
     "VectorStore",
 ]

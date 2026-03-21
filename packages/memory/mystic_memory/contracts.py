@@ -49,4 +49,8 @@ class MemoryStats(BaseModel):
     documents: int
     feedback_items: int
     vectors: int
+    search_queries: int = 0
+    searches_with_results: int = 0
+    search_hit_rate: float | None = None
+    feedback_coverage: float | None = None
     avg_feedback_rating: float | None = None

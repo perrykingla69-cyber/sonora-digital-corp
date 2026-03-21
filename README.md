@@ -74,7 +74,7 @@ python -m pytest tests/ -v
 
 ### Fase 3 — Memory OS
 - Postgres + Redis + Qdrant + evidence layer.
-- Primer corte v2: ingestión, consulta, borrado, métricas y feedback básico sobre memoria persistida en `.data` (configurable con `MEMORY_DATA_DIR`) con filtros por tenant/tipo, snippets de evidencia y preparada para adaptadores futuros.
+- Primer corte v2: ingestión, consulta, borrado, métricas y feedback básico sobre memoria persistida en `.data` (configurable con `MEMORY_DATA_DIR`) con filtros por tenant/tipo, snippets de evidencia, métricas simples de búsqueda/feedback y preparada para adaptadores futuros.
 
 ### Fase 4 — Agent Runtime + Skills 2.5
 - registry, runtime, sessions y policies.

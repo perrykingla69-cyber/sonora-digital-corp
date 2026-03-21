@@ -27,6 +27,13 @@ class FeedbackStore(Protocol):
 
 
 @runtime_checkable
+class SearchAnalyticsStore(Protocol):
+    def put(self, key: str, value: list[dict[str, Any]]) -> None: ...
+
+    def get(self, key: str, default: list[dict[str, Any]] | None = None) -> list[dict[str, Any]] | None: ...
+
+
+@runtime_checkable
 class VectorStore(Protocol):
     def add(self, key: str, text: str, embedding: list[float] | None = None, metadata: dict[str, Any] | None = None) -> None: ...
 
@@ -43,6 +50,11 @@ class JsonDocumentStore(KnowledgeStore):
 
 
 class JsonFeedbackStore(KnowledgeStore):
+    def __init__(self, persist_path: str | Path) -> None:
+        super().__init__(str(persist_path))
+
+
+class JsonSearchAnalyticsStore(KnowledgeStore):
     def __init__(self, persist_path: str | Path) -> None:
         super().__init__(str(persist_path))
 

@@ -94,6 +94,13 @@ def test_v2_memory_routes_and_ingest_search(tmp_path):
         assert payload[0]["retrieval_mode"] == "lexical"
         assert "aceite" in payload[0]["evidence_snippet"].lower()
 
+        no_hits = client.post(
+            "/api/rag/search",
+            json={"query": "inexistente", "limit": 5, "tenant_id": "tenant-a", "kind": "faq", "source": "test"},
+        )
+        assert no_hits.status_code == 200
+        assert no_hits.json() == []
+
         feedback = client.post("/api/feedback/memory", json={"key": "doc-test", "rating": 5, "comment": "útil"})
         assert feedback.status_code == 200
         assert feedback.json()["rating"] == 5
@@ -107,6 +114,10 @@ def test_v2_memory_routes_and_ingest_search(tmp_path):
         assert stats.json()["documents"] == 1
         assert stats.json()["feedback_items"] == 1
         assert stats.json()["avg_feedback_rating"] == 5.0
+        assert stats.json()["search_queries"] == 2
+        assert stats.json()["searches_with_results"] == 1
+        assert stats.json()["search_hit_rate"] == 0.5
+        assert stats.json()["feedback_coverage"] == 1.0
 
         deleted = client.delete("/api/memory/documents/doc-test")
         assert deleted.status_code == 204
