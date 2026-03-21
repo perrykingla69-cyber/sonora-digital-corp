@@ -56,6 +56,10 @@ def test_v2_memory_routes_and_ingest_search(tmp_path):
         )
         assert ingest.status_code == 200
 
+        doc = client.get("/api/memory/documents/doc-test")
+        assert doc.status_code == 200
+        assert doc.json()["metadata"]["source"] == "test"
+
         docs = client.get("/api/memory/documents")
         assert docs.status_code == 200
         assert docs.json()[0]["key"] == "doc-test"
@@ -71,5 +75,17 @@ def test_v2_memory_routes_and_ingest_search(tmp_path):
         feedback_list = client.get("/api/feedback/memory/doc-test")
         assert feedback_list.status_code == 200
         assert feedback_list.json()[0]["comment"] == "útil"
+
+        stats = client.get("/api/memory/stats")
+        assert stats.status_code == 200
+        assert stats.json()["documents"] == 1
+        assert stats.json()["feedback_items"] == 1
+        assert stats.json()["avg_feedback_rating"] == 5.0
+
+        deleted = client.delete("/api/memory/documents/doc-test")
+        assert deleted.status_code == 204
+
+        missing = client.get("/api/memory/documents/doc-test")
+        assert missing.status_code == 404
     finally:
         app.dependency_overrides.pop(get_memory_service, None)

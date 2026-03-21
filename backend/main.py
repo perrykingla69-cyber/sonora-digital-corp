@@ -5,7 +5,9 @@ Multi-tenant | 147 calculos fiscales | SAT compliant
 """
 import calendar
 import os
+import sys
 import uuid
+from pathlib import Path
 import xml.etree.ElementTree as ET
 from datetime import datetime, date
 from typing import Any, Dict, List, Optional
@@ -17,6 +19,10 @@ from pydantic import BaseModel
 from sqlalchemy import text, Column, String, Boolean, SmallInteger, Date, Text, DateTime as SADateTime, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Session
+
+BACKEND_DIR = Path(__file__).resolve().parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 from calculos import calcular_iva, calcular_isr, calcular_ieps
 from calculos_completos_147 import CalculosCompletos147

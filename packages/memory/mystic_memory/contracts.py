@@ -33,3 +33,10 @@ class MemoryFeedbackCreate(BaseModel):
 
 class MemoryFeedback(MemoryFeedbackCreate):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class MemoryStats(BaseModel):
+    documents: int
+    feedback_items: int
+    vectors: int
+    avg_feedback_rating: float | None = None
