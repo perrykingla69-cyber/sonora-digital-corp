@@ -1,3 +1,3 @@
-from . import auth, contactos, empleados, facturas, ops, tenants
+from . import alertas, auth, contactos, dashboard, empleados, facturas, leads, ops, tenants
 
-__all__ = ["auth", "contactos", "empleados", "facturas", "ops", "tenants"]
+__all__ = ["alertas", "auth", "contactos", "dashboard", "empleados", "facturas", "leads", "ops", "tenants"]
