@@ -54,7 +54,7 @@ def test_v2_memory_routes_and_ingest_search(tmp_path):
             "/api/memory/ingest",
             json={
                 "key": "doc-test",
-                "text": "aceite industrial fourgea",
+                "text": "manual interno de aceite industrial fourgea para mantenimiento preventivo",
                 "tenant_id": "tenant-a",
                 "kind": "faq",
                 "metadata": {"source": "test"},
@@ -88,7 +88,11 @@ def test_v2_memory_routes_and_ingest_search(tmp_path):
             json={"query": "aceite", "limit": 5, "tenant_id": "tenant-a", "kind": "faq", "source": "test"},
         )
         assert search.status_code == 200
-        assert [item["key"] for item in search.json()] == ["doc-test"]
+        payload = search.json()
+        assert [item["key"] for item in payload] == ["doc-test"]
+        assert payload[0]["source"] == "test"
+        assert payload[0]["retrieval_mode"] == "lexical"
+        assert "aceite" in payload[0]["evidence_snippet"].lower()
 
         feedback = client.post("/api/feedback/memory", json={"key": "doc-test", "rating": 5, "comment": "útil"})
         assert feedback.status_code == 200

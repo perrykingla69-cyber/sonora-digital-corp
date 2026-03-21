@@ -93,6 +93,9 @@ class MemoryService:
                 tenant_id=document.tenant_id if document else metadata.get("tenant_id"),
                 kind=document.kind if document else metadata.get("kind"),
                 metadata=metadata,
+                source=metadata.get("source"),
+                retrieval_mode="lexical",
+                evidence_snippet=self._build_evidence_snippet(record.text, needle),
                 score=1.0 if needle and needle in record.text.lower() else None,
             )
             if not self._matches_filters(result, tenant_id=tenant_id, kind=kind, source=source):
@@ -144,3 +147,20 @@ class MemoryService:
         if source and item.metadata.get("source") != source:
             return False
         return True
+
+    @staticmethod
+    def _build_evidence_snippet(text: str, needle: str, radius: int = 24) -> str | None:
+        if not needle:
+            return text[: radius * 2].strip() or None
+        lower_text = text.lower()
+        start = lower_text.find(needle)
+        if start == -1:
+            return text[: radius * 2].strip() or None
+        snippet_start = max(0, start - radius)
+        snippet_end = min(len(text), start + len(needle) + radius)
+        snippet = text[snippet_start:snippet_end].strip()
+        if snippet_start > 0:
+            snippet = f"…{snippet}"
+        if snippet_end < len(text):
+            snippet = f"{snippet}…"
+        return snippet

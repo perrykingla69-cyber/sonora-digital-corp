@@ -29,6 +29,9 @@ class MemorySearchResult(BaseModel):
     tenant_id: str | None = None
     kind: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+    source: str | None = None
+    retrieval_mode: str = "lexical"
+    evidence_snippet: str | None = None
     score: float | None = None
 
 
