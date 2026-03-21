@@ -1,16 +1,29 @@
-"""Compat entrypoint for the v2 monorepo layout.
+from __future__ import annotations
 
-This file intentionally re-exports the current FastAPI application from the
-legacy backend package so we can migrate incrementally without breaking the
-running system.
-"""
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from pathlib import Path
-import sys
+from .api import auth, facturas, ops, tenants
+from .core.settings import get_settings
 
-ROOT = Path(__file__).resolve().parents[3]
-LEGACY_BACKEND = ROOT / "backend"
-if str(LEGACY_BACKEND) not in sys.path:
-    sys.path.insert(0, str(LEGACY_BACKEND))
+settings = get_settings()
+app = FastAPI(
+    title=settings.app_name,
+    description=settings.app_description,
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 
-from main import app  # noqa: E402
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(ops.router)
+app.include_router(auth.router)
+app.include_router(tenants.router)
+app.include_router(facturas.router)

@@ -67,7 +67,7 @@ python -m pytest tests/ -v
 
 ### Fase 1 — Estructura monorepo
 - `apps/`, `packages/`, `workflows/`, `docs/architecture`, `docs/decisions`.
-- Wrapper compatible de API v2 en `apps/api/app/main.py`.
+- Bootstrap modular de API v2 en `apps/api/app/main.py` con routers reales de sistema, auth, tenants y facturas.
 
 ### Fase 2 — Backend modular
 - dividir `backend/main.py` en routers, servicios, integraciones y settings.
