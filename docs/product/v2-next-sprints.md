@@ -13,7 +13,7 @@
 - medir feedback y calidad de recuperación con métricas simples ✅
 
 ## Sprint 5 — Runtime + Skills
-- crear registry de skills ✅
+- crear registry de skills ✅ (cargado desde catálogo/config)
 - introducir sesiones/runtime de agentes ✅
 - definir policies básicas por tenant y por canal ✅
 - exponer endpoints v2 básicos para skills/sesiones/autorización ✅

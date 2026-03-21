@@ -51,7 +51,9 @@ def test_v2_runtime_endpoints():
 
     skills = client.get("/runtime/skills")
     assert skills.status_code == 200
-    assert any(item["name"] == "memory.search" for item in skills.json())
+    names = {item["name"] for item in skills.json()}
+    assert "shell" in names
+    assert "filesystem" in names
 
     session = client.post("/runtime/sessions", json={"tenant_id": "tenant-a"})
     assert session.status_code == 200
