@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from apps.api.app.main import app
+from apps.api.app.main import app, create_app
 
 
 def test_v2_root():
@@ -31,4 +31,12 @@ def test_v2_includes_dashboard_leads_alertas_routes():
     paths = {route.path for route in app.routes}
     assert "/dashboard" in paths
     assert "/leads" in paths
+    assert "/alertas/config" in paths
+
+
+def test_v2_create_app_factory():
+    created = create_app()
+    paths = {route.path for route in created.routes}
+    assert created.title == "Mystic API v2"
+    assert "/dashboard" in paths
     assert "/alertas/config" in paths

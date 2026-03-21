@@ -70,7 +70,7 @@ python -m pytest tests/ -v
 - Bootstrap modular de API v2 en `apps/api/app/main.py` con routers reales de sistema, auth, tenants y facturas.
 
 ### Fase 2 — Backend modular
-- dividir `backend/main.py` en routers, servicios, integraciones y settings.
+- dividir `backend/main.py` en routers, servicios, integraciones, settings, schemas y router agregador.
 
 ### Fase 3 — Memory OS
 - Postgres + Redis + Qdrant + evidence layer.

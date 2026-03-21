@@ -7,7 +7,7 @@ from ..core import legacy  # noqa: F401
 from ..db.session import get_db
 from ..integrations.whatsapp_client import WhatsAppClient
 from ..services.auth_service import login_user, register_user, reset_password
-from schemas import LoginRequest, LoginResponse, UsuarioCreate, UsuarioResponse  # type: ignore
+from ..schemas import LoginRequest, LoginResponse, UsuarioCreate, UsuarioResponse
 from security import get_current_user  # type: ignore
 
 router = APIRouter(prefix="/auth", tags=["Auth"])

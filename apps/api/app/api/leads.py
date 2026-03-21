@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..db.session import get_db
@@ -11,25 +10,7 @@ from ..services.lead_service import create_lead, delete_lead, list_leads, update
 from security import require_role  # type: ignore
 
 
-class LeadCreate(BaseModel):
-    nombre: str
-    empresa: Optional[str] = None
-    email: Optional[str] = None
-    telefono: Optional[str] = None
-    fuente: Optional[str] = None
-    estado: Optional[str] = None
-    notas: Optional[str] = None
-
-
-class LeadUpdate(BaseModel):
-    nombre: Optional[str] = None
-    empresa: Optional[str] = None
-    email: Optional[str] = None
-    telefono: Optional[str] = None
-    fuente: Optional[str] = None
-    estado: Optional[str] = None
-    notas: Optional[str] = None
-
+from ..schemas import LeadCreate, LeadUpdate
 
 router = APIRouter(tags=["CRM"])
 

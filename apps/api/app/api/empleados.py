@@ -15,7 +15,7 @@ from ..services.employee_service import (
     payroll_preview,
     update_employee,
 )
-from schemas import EmpleadoCreate, EmpleadoResponse  # type: ignore
+from ..schemas import EmpleadoCreate, EmpleadoResponse
 from security import get_current_user  # type: ignore
 
 router = APIRouter(tags=["Nomina"])

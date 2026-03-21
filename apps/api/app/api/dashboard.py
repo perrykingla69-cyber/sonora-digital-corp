@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ..db.session import get_db
 from ..services.dashboard_service import build_dashboard
-from schemas import DashboardResponse  # type: ignore
+from ..schemas import DashboardResponse
 from security import get_current_user  # type: ignore
 
 router = APIRouter(tags=["Dashboard"])

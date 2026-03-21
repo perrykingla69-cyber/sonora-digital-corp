@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..core import legacy  # noqa: F401
 from ..db.session import get_db
 from ..services.contact_service import create_contact, deactivate_contact, get_contact, list_contacts, update_contact
-from schemas import ContactoCreate, ContactoResponse  # type: ignore
+from ..schemas import ContactoCreate, ContactoResponse
 from security import get_current_user  # type: ignore
 
 router = APIRouter(tags=["Directorio"])

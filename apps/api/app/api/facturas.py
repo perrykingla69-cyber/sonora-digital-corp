@@ -9,7 +9,7 @@ from ..core import legacy  # noqa: F401
 from ..db.session import get_db
 from ..services.accounting_service import create_factura
 from models import Factura  # type: ignore
-from schemas import FacturaCreate, FacturaResponse  # type: ignore
+from ..schemas import FacturaCreate, FacturaResponse
 from security import get_current_user  # type: ignore
 
 router = APIRouter(prefix="/facturas", tags=["Facturas"])

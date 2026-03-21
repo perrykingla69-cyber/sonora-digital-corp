@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..core import legacy  # noqa: F401
 from ..db.session import get_db
 from models import Tenant  # type: ignore
-from schemas import TenantCreate, TenantResponse  # type: ignore
+from ..schemas import TenantCreate, TenantResponse
 from security import require_role  # type: ignore
 
 router = APIRouter(prefix="/tenants", tags=["Tenants"])
