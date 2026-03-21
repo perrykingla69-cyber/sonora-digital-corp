@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import { Card } from '@/components/ui/Card'
+import AuthGuard from '@/components/layout/AuthGuard'
 import { Building2, Users, FileText, TrendingUp, Settings, CheckCircle, XCircle } from 'lucide-react'
 
 const mxn = (v: number) =>
@@ -65,7 +66,8 @@ export default function AdminPage() {
   const totalUsuarios = tenants.reduce((s, t) => s + t.usuarios, 0)
 
   return (
-    <div className="space-y-6">
+    <AuthGuard allowedRoles={['admin', 'ceo']}>
+      <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Admin — Multi-Tenant</h1>
         <p className="text-sm text-gray-500 mt-0.5">Gestión de clientes, planes y métricas globales</p>
@@ -186,7 +188,8 @@ export default function AdminPage() {
 
       {/* AI OS Status */}
       <AIStatusCard />
-    </div>
+      </div>
+    </AuthGuard>
   )
 }
 

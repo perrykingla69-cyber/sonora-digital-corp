@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { api } from '@/lib/api'
+import AuthGuard from '@/components/layout/AuthGuard'
 import {
   Users, Upload, CheckCircle, XCircle, AlertCircle,
   TrendingUp, TrendingDown, FileText, RefreshCw,
@@ -108,7 +109,8 @@ export default function ContadorPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <AuthGuard allowedRoles={['contador', 'admin', 'ceo']}>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -301,6 +303,7 @@ export default function ContadorPage() {
           })}
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }
