@@ -60,6 +60,7 @@ export default function Sidebar() {
 
   // Reglas por rol (sin excepciones por nombre/email)
   const canSeeCeoPanel = rol === 'ceo' || rol === 'admin' || rol === 'contador'
+  const canSeeSystem = rol === 'ceo' || rol === 'admin'
 
   const navPrincipal = rol === 'admin'
     ? NAV_ADMIN_PANEL
@@ -145,7 +146,7 @@ export default function Sidebar() {
             </>
           )}
 
-          {canSeeCeoPanel && (
+          {canSeeSystem && (
             <>
               <p className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">Sistema</p>
               {NAV_SISTEMA.map(({ href, icon: Icon, label }) => (

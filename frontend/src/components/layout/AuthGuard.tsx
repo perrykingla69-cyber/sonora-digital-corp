@@ -12,24 +12,22 @@ type AuthGuardProps = {
 
 export default function AuthGuard({ children, allowedRoles, fallbackPath = '/dashboard' }: AuthGuardProps) {
   const router = useRouter()
+  const authenticated = isAuthenticated()
+  const user = getUser()
+  const authorized = !allowedRoles || allowedRoles.length === 0 || (user ? hasRole(allowedRoles) : false)
 
   useEffect(() => {
-    if (!isAuthenticated()) {
+    if (!authenticated) {
       router.replace('/login')
       return
     }
 
-    if (allowedRoles && allowedRoles.length > 0 && !hasRole(allowedRoles)) {
+    if (!authorized) {
       router.replace(fallbackPath)
     }
-  }, [allowedRoles, fallbackPath, router])
+  }, [authenticated, authorized, fallbackPath, router])
 
-  if (!isAuthenticated()) return null
-
-  if (allowedRoles && allowedRoles.length > 0) {
-    const user = getUser()
-    if (!user || !hasRole(allowedRoles)) return null
-  }
+  if (!authenticated || !authorized) return null
 
   return <>{children}</>
 }
