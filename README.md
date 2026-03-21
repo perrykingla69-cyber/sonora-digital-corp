@@ -1,107 +1,107 @@
 # MYSTIC AI Operating System
 
-Orquestador de agentes IA para **Sonora Digital Corp** — arquitectura modular, soberana y open source.
+Plataforma operativa de IA para **Sonora Digital Corp**: backend multi-tenant, automatización con n8n, memoria/RAG, canales conversacionales y una ruta clara hacia runtime de agentes, CLI y MCP.
 
-## Estructura
+## Estado actual del repo
 
-```
+El repositorio hoy contiene una base funcional de producción con:
+
+- API principal en **FastAPI**.
+- Frontend en **Next.js 14**.
+- Servicio **WhatsApp**.
+- **Bot** operativo.
+- Infraestructura con **PostgreSQL, Redis, Ollama, n8n y Qdrant**.
+- Documentación arquitectónica y workflows n8n.
+
+## Dirección v2 ya aterrizada
+
+Como primer paso real hacia la arquitectura v2, el repo ya incluye la nueva estructura base para migración incremental:
+
+```text
 sonora-digital-corp/
-├── orchestrator/       ← Coordinación central (registry, router, ejecución)
-├── agents/             ← 4 agentes de dominio + BaseAgent compartido
-├── skills/             ← 5 skills reales con interfaz estándar
-├── memory/             ← TaskHistory, KnowledgeStore, VectorMemory
-├── backend/            ← REST API FastAPI (puerto 8002)
-├── configs/            ← agents.yaml + skills.yaml
-├── prompts/            ← Filosofía del enjambre + lógica de coordinación
-├── docs/               ← Documentación de arquitectura y diseño
-├── scripts/            ← start_system.sh
-└── tests/              ← 26 pruebas (skills + API)
+├── apps/              # entradas ejecutables v2
+├── packages/          # librerías compartidas v2
+├── workflows/         # workflows catalogados y versionados
+├── infra/             # despliegue y operación
+├── docs/              # arquitectura, ADRs, runbooks y producto
+├── backend/           # implementación legacy actual
+├── frontend/          # implementación legacy actual
+├── bot/               # implementación legacy actual
+├── whatsapp/          # implementación legacy actual
+└── tests/             # pruebas existentes
 ```
 
-## Agentes
+La migración será incremental: la aplicación legacy sigue viva mientras se mueven responsabilidades a `apps/` y `packages/`.
 
-| Agente | Rol | Skills |
-|---|---|---|
-| `infra_agent` | Infraestructura y despliegue | shell, filesystem, analysis |
-| `dev_agent` | Desarrollo y código | filesystem, shell, github, analysis |
-| `knowledge_agent` | Investigación y síntesis | web_search, analysis, filesystem |
-| `business_agent` | Estrategia y reportes | web_search, analysis, github, filesystem |
+## Entradas principales
 
-## Skills
-
-| Skill | Qué hace |
-|---|---|
-| `filesystem` | Leer, escribir, listar y borrar archivos |
-| `shell` | Ejecutar comandos bash (con bloqueo de comandos peligrosos) |
-| `github` | Repos, PRs e issues via `gh` CLI |
-| `web_search` | DuckDuckGo sin API key + fallback urllib |
-| `analysis` | Stats, keywords, resumen (Ollama local o extractivo) |
-
-## Inicio rápido
+### Legacy
 
 ```bash
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Arrancar y verificar sistema
-bash scripts/start_system.sh
-
-# Levantar API
 python backend/main.py
-# → http://localhost:8002/docs
 ```
 
-## API REST
+### V2 bootstrap compatible
 
 ```bash
-# Ejecutar una tarea
-curl -X POST http://localhost:8002/task \
-  -H "Content-Type: application/json" \
-  -d '{
-    "agent": "dev_agent",
-    "payload": {
-      "skill": "shell",
-      "args": {"command": "docker ps"}
-    }
-  }'
-
-# Ejecutar enjambre
-curl -X POST http://localhost:8002/swarm \
-  -H "Content-Type: application/json" \
-  -d '{"tasks": [...]}'
-
-# Ver estado
-curl http://localhost:8002/status
-
-# Documentación interactiva
-open http://localhost:8002/docs
+uvicorn apps.api.app.main:app --host 0.0.0.0 --port 8000
 ```
 
-## Endpoints disponibles
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/status` | Estado del orquestador |
-| GET | `/agents` | Lista de agentes con capacidades |
-| GET | `/skills` | Lista de skills disponibles |
-| POST | `/task` | Ejecutar una tarea |
-| POST | `/swarm` | Ejecutar múltiples tareas |
-| GET | `/memory/tasks` | Historial de tareas recientes |
-| GET/POST/DELETE | `/memory/knowledge/{key}` | CRUD de knowledge store |
-| POST | `/memory/knowledge/search` | Búsqueda en knowledge store |
-| POST | `/memory/vectors` | Agregar documento vectorial |
-| POST | `/memory/vectors/search` | Búsqueda semántica |
-
-## Tests
+## Quick start
 
 ```bash
+# Backend legacy
+python backend/main.py
+
+# Backend v2 wrapper
+uvicorn apps.api.app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Frontend legacy
+cd frontend && npm install && npm run dev
+
+# Tests backend
 python -m pytest tests/ -v
-# 26 passed
 ```
+
+## Roadmap de implementación
+
+### Fase 1 — Estructura monorepo
+- `apps/`, `packages/`, `workflows/`, `docs/architecture`, `docs/decisions`.
+- Bootstrap modular de API v2 en `apps/api/app/main.py` con routers reales de sistema, auth, tenants y facturas.
+
+### Fase 2 — Backend modular
+- dividir `backend/main.py` en routers, servicios, integraciones, settings, schemas y router agregador.
+
+### Fase 3 — Memory OS
+- Postgres + Redis + Qdrant + evidence layer.
+- Primer corte v2: ingestión, consulta, borrado, métricas y feedback básico sobre memoria persistida en `.data` (configurable con `MEMORY_DATA_DIR`) con filtros por tenant/tipo, snippets de evidencia, métricas simples de búsqueda/feedback y preparada para adaptadores futuros.
+
+### Fase 4 — Agent Runtime + Skills 2.5
+- registry, runtime, sessions y policies (primer corte iniciado en `packages/agent-runtime` y expuesto en `/runtime/*`).
+
+### Fase 5 — MCP + CLI
+- tool exposure gobernada y operable desde Claude Code/CLI.
+
+### Fase 6 — Workflows + Approvals + Autonomy
+- n8n catalogado, approvals y autonomía controlada.
+
+### Fase 7 — Command Center
+- consola operativa para tareas, workflows, approvals, memoria y observabilidad.
+
+### Fase 8 — Evals + Security + CI/CD
+- hardening de producción, gobierno, evaluaciones y despliegue seguro.
+
+## Documentos clave nuevos
+
+- `docs/architecture/target-architecture-v2.md`
+- `docs/product/skills-2.5.md`
+- `docs/decisions/0001-monorepo-layout.md`
+- `docs/decisions/0002-skills-contract.md`
 
 ## Filosofía
 
-- **90% open source** — sin dependencia de APIs de pago
-- **Principio de Inversión de Inferencia**: determinístico → caché → Ollama local → Claude API (5%)
-- **Memoria persistente**: cada tarea aprendida queda guardada
-- **Degradación graceful**: skill o agente faltante → warning, no crash
+- **Open-source first**.
+- **Migración incremental sin romper producción**.
+- **Memoria y evidencia antes de autonomía agresiva**.
+- **Policies y observabilidad antes de exposición externa**.
+- **Una sola base de código, múltiples superficies de operación**.
