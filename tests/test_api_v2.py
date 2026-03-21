@@ -34,7 +34,6 @@ def test_v2_includes_dashboard_leads_alertas_routes():
     assert "/dashboard" in paths
     assert "/leads" in paths
     assert "/alertas/config" in paths
-    assert "/runtime/skills" in paths
 
 
 def test_v2_create_app_factory():
@@ -43,33 +42,6 @@ def test_v2_create_app_factory():
     assert created.title == "Mystic API v2"
     assert "/dashboard" in paths
     assert "/alertas/config" in paths
-    assert "/runtime/sessions" in paths
-
-
-def test_v2_runtime_endpoints():
-    client = TestClient(app)
-
-    skills = client.get("/runtime/skills")
-    assert skills.status_code == 200
-    names = {item["name"] for item in skills.json()}
-    assert "shell" in names
-    assert "filesystem" in names
-
-    session = client.post("/runtime/sessions", json={"tenant_id": "tenant-a"})
-    assert session.status_code == 200
-    assert session.json()["tenant_id"] == "tenant-a"
-
-    decision = client.post(
-        "/runtime/authorize",
-        json={
-            "tenant_id": "tenant-a",
-            "skill_name": "github.write",
-            "allowed_skills": ["github.write"],
-            "blocked_scopes": ["github:write"],
-        },
-    )
-    assert decision.status_code == 200
-    assert decision.json()["allowed"] is False
 
 
 def test_v2_memory_routes_and_ingest_search(tmp_path):

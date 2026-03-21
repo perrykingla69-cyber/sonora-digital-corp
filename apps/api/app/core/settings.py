@@ -9,10 +9,6 @@ class Settings(BaseModel):
     environment: str = os.getenv("ENVIRONMENT", "development")
     cors_origins: list[str] = [origin for origin in os.getenv("CORS_ORIGINS", "*").split(",") if origin]
     memory_data_dir: str = os.getenv("MEMORY_DATA_DIR", ".data")
-    memory_backend: str = os.getenv("MEMORY_BACKEND", "json")
-    memory_sqlalchemy_url: str | None = os.getenv("MEMORY_SQLALCHEMY_URL")
-    memory_qdrant_url: str | None = os.getenv("MEMORY_QDRANT_URL")
-    memory_qdrant_collection: str = os.getenv("MEMORY_QDRANT_COLLECTION", "mystic_memory")
 
 
 @lru_cache(maxsize=1)
