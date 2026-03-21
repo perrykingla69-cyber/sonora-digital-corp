@@ -52,21 +52,43 @@ def test_v2_memory_routes_and_ingest_search(tmp_path):
     try:
         ingest = client.post(
             "/api/memory/ingest",
-            json={"key": "doc-test", "text": "aceite industrial fourgea", "metadata": {"source": "test"}},
+            json={
+                "key": "doc-test",
+                "text": "aceite industrial fourgea",
+                "tenant_id": "tenant-a",
+                "kind": "faq",
+                "metadata": {"source": "test"},
+            },
         )
         assert ingest.status_code == 200
+        assert ingest.json()["tenant_id"] == "tenant-a"
+        assert ingest.json()["kind"] == "faq"
+
+        client.post(
+            "/api/memory/ingest",
+            json={
+                "key": "doc-otro",
+                "text": "panel comercial crm",
+                "tenant_id": "tenant-b",
+                "kind": "playbook",
+                "metadata": {"source": "manual"},
+            },
+        )
 
         doc = client.get("/api/memory/documents/doc-test")
         assert doc.status_code == 200
         assert doc.json()["metadata"]["source"] == "test"
 
-        docs = client.get("/api/memory/documents")
+        docs = client.get("/api/memory/documents", params={"tenant_id": "tenant-a", "kind": "faq"})
         assert docs.status_code == 200
-        assert docs.json()[0]["key"] == "doc-test"
+        assert [item["key"] for item in docs.json()] == ["doc-test"]
 
-        search = client.post("/api/rag/search", json={"query": "aceite", "limit": 5})
+        search = client.post(
+            "/api/rag/search",
+            json={"query": "aceite", "limit": 5, "tenant_id": "tenant-a", "kind": "faq", "source": "test"},
+        )
         assert search.status_code == 200
-        assert any(item["key"] == "doc-test" for item in search.json())
+        assert [item["key"] for item in search.json()] == ["doc-test"]
 
         feedback = client.post("/api/feedback/memory", json={"key": "doc-test", "rating": 5, "comment": "útil"})
         assert feedback.status_code == 200
@@ -76,7 +98,7 @@ def test_v2_memory_routes_and_ingest_search(tmp_path):
         assert feedback_list.status_code == 200
         assert feedback_list.json()[0]["comment"] == "útil"
 
-        stats = client.get("/api/memory/stats")
+        stats = client.get("/api/memory/stats", params={"tenant_id": "tenant-a"})
         assert stats.status_code == 200
         assert stats.json()["documents"] == 1
         assert stats.json()["feedback_items"] == 1

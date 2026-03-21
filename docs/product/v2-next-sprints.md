@@ -8,8 +8,8 @@
 
 ## Sprint 4 — Profundizar Memory OS
 - reemplazar JSON local por adaptadores compatibles con Postgres/Qdrant/Redis
-- agregar evidencia/trace de recuperación y metadatos de origen
-- incorporar filtros por tenant y por tipo de documento
+- agregar evidencia/trace de recuperación y metadatos de origen ◐
+- incorporar filtros por tenant y por tipo de documento ✅
 - medir feedback y calidad de recuperación con métricas simples
 
 ## Sprint 5 — Runtime + Skills

@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field
 class MemoryDocument(BaseModel):
     key: str
     text: str
+    tenant_id: str | None = None
+    kind: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -16,11 +18,16 @@ class MemoryDocument(BaseModel):
 class MemorySearchRequest(BaseModel):
     query: str
     limit: int = Field(default=5, ge=1, le=25)
+    tenant_id: str | None = None
+    kind: str | None = None
+    source: str | None = None
 
 
 class MemorySearchResult(BaseModel):
     key: str
     text: str
+    tenant_id: str | None = None
+    kind: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
     score: float | None = None
 
