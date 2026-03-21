@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { api } from '@/lib/api'
 import AuthGuard from '@/components/layout/AuthGuard'
+import { getToken } from '@/lib/auth'
 import {
   Users, Upload, CheckCircle, XCircle, AlertCircle,
   TrendingUp, TrendingDown, FileText, RefreshCw,
@@ -71,7 +72,7 @@ export default function ContadorPage() {
 
     setUploading(true); setBulkResults(null); setBulkSummary(null)
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const token = getToken()
       const form = new FormData()
       xmlFiles.forEach(f => form.append('files', f))
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/contador/xmls/bulk`, {
