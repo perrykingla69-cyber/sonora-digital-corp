@@ -73,7 +73,19 @@ Cuando trabajes junto con Codex/Claude Code en el mismo repo:
    - riesgos de deploy,
    - siguiente acción recomendada.
 
-Prompt base sugerido para otra IA terminal: ver `docs/claude_terminal_prompt.md`.
+Prompt base sugerido para otra IA terminal:
+
+```text
+Estamos trabajando sobre el repo sonora-digital-corp.
+Objetivo actual: <objetivo>.
+Reglas:
+1) No expongas secretos ni los pegues en respuestas.
+2) Antes de editar, muestra: rama actual, git status corto y archivos que tocarás.
+3) Propón la estrategia mínima, compárala contra 1 alternativa y elige la más segura.
+4) Si el cambio afecta deploy VPS, valida impacto en docker compose, variables de entorno y puertos expuestos.
+5) Al final entrega: resumen, diff lógico, comandos ejecutados, riesgos y rollback.
+6) Si ves credenciales en el repo, reemplázalas por placeholders y documenta rotación.
+```
 
 ---
 

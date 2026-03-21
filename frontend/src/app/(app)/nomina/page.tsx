@@ -277,9 +277,9 @@ export default function NominaPage() {
                     <p className="text-xs text-gray-400">Integrado: {mxn(e.salario_integrado)}/día</p>
                   </div>
                   <div className="flex items-center gap-1">
-                    {e.nss ? <CheckCircle size={13} className="text-emerald-500" title="NSS OK" /> : <AlertTriangle size={13} className="text-amber-400" title="Falta NSS" />}
-                    {e.clabe ? <CheckCircle size={13} className="text-emerald-500" title="CLABE OK" /> : <AlertTriangle size={13} className="text-amber-400" title="Falta CLABE" />}
-                    {e.curp ? <CheckCircle size={13} className="text-emerald-500" title="CURP OK" /> : <AlertTriangle size={13} className="text-amber-400" title="Falta CURP" />}
+                    {e.nss ? <CheckCircle size={13} className="text-emerald-500" aria-label="NSS OK" /> : <AlertTriangle size={13} className="text-amber-400" aria-label="Falta NSS" />}
+                    {e.clabe ? <CheckCircle size={13} className="text-emerald-500" aria-label="CLABE OK" /> : <AlertTriangle size={13} className="text-amber-400" aria-label="Falta CLABE" />}
+                    {e.curp ? <CheckCircle size={13} className="text-emerald-500" aria-label="CURP OK" /> : <AlertTriangle size={13} className="text-amber-400" aria-label="Falta CURP" />}
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => { setEditando(e); setShowForm(false) }} className="p-1.5 text-gray-400 hover:text-brand-600 rounded"><Edit2 size={14} /></button>
