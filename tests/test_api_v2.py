@@ -18,3 +18,10 @@ def test_v2_health():
     data = response.json()
     assert data["status"] == "online"
     assert "db" in data
+
+
+def test_v2_includes_nomina_y_contactos_routes():
+    paths = {route.path for route in app.routes}
+    assert "/empleados" in paths
+    assert "/contactos" in paths
+    assert "/nomina/calculos/{empleado_id}" in paths

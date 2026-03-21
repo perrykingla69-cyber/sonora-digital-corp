@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import auth, facturas, ops, tenants
+from .api import auth, contactos, empleados, facturas, ops, tenants
 from .core.settings import get_settings
 
 settings = get_settings()
@@ -27,3 +27,5 @@ app.include_router(ops.router)
 app.include_router(auth.router)
 app.include_router(tenants.router)
 app.include_router(facturas.router)
+app.include_router(empleados.router)
+app.include_router(contactos.router)
