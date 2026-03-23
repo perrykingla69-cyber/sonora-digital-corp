@@ -29,3 +29,21 @@ out/
 # Secrets
 *.pem
 infra/nginx/ssl/
+
+# WhatsApp sessions (credenciales de sesion)
+apps/whatsapp-bridge/sessions/
+whatsapp_sessions/
+
+# Env con valores reales
+infra/.env
+infra/.env.vps
+!infra/.env.example
+
+# Backups
+*.sql
+*.dump
+infra/backups/
+
+# Logs
+*.log
+logs/
