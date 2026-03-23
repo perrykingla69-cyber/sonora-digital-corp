@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "pyyaml"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mystic-evals"
+version = "0.1.0"
+description = "MYSTIC Evals - Framework de evaluación de calidad del Brain IA"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.5.0",
+    "httpx>=0.25.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[project.scripts]
+mystic-eval = "mystic_evals.runner:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mystic_evals*"]

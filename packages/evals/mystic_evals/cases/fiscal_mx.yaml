@@ -1,0 +1,93 @@
+# MYSTIC Evals - Casos Fiscales México
+name: Evaluación Fiscal MX
+description: Casos de prueba para conocimiento fiscal mexicano 2026
+categories:
+  - fiscal
+  - sat
+  - impuestos
+
+cases:
+  - id: resico_001
+    name: ¿Qué es RESICO?
+    category: fiscal
+    query: "¿Qué es el RESICO y quién puede tributar en él?"
+    expected_answer: "El Régimen Simplificado de Confianza"
+    max_latency_ms: 5000
+    min_confidence: 0.7
+    tags:
+      - resico
+      - regimenes
+
+  - id: diot_001
+    name: ¿Qué es la DIOT?
+    category: fiscal
+    query: "¿Cuándo se presenta la DIOT?"
+    expected_answer: "Declaración Informativa de Operaciones con Terceros"
+    expected_tool_calls:
+      - sat_query
+    tags:
+      - diot
+      - declaraciones
+
+  - id: iva_001
+    name: Tasa de IVA general
+    category: fiscal
+    query: "¿Cuál es la tasa general de IVA en México?"
+    expected_answer: "16%"
+    max_latency_ms: 3000
+    tags:
+      - iva
+      - tasas
+
+  - id: isr_001
+    name: Tabla ISR personas físicas
+    category: fiscal
+    query: "¿Cómo se calcula el ISR para personas físicas en 2026?"
+    expected_answer: "tabla"
+    expected_tool_calls:
+      - calcular_isr
+    tags:
+      - isr
+      - personas_fisicas
+
+  - id: cfdi_001
+    name: ¿Qué es un CFDI?
+    category: fiscal
+    query: "¿Qué es un CFDI y para qué sirve?"
+    expected_answer: "Comprobante Fiscal Digital por Internet"
+    tags:
+      - cfdi
+      - facturacion
+
+  - id: sat_001
+    name: Verificar CFDI
+    category: fiscal
+    query: "Verifica el CFDI con UUID A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
+    expected_answer: "SAT"
+    expected_tool_calls:
+      - verificar_cfdi
+    tags:
+      - cfdi
+      - verificacion
+
+  - id: nomina_001
+    name: Cuotas IMSS patronales
+    category: fiscal
+    query: "¿Cuáles son las cuotas patronales del IMSS?"
+    expected_answer: "IMSS"
+    expected_tool_calls:
+      - consultar_imss
+    tags:
+      - imss
+      - nomina
+
+  - id: pedimento_001
+    name: Cálculo de pedimento
+    category: fiscal
+    query: "Calcula el pedimento para importación de USD 5000"
+    expected_answer: "IGI"
+    expected_tool_calls:
+      - calcular_pedimento
+    tags:
+      - pedimento
+      - comercio_exterior

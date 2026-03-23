@@ -1,27 +1,5 @@
 ```
-# Dependencies
-backend/.venv/
-backend/venv/
-backend/__pycache__/
-backend/.mypy_cache/
-backend/.pytest_cache/
+# Documentation
+docs/
 
-# Environment
-backend/.env
-backend/.env.local
-backend/*.env.*
-
-# Logs and temp files
-*.log
-*.tmp
-*.swp
-
-# Editors
-.vscode/
-.idea/
-
-# Build artifacts
-dist/
-build/
-target/
 ```
