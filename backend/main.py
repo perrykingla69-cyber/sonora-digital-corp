@@ -98,6 +98,16 @@ except Exception as _e:
     import logging
     logging.getLogger(__name__).warning(f"Aduanas router no disponible: {_e}")
 
+# ── V2 Advanced router (Omnichannel, Fiscal Reasoning, Predictive) ────
+try:
+    from app.api.v2_advanced import router as v2_router
+    app.include_router(v2_router, prefix="/api")
+    import logging
+    logging.getLogger(__name__).info("V2 Advanced router registrado: /api/v2/*")
+except Exception as _e:
+    import logging
+    logging.getLogger(__name__).warning(f"V2 router no disponible: {_e}")
+
 # Redis opcional (no bloquea si no está disponible)
 try:
     _redis = redis.from_url(
@@ -3699,13 +3709,11 @@ async def admin_seed_dof(
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
-# ============================================
-# IMPORTS V2 - Módulos avanzados (agregar al inicio del archivo existente)
-# ============================================
-
-from app.api.v2_advanced import router as v2_router
-app.include_router(v2_router, prefix="/api")
-
-from app.academy import router as academy_router
-app.include_router(academy_router, prefix="/api")
+# ── Academy router ────────────────────────────────────────────────────
+try:
+    from app.academy import router as academy_router
+    app.include_router(academy_router, prefix="/api")
+except Exception as _e:
+    import logging
+    logging.getLogger(__name__).warning(f"Academy router no disponible: {_e}")
 
