@@ -3698,3 +3698,12 @@ async def admin_seed_dof(
         return {"ok": False, "error": "Timeout — el proceso tardó más de 5 minutos"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+# ============================================
+# IMPORTS V2 - Módulos avanzados (agregar al inicio del archivo existente)
+# ============================================
+
+# Descomenta estas líneas en tu main.py existente:
+# from app.api.v2_advanced import router as v2_router
+# app.include_router(v2_router)
+
