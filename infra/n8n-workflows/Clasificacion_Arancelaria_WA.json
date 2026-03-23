@@ -1,0 +1,62 @@
+{
+  "id": "a1c2e3f4-5678-90ab-cdef-111222333444",
+  "name": "Clasificacion Arancelaria WA",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "clasificar-arancel",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Webhook Clasificar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "clasificar-arancel-001"
+    },
+    {
+      "parameters": {
+        "url": "=http://api:8000/api/aduanas/clasificar?descripcion={{ encodeURIComponent($json.body.descripcion) }}",
+        "options": {}
+      },
+      "name": "Clasificar TIGIE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Clasificar TIGIE').first().json;\nconst req = $('Webhook Clasificar').first().json.body;\nconst r = data.resultado || data.sugerencias?.[0] || {};\nlet msg = '⚙️ *Clasificación Arancelaria MYSTIC*\\n\\n';\nmsg += `📦 Producto: ${req.descripcion}\\n`;\nmsg += `🔢 Fracción TIGIE: *${r.fraccion || 'No encontrada'}*\\n`;\nmsg += `📊 IGI: ${r.igi_pct !== undefined ? r.igi_pct + '%' : 'N/A'}\\n`;\nmsg += `🎯 Confianza: ${r.confianza || 'N/A'}\\n`;\nif (r.nota_tmec) msg += `\\n🇺🇸 ${r.nota_tmec}\\n`;\nmsg += '\\n👉 sonoradigitalcorp.com/panel';\nconst numero = req.numero || '526622681111';\nreturn [{ json: { mensaje: msg, numero } }];"
+      },
+      "name": "Formatear Mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Clasificar": { "main": [[{ "node": "Clasificar TIGIE", "type": "main", "index": 0 }]] },
+    "Clasificar TIGIE": { "main": [[{ "node": "Formatear Mensaje", "type": "main", "index": 0 }]] },
+    "Formatear Mensaje": { "main": [[{ "node": "Enviar WA", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
