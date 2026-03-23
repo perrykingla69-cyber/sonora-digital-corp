@@ -173,6 +173,44 @@ services:
       - mystic_net
     restart: unless-stopped
 
+  whatsapp-bridge:
+    build:
+      context: ../apps/whatsapp-bridge
+      dockerfile: Dockerfile
+    container_name: mystic_whatsapp_bridge
+    ports:
+      - "127.0.0.1:3002:3002"
+    environment:
+      PORT: 3002
+      API_BASE: http://api:8000
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+    volumes:
+      - whatsapp_sessions:/app/sessions
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - mystic_net
+    restart: unless-stopped
+
+  telegram-bot:
+    build:
+      context: ../apps/telegram-bot
+      dockerfile: Dockerfile
+    container_name: mystic_telegram_bot
+    ports:
+      - "127.0.0.1:3003:3003"
+    environment:
+      PORT: 3003
+      API_BASE: http://api:8000
+      DEFAULT_BOT_TOKEN: ${TELEGRAM_TOKEN}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - mystic_net
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
@@ -180,6 +218,7 @@ volumes:
   ollama_data:
   wa_data:
   qdrant_data:
+  whatsapp_sessions:
 
 networks:
   mystic_net:
