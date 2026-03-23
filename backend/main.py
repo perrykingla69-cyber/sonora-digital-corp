@@ -66,6 +66,14 @@ except Exception as _e:
     import logging
     logging.getLogger(__name__).warning(f"Media router no disponible: {_e}")
 
+# ── SAT router (verificador CFDI, sandbox, calendario) ───────────────
+try:
+    from app.api.sat import router as sat_router
+    app.include_router(sat_router)
+except Exception as _e:
+    import logging
+    logging.getLogger(__name__).warning(f"SAT router no disponible: {_e}")
+
 # Redis opcional (no bloquea si no está disponible)
 try:
     _redis = redis.from_url(
