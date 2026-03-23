@@ -2054,6 +2054,16 @@ except Exception:
     _queen = None
     _SWARM_ENABLED = False
 
+# ── Tool Use (detecta intención → ejecuta acción directa) ─────────────
+try:
+    from app.ai.tools.tool_use import detect_tool_calls, execute_tool_call
+    _TOOLS_ENABLED = True
+except Exception as _te:
+    detect_tool_calls = None
+    execute_tool_call = None
+    _TOOLS_ENABLED = False
+    import logging; logging.getLogger(__name__).warning(f"Tools no disponibles: {_te}")
+
 # Mapeo context → colección Qdrant
 _CONTEXT_COLLECTION = {
     "default": "fiscal_mx",
@@ -2337,6 +2347,25 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
     Respuestas precisas sin alucinaciones sobre tasas, artículos y trámites mexicanos.
     """
     key = _cache_key(body.question, body.context)
+
+    # Capa 0: Tool Use — detecta intención de acción antes del RAG
+    if _TOOLS_ENABLED and detect_tool_calls:
+        try:
+            tool_calls = detect_tool_calls(body.question)
+            if tool_calls:
+                tc = tool_calls[0]
+                tool_result = await execute_tool_call(tc)
+                answer = tool_result.get("message") or str(tool_result.get("result", "Acción ejecutada"))
+                return _BrainResponse(
+                    answer=answer,
+                    source=f"tool:{tc.tool_name}",
+                    cached=False,
+                    chunks_used=0,
+                    qdrant_used=False,
+                    session_id=body.session_id,
+                )
+        except Exception as _tool_err:
+            import logging; logging.getLogger(__name__).warning(f"Tool Use error: {_tool_err}")
 
     # Capa 1: Redis Cache
     if body.use_cache:
