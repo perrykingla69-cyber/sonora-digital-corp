@@ -3712,7 +3712,7 @@ async def admin_seed_dof(
 # ── Academy router ────────────────────────────────────────────────────
 try:
     from app.academy import router as academy_router
-    app.include_router(academy_router, prefix="/api")
+    app.include_router(academy_router)  # Nginx ya quita /api antes de llegar aquí
 except Exception as _e:
     import logging
     logging.getLogger(__name__).warning(f"Academy router no disponible: {_e}")
