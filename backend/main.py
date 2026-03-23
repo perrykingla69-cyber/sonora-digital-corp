@@ -3653,3 +3653,48 @@ async def admin_ollama_health():
         return {"ok": True, "models": models, "active_model": _OLLAMA_MODEL, "latency_ms": latency_ms, "circuit_breaker": cb}
     except Exception as e:
         return {"ok": False, "error": str(e), "latency_ms": int((_time.time() - t0) * 1000)}
+
+
+# ── Admin: Seed DOF automático ────────────────────────────────────────────────
+
+@app.post("/api/admin/seed/dof", tags=["Admin"])
+async def admin_seed_dof(
+    dias: int = 7,
+    include_qa: bool = False,
+    fecha: str = "",
+):
+    """
+    Dispara el script seed_dof_auto.py en background.
+    Llamado por N8N workflow DOF_Auto_Seed_Semanal cada lunes.
+    """
+    import subprocess
+    import sys as _sys
+
+    script = "/home/mystic/sonora-digital-corp/scripts/seed_dof_auto.py"
+    cmd = [_sys.executable, script, "--dof-only", f"--dias={dias}"]
+    if fecha:
+        cmd = [_sys.executable, script, "--fecha", fecha, "--dof-only"]
+    if include_qa:
+        cmd = [_sys.executable, script, f"--dias={dias}"]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            env={**os.environ, "QDRANT_URL": "http://mystic_qdrant:6333", "OLLAMA_URL": "http://mystic-ollama:11434"}
+        )
+        lines = (result.stdout + result.stderr).splitlines()
+        indexed = sum(1 for l in lines if "OK" in l or "indexado" in l.lower())
+        errors = sum(1 for l in lines if "ERROR" in l or "Error" in l)
+        return {
+            "ok": True,
+            "indexed": indexed,
+            "errors": errors,
+            "log": lines[-20:] if lines else []
+        }
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "Timeout — el proceso tardó más de 5 minutos"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
