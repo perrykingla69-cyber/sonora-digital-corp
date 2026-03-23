@@ -1,0 +1,128 @@
+{
+  "updatedAt": "2026-03-17T19:12:42.050Z",
+  "createdAt": "2026-03-17T19:12:42.050Z",
+  "id": "fc8759fa-1496-45d7-9c53-703aef473d13",
+  "name": "Mapeo Legal — Fracción Arancelaria",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mapeo-legal",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-mapeo",
+      "name": "Webhook POST /mapeo-legal",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "mapeo-legal-001"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/api/brain/ask",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "question",
+              "value": "=Dada la fracción arancelaria {{ $json.body.fraccion }} para el producto {{ $json.body.descripcion }}, indica: 1) IGI aplicable, 2) NOM/normas requeridas, 3) permisos previos COFEPRIS/SEMARNAT si aplica, 4) documentos aduaneros necesarios."
+            },
+            {
+              "name": "context",
+              "value": "aranceles-mexico"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "brain-mapeo",
+      "name": "Mystic Brain — Consulta Legal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-mapeo",
+      "name": "Responder JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook POST /mapeo-legal": {
+      "main": [
+        [
+          {
+            "node": "Mystic Brain — Consulta Legal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mystic Brain — Consulta Legal": {
+      "main": [
+        [
+          {
+            "node": "Responder JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b4fb4451-36ad-4fd0-a120-971c443e2685",
+  "activeVersionId": null,
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-17T19:12:42.050Z",
+      "createdAt": "2026-03-17T19:12:42.050Z",
+      "role": "workflow:owner",
+      "workflowId": "fc8759fa-1496-45d7-9c53-703aef473d13",
+      "projectId": "w1foCeVywdyMBjNr",
+      "project": {
+        "updatedAt": "2026-03-17T18:04:43.174Z",
+        "createdAt": "2026-03-17T18:04:43.174Z",
+        "id": "w1foCeVywdyMBjNr",
+        "name": "Unnamed Project",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "81e2334b-2624-4661-af6a-6a0b4a98eb75"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

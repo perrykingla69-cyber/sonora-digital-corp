@@ -1,0 +1,104 @@
+{
+  "updatedAt": "2026-03-19T04:02:48.117Z",
+  "createdAt": "2026-03-19T04:02:48.117Z",
+  "id": "c6c077ac-edbc-465b-9585-74c967cef12a",
+  "name": "Recordatorio SAT Dia 17",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "c1",
+      "name": "Trigger Dia 17",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 17 * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c2",
+      "name": "Alerta SAT WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://mystic-wa:3001/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "MysticWA2026!"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "jid": "6622681111@s.whatsapp.net",
+          "message": "Recordatorio SAT: Vencen declaraciones mensuales. Revisa Mystic."
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Trigger Dia 17": {
+      "main": [
+        [
+          {
+            "node": "Alerta SAT WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "2a02d17e-638e-4b96-8300-878e8f3fb355",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-19T04:04:12.078Z",
+      "createdAt": "2026-03-19T04:04:12.078Z",
+      "role": "workflow:owner",
+      "workflowId": "c6c077ac-edbc-465b-9585-74c967cef12a",
+      "projectId": "w1foCeVywdyMBjNr",
+      "project": {
+        "updatedAt": "2026-03-17T18:04:43.174Z",
+        "createdAt": "2026-03-17T18:04:43.174Z",
+        "id": "w1foCeVywdyMBjNr",
+        "name": "Unnamed Project",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "81e2334b-2624-4661-af6a-6a0b4a98eb75"
+      }
+    }
+  ],
+  "versionMetadata": null
+}

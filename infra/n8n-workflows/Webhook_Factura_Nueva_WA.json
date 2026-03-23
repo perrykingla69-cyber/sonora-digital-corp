@@ -1,0 +1,99 @@
+{
+  "updatedAt": "2026-03-19T04:02:48.117Z",
+  "createdAt": "2026-03-19T04:02:48.117Z",
+  "id": "5c0987dc-cc0a-4c95-8d2d-dabd3a06d24d",
+  "name": "Webhook Factura Nueva WA",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "w1",
+      "name": "Webhook Factura",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "path": "factura-nueva",
+        "responseMode": "onReceived",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "w2",
+      "name": "Notif WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://mystic-wa:3001/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "MysticWA2026!"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "jid": "6622681111@s.whatsapp.net",
+          "message": "Nueva factura procesada en Mystic."
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Factura": {
+      "main": [
+        [
+          {
+            "node": "Notif WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "7a8cc846-2b69-4b92-8522-cd392f064a0e",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-19T04:04:12.078Z",
+      "createdAt": "2026-03-19T04:04:12.078Z",
+      "role": "workflow:owner",
+      "workflowId": "5c0987dc-cc0a-4c95-8d2d-dabd3a06d24d",
+      "projectId": "w1foCeVywdyMBjNr",
+      "project": {
+        "updatedAt": "2026-03-17T18:04:43.174Z",
+        "createdAt": "2026-03-17T18:04:43.174Z",
+        "id": "w1foCeVywdyMBjNr",
+        "name": "Unnamed Project",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "81e2334b-2624-4661-af6a-6a0b4a98eb75"
+      }
+    }
+  ],
+  "versionMetadata": null
+}

@@ -1,0 +1,123 @@
+{
+  "updatedAt": "2026-03-17T19:12:38.781Z",
+  "createdAt": "2026-03-17T19:12:38.781Z",
+  "id": "ef39d99f-45d6-43a6-98a2-11343bd23ade",
+  "name": "Alert Tarde — Resumen Diario 6pm",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 1 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-tarde",
+      "name": "Cron 6pm Hermosillo",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://127.0.0.1:8000/dashboard",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "get-dashboard-tarde",
+      "name": "GET Dashboard API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🌆 *Resumen Tarde — {{ $now.format('DD/MM/YYYY') }}*\n\n📊 Total facturas: {{ $json.resumen.total_facturas }}\n💰 Ingresos hoy: ${{ $json.resumen.ingresos_mes?.toFixed(2) }} MXN\n💸 Gastos hoy: ${{ $json.resumen.gastos_mes?.toFixed(2) }} MXN\n⏳ Por cobrar: ${{ $json.resumen.por_cobrar?.toFixed(2) }} MXN\n⏳ Por pagar: ${{ $json.resumen.por_pagar?.toFixed(2) }} MXN\n\n{{ $json.alertas.length > 0 ? '⚠️ Alertas:\\n' + $json.alertas.join('\\n') : '✅ Sin alertas críticas' }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-tarde",
+      "name": "Telegram Alerta Tarde",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Cron 6pm Hermosillo": {
+      "main": [
+        [
+          {
+            "node": "GET Dashboard API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Dashboard API": {
+      "main": [
+        [
+          {
+            "node": "Telegram Alerta Tarde",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "bb19631e-a909-4ba1-8b1a-858ca943b6d6",
+  "activeVersionId": null,
+  "versionCounter": 3,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-17T19:12:38.781Z",
+      "createdAt": "2026-03-17T19:12:38.781Z",
+      "role": "workflow:owner",
+      "workflowId": "ef39d99f-45d6-43a6-98a2-11343bd23ade",
+      "projectId": "w1foCeVywdyMBjNr",
+      "project": {
+        "updatedAt": "2026-03-17T18:04:43.174Z",
+        "createdAt": "2026-03-17T18:04:43.174Z",
+        "id": "w1foCeVywdyMBjNr",
+        "name": "Unnamed Project",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "81e2334b-2624-4661-af6a-6a0b4a98eb75"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}
