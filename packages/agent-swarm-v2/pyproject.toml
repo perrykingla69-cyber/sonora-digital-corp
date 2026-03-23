@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "mystic-swarm"
+version = "2.0.0"
+description = "MYSTIC Agent Swarm V2 — Merch, Vision, Academy, Chain, Hype"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio"]

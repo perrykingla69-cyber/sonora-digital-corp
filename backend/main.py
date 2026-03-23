@@ -3703,7 +3703,9 @@ async def admin_seed_dof(
 # IMPORTS V2 - Módulos avanzados (agregar al inicio del archivo existente)
 # ============================================
 
-# Descomenta estas líneas en tu main.py existente:
-# from app.api.v2_advanced import router as v2_router
-# app.include_router(v2_router)
+from app.api.v2_advanced import router as v2_router
+app.include_router(v2_router, prefix="/api")
+
+from app.academy import router as academy_router
+app.include_router(academy_router, prefix="/api")
 
