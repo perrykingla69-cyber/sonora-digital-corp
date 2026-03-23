@@ -74,6 +74,14 @@ except Exception as _e:
     import logging
     logging.getLogger(__name__).warning(f"SAT router no disponible: {_e}")
 
+# ── Fiscal router (DIOT, complemento pago, scorecard, flujo) ─────────
+try:
+    from app.api.fiscal import router as fiscal_router
+    app.include_router(fiscal_router)
+except Exception as _e:
+    import logging
+    logging.getLogger(__name__).warning(f"Fiscal router no disponible: {_e}")
+
 # Redis opcional (no bloquea si no está disponible)
 try:
     _redis = redis.from_url(

@@ -1,0 +1,48 @@
+{
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "name": "Reporte Ejecutivo Lunes WA",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8 * * 1" }] } },
+      "name": "Trigger Lunes 8am", "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1, "position": [240, 300]
+    },
+    {
+      "parameters": { "url": "http://api:8000/dashboard", "options": {} },
+      "name": "Dashboard", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [460, 200]
+    },
+    {
+      "parameters": { "url": "http://api:8000/api/sat/calendario", "options": {} },
+      "name": "Vencimientos SAT", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const dash = $('Dashboard').first().json;\nconst sat = $('Vencimientos SAT').first().json;\nconst res = dash.resumen || {};\nconst mxn = v => '$' + Number(v||0).toLocaleString('es-MX');\nlet msg = '📊 *REPORTE SEMANAL MYSTIC*\\n\\n';\nmsg += `💰 Ingresos: ${mxn(res.ingresos_mes)}\\n`;\nmsg += `📉 Egresos: ${mxn(res.gastos_mes)}\\n`;\nmsg += `✅ Utilidad: ${mxn(res.utilidad_mes)}\\n`;\nmsg += `🧾 Facturas: ${res.facturas_mes||0}\\n\\n`;\nconst urg = (sat.vencimientos||[]).filter(v=>v.urgente);\nif(urg.length) { msg += '⚠️ *VENCIMIENTOS:*\\n'; urg.forEach(v=>msg+=`• ${v.obligacion} — ${v.dias_restantes}d\\n`); }\nelse { msg += '✅ Sin vencimientos urgentes\\n'; }\nmsg += '\\n👉 sonoradigitalcorp.com/panel';\nreturn [{json:{mensaje:msg,numero:'526623538272'}}];"
+      },
+      "name": "Formatear", "type": "n8n-nodes-base.code",
+      "typeVersion": 2, "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send", "method": "POST", "sendBody": true,
+        "bodyParameters": { "parameters": [
+          {"name":"numero","value":"={{ $json.numero }}"},
+          {"name":"mensaje","value":"={{ $json.mensaje }}"}
+        ]},
+        "options": {}
+      },
+      "name": "Enviar WA", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [920, 300]
+    }
+  ],
+  "connections": {
+    "Trigger Lunes 8am": {"main": [[{"node":"Dashboard","type":"main","index":0},{"node":"Vencimientos SAT","type":"main","index":0}]]},
+    "Dashboard": {"main": [[{"node":"Formatear","type":"main","index":0}]]},
+    "Vencimientos SAT": {"main": [[{"node":"Formatear","type":"main","index":0}]]},
+    "Formatear": {"main": [[{"node":"Enviar WA","type":"main","index":0}]]}
+  },
+  "active": true,
+  "settings": {"executionOrder": "v1"}
+}
