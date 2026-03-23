@@ -1,31 +1,27 @@
-# Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-venv/
-*.egg-info/
+```
+# Dependencies
+backend/.venv/
+backend/venv/
+backend/__pycache__/
+backend/.mypy_cache/
+backend/.pytest_cache/
 
 # Environment
-.env
-.env.*
-!.env.example
+backend/.env
+backend/.env.local
+backend/*.env.*
 
-# Node
-node_modules/
-.next/
-out/
+# Logs and temp files
+*.log
+*.tmp
+*.swp
 
-# Expo
-.expo/
-
-# IDE
+# Editors
 .vscode/
 .idea/
 
-# OS
-.DS_Store
-
-# Secrets
-*.pem
-infra/nginx/ssl/
+# Build artifacts
+dist/
+build/
+target/
+```
