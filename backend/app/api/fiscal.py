@@ -212,7 +212,6 @@ EGRESOS_MOCK: List[dict] = [
 @router.get(
     "/diot/{ano}/{mes}",
     summary="Genera DIOT en formato texto plano SAT",
-    response_class=None,
 )
 async def generar_diot(ano: int, mes: int):
     """

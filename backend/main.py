@@ -82,6 +82,22 @@ except Exception as _e:
     import logging
     logging.getLogger(__name__).warning(f"Fiscal router no disponible: {_e}")
 
+# ── Onboarding router (wizard de configuración inicial) ───────────────
+try:
+    from app.api.onboarding import router as onboarding_router
+    app.include_router(onboarding_router)
+except Exception as _e:
+    import logging
+    logging.getLogger(__name__).warning(f"Onboarding router no disponible: {_e}")
+
+# ── Aduanas router (clasificación arancelaria, pedimento, VUCEM) ──────
+try:
+    from app.api.aduanas import router as aduanas_router
+    app.include_router(aduanas_router)
+except Exception as _e:
+    import logging
+    logging.getLogger(__name__).warning(f"Aduanas router no disponible: {_e}")
+
 # Redis opcional (no bloquea si no está disponible)
 try:
     _redis = redis.from_url(
