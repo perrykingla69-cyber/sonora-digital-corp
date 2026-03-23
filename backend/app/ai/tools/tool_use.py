@@ -164,7 +164,13 @@ def extract_arguments(tool_name: str, match: re.Match, full_input: str) -> Dict[
 
 async def execute_tool_call(tool_call: ToolCall, tenant_id: Optional[str] = None) -> Dict[str, Any]:
     """Ejecuta una llamada a herramienta y retorna el resultado."""
-    from ai.tools.base import get_tool
+    try:
+        from app.ai.tools.base import get_tool
+    except ImportError:
+        try:
+            from tools.base import get_tool
+        except ImportError:
+            from ai.tools.base import get_tool
     
     tool = get_tool(tool_call.tool_name)
     if not tool:
