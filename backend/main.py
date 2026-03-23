@@ -58,6 +58,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Media router (OCR + Whisper STT) ─────────────────────────────────
+try:
+    from app.api.media import router as media_router
+    app.include_router(media_router)
+except Exception as _e:
+    import logging
+    logging.getLogger(__name__).warning(f"Media router no disponible: {_e}")
+
 # Redis opcional (no bloquea si no está disponible)
 try:
     _redis = redis.from_url(
