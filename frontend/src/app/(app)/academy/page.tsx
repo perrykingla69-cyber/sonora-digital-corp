@@ -6,6 +6,7 @@ import {
   Lock, TrendingUp, Award, Users, ChevronRight
 } from 'lucide-react'
 import clsx from 'clsx'
+import { api } from '@/lib/api'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Perfil {
@@ -53,17 +54,6 @@ interface LeaderEntry {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
-async function apiFetch(path: string, opts?: RequestInit) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
-  const res = await fetch(`${API}${path}`, {
-    ...opts,
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...opts?.headers },
-  })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
 
 const tipoColor: Record<string, string> = {
   diaria: 'text-sovereign-gold border-sovereign-gold/30 bg-sovereign-gold/10',
@@ -150,10 +140,10 @@ export default function AcademyPage() {
 
   useEffect(() => {
     Promise.all([
-      apiFetch('/academy/perfil'),
-      apiFetch('/academy/misiones'),
-      apiFetch('/academy/logros'),
-      apiFetch('/academy/leaderboard'),
+      api.get<Perfil>('/academy/perfil'),
+      api.get<Mision[]>('/academy/misiones'),
+      api.get<Logro[]>('/academy/logros'),
+      api.get<LeaderEntry[]>('/academy/leaderboard'),
     ]).then(([p, m, l, r]) => {
       setPerfil(p); setMisiones(m); setLogros(l); setRanking(r)
     }).catch(console.error)
@@ -167,7 +157,7 @@ export default function AcademyPage() {
 
   const completarMision = async (id: string) => {
     try {
-      const res = await apiFetch(`/academy/misiones/${id}/completar`, { method: 'POST' })
+      const res = await api.post<{xp_ganada:number;nivel_actual:number;experiencia:number;rango:string}>(`/academy/misiones/${id}/completar`, {})
       setMisiones(prev => prev.map(m => m.id === id ? { ...m, completada: true } : m))
       setPerfil(prev => prev ? { ...prev, experiencia: res.experiencia, nivel: res.nivel_actual, rango: res.rango } : prev)
       showToast(`+${res.xp_ganada} XP — ¡Misión completada!`)
