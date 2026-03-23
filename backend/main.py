@@ -13,7 +13,7 @@ from datetime import datetime, date
 from typing import Any, Dict, List, Optional
 
 import redis
-from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import text, Column, String, Boolean, SmallInteger, Date, Text, DateTime as SADateTime, func
@@ -1019,9 +1019,19 @@ async def tipo_cambio_hoy(db: Session = Depends(get_db)):
 #  STATUS PAGE (pública)
 # ═══════════════════════════════════════════════
 
+import time as _time_status
+_APP_START_TIME = _time_status.time()
+
 @app.get("/status", tags=["Sistema"])
 async def status_publico(db: Session = Depends(get_db)):
-    checks = {"api": "ok", "db": "error", "redis": "error", "timestamp": datetime.utcnow().isoformat()}
+    checks = {
+        "api": "ok",
+        "db": "error",
+        "redis": "error",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "3.3.6",
+        "uptime_seconds": int(_time_status.time() - _APP_START_TIME),
+    }
     try:
         db.execute(text("SELECT 1"))
         checks["db"] = "ok"
@@ -1033,7 +1043,18 @@ async def status_publico(db: Session = Depends(get_db)):
             checks["redis"] = "ok"
     except Exception:
         pass
-    checks["status"] = "operational" if all(v == "ok" for k, v in checks.items() if k not in ("timestamp", "status")) else "degraded"
+    # Contar workflows N8N activos (best-effort)
+    try:
+        import urllib.request as _ur, json as _j
+        _n8n_url = os.getenv("N8N_URL", "http://n8n:5679")
+        _n8n_key = os.getenv("N8N_API_KEY", "")
+        _req = _ur.Request(f"{_n8n_url}/api/v1/workflows?active=true", headers={"X-N8N-API-KEY": _n8n_key})
+        with _ur.urlopen(_req, timeout=3) as _r:
+            _wf_data = _j.loads(_r.read())
+            checks["n8n_active_workflows"] = len(_wf_data.get("data", []))
+    except Exception:
+        checks["n8n_active_workflows"] = None
+    checks["status"] = "operational" if all(v == "ok" for k, v in checks.items() if k in ("api", "db", "redis")) else "degraded"
     return checks
 
 
@@ -2033,6 +2054,7 @@ def ai_mem_search(req: _SearchReq, current_user=Depends(get_current_user)):
 import hashlib as _hashlib
 import urllib.request as _urllib_req
 import json as _json
+import time as _time
 
 _OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
 _BRAIN_CACHE_TTL = int(os.environ.get("BRAIN_CACHE_TTL", "3600"))
@@ -2234,6 +2256,35 @@ def _is_direct_lookup(question: str, chunks: list[dict]) -> bool:
 
 _OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "deepseek-r1:1.5b")
 _OLLAMA_FALLBACK = "phi3-fast"  # fallback si deepseek no está disponible
+_OLLAMA_TIMEOUT = int(os.environ.get("OLLAMA_TIMEOUT", "30"))  # segundos
+
+# ── Middleware de seguridad y métricas ────────────────────────────────────────
+try:
+    from app.middleware.security import OllamaCircuitBreaker, AuditLogger
+    from app.middleware.metrics import AgentMetrics
+    _circuit_breaker = OllamaCircuitBreaker(max_failures=5, reset_timeout=60.0)
+    _audit_logger = AuditLogger(_redis_client())
+    _agent_metrics = AgentMetrics(_redis_client())
+    _MIDDLEWARE_ENABLED = True
+except Exception as _mw_err:
+    import logging as _mw_logging
+    _mw_logging.getLogger(__name__).warning(f"Middleware seguridad no disponible: {_mw_err}")
+    _circuit_breaker = None
+    _audit_logger = None
+    _agent_metrics = None
+    _MIDDLEWARE_ENABLED = False
+
+# Patrones de prompt injection a bloquear
+_INJECTION_PATTERNS = [
+    "ignore previous instructions",
+    "system prompt",
+    "ignore all instructions",
+    "disregard previous",
+    "forget your instructions",
+    "you are now",
+    "act as",
+    "jailbreak",
+]
 
 import re as _re
 
@@ -2243,6 +2294,20 @@ def _strip_think_tags(text: str) -> str:
 
 
 def _ollama_ask(question: str, rag_context: str) -> str:
+    """
+    Llama a Ollama con contexto RAG.
+    - Usa _OLLAMA_TIMEOUT (env OLLAMA_TIMEOUT, default 30s).
+    - Si timeout supera el límite, retorna texto de fallback en lugar de lanzar excepción.
+    - Integra con OllamaCircuitBreaker: registra éxito/fallo para proteger el servicio.
+    """
+    import socket as _socket
+
+    # Circuit breaker: si está OPEN, retornar fallback inmediatamente
+    if _circuit_breaker is not None and not _circuit_breaker.allow_request():
+        import logging as _cb_log
+        _cb_log.getLogger(__name__).warning("[Ollama] Circuit OPEN — skip Ollama, usando RAG fallback")
+        return ""  # el caller usa el RAG directo como fallback
+
     system = _BRAIN_SYSTEM_SHORT
     if rag_context:
         system += f"\n\nCONTEXTO:\n{rag_context}"
@@ -2265,9 +2330,26 @@ def _ollama_ask(question: str, rag_context: str) -> str:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with _urllib_req.urlopen(req, timeout=60) as r:
-        raw = _json.loads(r.read()).get("response", "").strip()
-    return _strip_think_tags(raw) if is_deepseek else raw
+
+    try:
+        with _urllib_req.urlopen(req, timeout=_OLLAMA_TIMEOUT) as r:
+            raw = _json.loads(r.read()).get("response", "").strip()
+        result = _strip_think_tags(raw) if is_deepseek else raw
+        if _circuit_breaker is not None:
+            _circuit_breaker.record_success()
+        return result
+    except (_socket.timeout, TimeoutError):
+        import logging as _to_log
+        _to_log.getLogger(__name__).warning(
+            "[Ollama] Timeout después de %ds — usando fallback RAG", _OLLAMA_TIMEOUT
+        )
+        if _circuit_breaker is not None:
+            _circuit_breaker.record_failure()
+        return ""  # string vacío → el caller detecta y usa RAG directo
+    except Exception:
+        if _circuit_breaker is not None:
+            _circuit_breaker.record_failure()
+        raise
 
 
 # ── P1: RAG por colección específica (para los workers del swarm) ─────────────
@@ -2341,11 +2423,54 @@ def _session_history_text(db: Session, session_id: str | None) -> str:
 
 
 @app.post("/api/brain/ask", response_model=_BrainResponse, tags=["Brain"])
-async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
+async def brain_ask(request: Request, body: _BrainRequest, db: Session = Depends(get_db)):
     """
     Brain RAG: busca en knowledge_base fiscal → Ollama con contexto verificado.
     Respuestas precisas sin alucinaciones sobre tasas, artículos y trámites mexicanos.
     """
+    _t0 = _time.time()
+    client_ip = request.client.host if request.client else "unknown"
+
+    # ── Rate Limiting: 30 req/min por IP usando Redis ─────────────────────────
+    try:
+        _rl_key = f"rate:{client_ip}"
+        _rl_pipe = _redis_client().pipeline()
+        _rl_pipe.incr(_rl_key)
+        _rl_pipe.ttl(_rl_key)
+        _rl_count, _rl_ttl = _rl_pipe.execute()
+        if _rl_ttl < 0:
+            # Primera vez en el minuto — establecer TTL de 60 segundos
+            _redis_client().expire(_rl_key, 60)
+        if _rl_count > 30:
+            raise HTTPException(
+                status_code=429,
+                detail="Límite de consultas alcanzado. Espera 1 minuto.",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # Si Redis falla, no bloquear el servicio
+
+    # ── Validación de input ───────────────────────────────────────────────────
+    # 1. Límite de longitud
+    if len(body.question) > 2000:
+        raise HTTPException(
+            status_code=400,
+            detail="La pregunta excede el límite de 2000 caracteres.",
+        )
+
+    # 2. Strip de whitespace excesivo
+    body.question = " ".join(body.question.split())
+
+    # 3. Detección de prompt injection básico
+    _q_lower = body.question.lower()
+    for _pattern in _INJECTION_PATTERNS:
+        if _pattern in _q_lower:
+            raise HTTPException(
+                status_code=400,
+                detail="Solicitud no permitida.",
+            )
+
     key = _cache_key(body.question, body.context)
 
     # Capa 0: Tool Use — detecta intención de acción antes del RAG
@@ -2356,14 +2481,24 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
                 tc = tool_calls[0]
                 tool_result = await execute_tool_call(tc)
                 answer = tool_result.get("message") or str(tool_result.get("result", "Acción ejecutada"))
-                return _BrainResponse(
+                _tool_src = f"tool:{tc.tool_name}"
+                _tool_resp = _BrainResponse(
                     answer=answer,
-                    source=f"tool:{tc.tool_name}",
+                    source=_tool_src,
                     cached=False,
                     chunks_used=0,
                     qdrant_used=False,
                     session_id=body.session_id,
                 )
+                try:
+                    _rc = _redis_client()
+                    _rc.incr(f"metrics:{_tool_src}:count")
+                    _rc.incrby(f"metrics:{_tool_src}:total_ms", int((_time.time() - _t0) * 1000))
+                    _rc.expire(f"metrics:{_tool_src}:count", 86400 * 7)
+                    _rc.expire(f"metrics:{_tool_src}:total_ms", 86400 * 7)
+                except Exception:
+                    pass
+                return _tool_resp
         except Exception as _tool_err:
             import logging; logging.getLogger(__name__).warning(f"Tool Use error: {_tool_err}")
 
@@ -2412,6 +2547,24 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
                 _session_save(db, body.session_id, body.channel, body.question, answer)
             except Exception:
                 pass
+        _elapsed_ms = int((_time.time() - _t0) * 1000)
+        try:
+            _rc = _redis_client()
+            _rc.incr(f"metrics:{result.source}:count")
+            _rc.incrby(f"metrics:{result.source}:total_ms", _elapsed_ms)
+            _rc.expire(f"metrics:{result.source}:count", 86400 * 7)
+            _rc.expire(f"metrics:{result.source}:total_ms", 86400 * 7)
+        except Exception:
+            pass
+        if _audit_logger is not None:
+            _audit_logger.log(
+                ip=client_ip,
+                question=body.question,
+                source=result.source,
+                response_time_ms=_elapsed_ms,
+                tenant_id=getattr(body, "tenant_id", None),
+                channel=body.channel,
+            )
         return result
 
     # P2: Inyectar historial de sesión al contexto RAG
@@ -2441,6 +2594,24 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
                 _session_save(db, body.session_id, body.channel, body.question, answer)
             except Exception:
                 pass
+        _elapsed_ms = int((_time.time() - _t0) * 1000)
+        try:
+            _rc = _redis_client()
+            _rc.incr(f"metrics:{result.source}:count")
+            _rc.incrby(f"metrics:{result.source}:total_ms", _elapsed_ms)
+            _rc.expire(f"metrics:{result.source}:count", 86400 * 7)
+            _rc.expire(f"metrics:{result.source}:total_ms", 86400 * 7)
+        except Exception:
+            pass
+        if _audit_logger is not None:
+            _audit_logger.log(
+                ip=client_ip,
+                question=body.question,
+                source=result.source,
+                response_time_ms=_elapsed_ms,
+                tenant_id=getattr(body, "tenant_id", None),
+                channel=body.channel,
+            )
         return result
     except Exception as e:
         # Fallback: si Ollama falla, devolver el RAG directo
@@ -2463,8 +2634,102 @@ async def brain_ask(body: _BrainRequest, db: Session = Depends(get_db)):
                     _redis_client().setex(key, _BRAIN_CACHE_TTL, _json.dumps(result.model_dump()))
                 except Exception:
                     pass
+            _elapsed_ms = int((_time.time() - _t0) * 1000)
+            try:
+                _rc = _redis_client()
+                _rc.incr(f"metrics:{result.source}:count")
+                _rc.incrby(f"metrics:{result.source}:total_ms", _elapsed_ms)
+                _rc.expire(f"metrics:{result.source}:count", 86400 * 7)
+                _rc.expire(f"metrics:{result.source}:total_ms", 86400 * 7)
+            except Exception:
+                pass
+            if _audit_logger is not None:
+                _audit_logger.log(
+                    ip=client_ip,
+                    question=body.question,
+                    source=result.source,
+                    response_time_ms=_elapsed_ms,
+                    tenant_id=getattr(body, "tenant_id", None),
+                    channel=body.channel,
+                )
             return result
         raise HTTPException(status_code=503, detail=f"Brain no disponible: {str(e)}")
+
+
+# ── /api/metrics — Contadores por source (sin auth, para monitoring externo) ──
+@app.get("/api/metrics", tags=["Brain"])
+async def get_metrics():
+    """
+    Retorna métricas de uso del Brain IA: conteo y latencia promedio por source.
+    Sin autenticación requerida — diseñado para integración con dashboards/monitoring.
+
+    Incluye:
+    - Contadores por source (qdrant+ollama, rag_direct, tool:*, etc.)
+    - Latencia promedio por source
+    - Estado del circuit breaker de Ollama
+    - Resumen del audit log del día
+    """
+    # Leer métricas desde Redis directamente (compatible con o sin AgentMetrics)
+    sources_data: list[dict] = []
+    total_requests = 0
+    total_errors = 0
+
+    try:
+        _rc = _redis_client()
+        count_keys = _rc.keys("metrics:*:count")
+
+        for key in count_keys:
+            key_str = key.decode() if isinstance(key, bytes) else key
+            parts = key_str.split(":")
+            if len(parts) < 3:
+                continue
+            source = ":".join(parts[1:-1])  # todo entre 'metrics:' y ':count'
+
+            count_raw = _rc.get(f"metrics:{source}:count")
+            ms_raw = _rc.get(f"metrics:{source}:total_ms")
+            err_raw = _rc.get(f"metrics:{source}:errors")
+
+            count = int(count_raw or 0)
+            total_ms = int(ms_raw or 0)
+            errors = int(err_raw or 0)
+            avg_ms = round(total_ms / count) if count > 0 else 0
+
+            sources_data.append({
+                "source": source,
+                "count": count,
+                "errors": errors,
+                "avg_ms": avg_ms,
+                "total_ms": total_ms,
+            })
+            total_requests += count
+            total_errors += errors
+
+        sources_data.sort(key=lambda x: x["count"], reverse=True)
+
+    except Exception:
+        pass
+
+    # Estado del circuit breaker
+    cb_status = {}
+    if _circuit_breaker is not None:
+        cb_status = _circuit_breaker.status_dict()
+
+    # Resumen de audit del día
+    audit_summary = {}
+    if _audit_logger is not None:
+        try:
+            audit_summary = _audit_logger.summary_today()
+        except Exception:
+            pass
+
+    return {
+        "ok": True,
+        "total_requests": total_requests,
+        "total_errors": total_errors,
+        "sources": sources_data,
+        "circuit_breaker": cb_status,
+        "audit_today": audit_summary,
+    }
 
 
 @app.get("/api/brain/status", tags=["Brain"])
@@ -3355,3 +3620,36 @@ async def contador_cliente_facturas(
         }
         for f in facturas
     ]
+
+
+# ── Admin: Cache ──────────────────────────────────────────────────────────────
+
+@app.post("/admin/cache/clear", tags=["Admin"])
+async def admin_cache_clear(current_user=Depends(get_current_user)):
+    """Limpia el cache de Redis del Brain (keys brain:*). Requiere autenticación JWT."""
+    try:
+        rc = _redis_client()
+        keys = rc.keys("brain:*")
+        if keys:
+            rc.delete(*keys)
+        return {"ok": True, "deleted_keys": len(keys), "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        raise HTTPException(500, f"Error limpiando cache: {e}")
+
+
+# ── Admin: Ollama Health ──────────────────────────────────────────────────────
+
+@app.get("/admin/ollama/health", tags=["Admin"])
+async def admin_ollama_health():
+    """Health check de Ollama con latencia y estado del Circuit Breaker."""
+    t0 = _time.time()
+    try:
+        req = _urllib_req.Request(f"{_OLLAMA_URL}/api/tags")
+        with _urllib_req.urlopen(req, timeout=5) as r:
+            data = _json.loads(r.read())
+            models = [m["name"] for m in data.get("models", [])]
+        latency_ms = int((_time.time() - t0) * 1000)
+        cb = _circuit_breaker.status_dict() if _circuit_breaker is not None else {}
+        return {"ok": True, "models": models, "active_model": _OLLAMA_MODEL, "latency_ms": latency_ms, "circuit_breaker": cb}
+    except Exception as e:
+        return {"ok": False, "error": str(e), "latency_ms": int((_time.time() - t0) * 1000)}

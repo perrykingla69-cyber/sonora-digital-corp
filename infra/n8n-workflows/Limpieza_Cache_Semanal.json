@@ -1,0 +1,107 @@
+{
+  "id": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+  "name": "Limpieza Cache Semanal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 2 * * 0" }]
+        }
+      },
+      "name": "Trigger Domingo 2am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/admin/cache/clear",
+        "method": "POST",
+        "options": {}
+      },
+      "name": "Limpiar Cache",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/admin/ollama/health",
+        "method": "POST",
+        "options": {}
+      },
+      "name": "Health Ollama",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cache = $('Limpiar Cache').first().json;\nconst ollama = $('Health Ollama').first().json;\nconst fecha = new Date().toLocaleDateString('es-MX', {\n  timeZone: 'America/Hermosillo',\n  day: '2-digit', month: '2-digit', year: 'numeric'\n});\nconst cacheStatus = cache.status || cache.message || 'completado';\nconst ollamaStatus = ollama.status || ollama.health || 'desconocido';\nconst ollamaModelo = ollama.model || ollama.active_model || 'deepseek-r1:1.5b';\nconst msg =\n  `🧹 *Limpieza Semanal Completada*\\n\\n` +\n  `📅 ${fecha}\\n\\n` +\n  `✅ Cache Redis: ${cacheStatus}\\n` +\n  `🤖 Ollama: ${ollamaStatus}\\n` +\n  `   Modelo activo: ${ollamaModelo}\\n\\n` +\n  `💾 Sistema listo para la semana\\n` +\n  `👉 sonoradigitalcorp.com/panel`;\nreturn [{ json: { mensaje: msg, numero: '526622681111' } }];"
+      },
+      "name": "Resumen Limpieza",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Resumen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [920, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const err = $input.item.json;\nreturn [{ json: { numero: '526622681111', mensaje: `⚠️ Error en workflow: ${$workflow.name}\\nDetalles: ${JSON.stringify(err).slice(0,200)}` } }];"
+      },
+      "name": "Alerta Error WA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 480]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [920, 480]
+    }
+  ],
+  "connections": {
+    "Trigger Domingo 2am": {
+      "main": [[
+        { "node": "Limpiar Cache", "type": "main", "index": 0 },
+        { "node": "Health Ollama", "type": "main", "index": 0 }
+      ]]
+    },
+    "Limpiar Cache": { "main": [[{ "node": "Resumen Limpieza", "type": "main", "index": 0 }]] },
+    "Health Ollama": { "main": [[{ "node": "Resumen Limpieza", "type": "main", "index": 0 }]] },
+    "Resumen Limpieza": { "main": [[{ "node": "Enviar WA Resumen", "type": "main", "index": 0 }]] },
+    "Alerta Error WA": { "main": [[{ "node": "Enviar WA Error", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

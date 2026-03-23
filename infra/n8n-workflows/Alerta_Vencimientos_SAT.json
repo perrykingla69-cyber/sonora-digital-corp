@@ -58,13 +58,46 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "const err = $input.item.json;\nreturn [{ json: { numero: '526622681111', mensaje: `⚠️ Error en workflow: ${$workflow.name}\\nDetalles: ${JSON.stringify(err).slice(0,200)}` } }];"
+      },
+      "name": "Alerta Error WA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 460]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 460]
     }
   ],
   "connections": {
     "Trigger Dias SAT": { "main": [[{ "node": "Consultar Calendario SAT", "type": "main", "index": 0 }]] },
     "Consultar Calendario SAT": { "main": [[{ "node": "Hay Urgentes?", "type": "main", "index": 0 }]] },
-    "Hay Urgentes?": { "main": [[{ "node": "Formatear Mensaje", "type": "main", "index": 0 }], []] },
-    "Formatear Mensaje": { "main": [[{ "node": "Enviar WA Nathaly", "type": "main", "index": 0 }]] }
+    "Hay Urgentes?": {
+      "main": [
+        [{ "node": "Formatear Mensaje", "type": "main", "index": 0 }],
+        [{ "node": "Alerta Error WA", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formatear Mensaje": { "main": [[{ "node": "Enviar WA Nathaly", "type": "main", "index": 0 }]] },
+    "Alerta Error WA": { "main": [[{ "node": "Enviar WA Error", "type": "main", "index": 0 }]] }
   },
   "active": true,
   "settings": { "executionOrder": "v1" }
