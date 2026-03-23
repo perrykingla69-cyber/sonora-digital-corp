@@ -207,7 +207,7 @@ async def forgot_password(body: dict, db: Session = Depends(get_db)):
             import urllib.request as _ur, json as _j
             payload = _j.dumps({"to": wa_num, "message": f"🔐 Mystic — Contraseña temporal: *{temp_pass}*\nCámbiala después de ingresar."}).encode()
             req = _ur.Request("http://localhost:3001/send", data=payload,
-                              headers={"Content-Type": "application/json", "x-api-key": "MysticWA2026!"})
+                              headers={"Content-Type": "application/json", "x-api-key": os.getenv("WA_API_KEY", "MysticWA2026!")})
             _ur.urlopen(req, timeout=5)
             wa_sent = True
         except Exception:
