@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Trophy, Zap, Flame, Target, CheckCircle2, BookOpen,
   Users, Play, FileText, HelpCircle, Layers, Lock,
-  ChevronRight, Star, TrendingUp, GraduationCap, Clock
+  ChevronRight, Star, TrendingUp, GraduationCap, Clock, Swords
 } from 'lucide-react'
 import clsx from 'clsx'
 import { api } from '@/lib/api'
@@ -240,14 +241,154 @@ function RankingView({ ranking }: { ranking: LeaderEntry[] }) {
   )
 }
 
+// ── Concursos ─────────────────────────────────────────────────────────────────
+interface Concurso {
+  id: string; titulo: string; descripcion: string
+  fecha_fin: string; premio: string; participantes: number
+  estado: 'activo'|'finalizado'; ganador?: string
+}
+
+function ConcursosView() {
+  const [concursos, setConcursos] = useState<Concurso[]>([])
+  const [loading, setLoading] = useState(true)
+  const [joining, setJoining] = useState<string|null>(null)
+  const [msg, setMsg] = useState<string|null>(null)
+
+  useEffect(() => {
+    api.get<Concurso[]>('/academy/concursos')
+      .then(setConcursos)
+      .catch(() => setConcursos([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const unirse = async (id: string) => {
+    setJoining(id)
+    try {
+      await api.post(`/academy/concursos/${id}/unirse`, {})
+      setMsg('¡Te uniste al concurso! Que gane el mejor 🏆')
+      setTimeout(() => setMsg(null), 3000)
+    } catch { setMsg('Error al unirse') }
+    finally { setJoining(null) }
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-32">
+      <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin"/>
+    </div>
+  )
+
+  const activos    = concursos.filter(c => c.estado === 'activo')
+  const finalizados = concursos.filter(c => c.estado === 'finalizado')
+
+  return (
+    <div className="space-y-6">
+      {msg && (
+        <div className="fixed top-4 right-4 z-50 bg-[#161616] border border-[#D4AF37]/40
+                        text-[#D4AF37] px-4 py-3 rounded-xl text-sm shadow-lg">
+          {msg}
+        </div>
+      )}
+
+      {/* Banner info */}
+      <div className="bg-gradient-to-r from-[#D4AF37]/10 to-purple-500/10 border border-[#D4AF37]/20
+                      rounded-2xl p-5">
+        <h2 className="text-[#E8E8E8] font-bold text-lg flex items-center gap-2 mb-2">
+          <Swords size={20} className="text-[#D4AF37]"/> Concursos entre Contadores
+        </h2>
+        <p className="text-[#666] text-sm">
+          Compite con otros usuarios de Mystic Academy. El ganador recibe acceso al
+          <span className="text-[#D4AF37] font-semibold"> Paquete Master</span> por un mes.
+          ¡Demuestra tu dominio fiscal!
+        </p>
+      </div>
+
+      {activos.length === 0 && finalizados.length === 0 && (
+        <div className="text-center py-12 text-[#666]">
+          <Swords size={36} className="mx-auto mb-3 opacity-40"/>
+          <p className="font-medium text-[#E8E8E8]">No hay concursos activos</p>
+          <p className="text-sm mt-1">El próximo concurso llegará pronto. ¡Sigue estudiando!</p>
+        </div>
+      )}
+
+      {activos.length > 0 && (
+        <div>
+          <h3 className="text-[#E8E8E8] font-semibold mb-3 flex items-center gap-2">
+            <Zap size={16} className="text-[#D4AF37]"/> Concursos Activos
+          </h3>
+          <div className="space-y-3">
+            {activos.map(c => (
+              <div key={c.id} className="bg-[#161616] border border-[#D4AF37]/20 rounded-2xl p-5">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h4 className="text-[#E8E8E8] font-semibold">{c.titulo}</h4>
+                    <p className="text-[#666] text-sm mt-0.5">{c.descripcion}</p>
+                  </div>
+                  <span className="shrink-0 px-2 py-0.5 rounded-full text-xs bg-green-500/10
+                                   text-green-400 border border-green-500/20">Activo</span>
+                </div>
+                <div className="flex flex-wrap gap-4 text-xs text-[#666] mb-4">
+                  <span className="flex items-center gap-1">
+                    <Trophy size={10} className="text-[#D4AF37]"/> Premio: <span className="text-[#D4AF37] font-medium">{c.premio}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users size={10}/> {c.participantes} participantes
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock size={10}/> Hasta: {new Date(c.fecha_fin).toLocaleDateString('es-MX')}
+                  </span>
+                </div>
+                <button
+                  onClick={() => unirse(c.id)}
+                  disabled={joining === c.id}
+                  className="w-full py-2.5 bg-[#D4AF37] hover:bg-yellow-400 disabled:opacity-50
+                             text-[#0A0A0A] font-semibold text-sm rounded-xl transition-colors">
+                  {joining === c.id ? 'Uniéndose...' : '⚔️ Unirme al Concurso'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {finalizados.length > 0 && (
+        <div>
+          <h3 className="text-[#666] font-semibold mb-3 flex items-center gap-2">
+            <CheckCircle2 size={16}/> Finalizados
+          </h3>
+          <div className="space-y-2">
+            {finalizados.map(c => (
+              <div key={c.id} className="bg-[#161616] border border-[#222] rounded-xl p-4 opacity-60">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[#E8E8E8] text-sm font-medium">{c.titulo}</p>
+                    {c.ganador && (
+                      <p className="text-[#666] text-xs mt-0.5">
+                        🏆 Ganador: <span className="text-[#D4AF37]">{c.ganador}</span>
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs text-[#666] border border-[#333] px-2 py-0.5 rounded-full">
+                    Finalizado
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Página Principal ──────────────────────────────────────────────────────────
 export default function AcademyPage() {
+  const router = useRouter()
   const [perfil, setPerfil]     = useState<Perfil | null>(null)
   const [cursos, setCursos]     = useState<Curso[]>([])
   const [misiones, setMisiones] = useState<Mision[]>([])
   const [logros, setLogros]     = useState<Logro[]>([])
   const [ranking, setRanking]   = useState<LeaderEntry[]>([])
-  const [tab, setTab]           = useState<'cursos'|'misiones'|'logros'|'ranking'>('cursos')
+  const [tab, setTab]           = useState<'cursos'|'misiones'|'logros'|'ranking'|'concursos'>('cursos')
   const [loading, setLoading]   = useState(true)
   const [toast, setToast]       = useState<string|null>(null)
   const [error, setError]       = useState(false)
@@ -316,76 +457,4 @@ export default function AcademyPage() {
           <div className="w-16 h-16 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30
                           flex items-center justify-center text-4xl shrink-0">
             {perfil.rango_emoji}
-          </div>
-          {/* XP */}
-          <div className="flex-1">
-            <div className="flex justify-between text-xs text-[#666] mb-2">
-              <span className="text-[#E8E8E8] font-medium">{perfil.nombre}</span>
-              <span className="text-[#D4AF37] font-mono">{perfil.experiencia} / {perfil.xp_siguiente_nivel} XP</span>
-            </div>
-            <XPBar pct={perfil.progreso_pct}/>
-            <p className="text-[#666] text-xs mt-1">{perfil.progreso_pct}% al siguiente nivel</p>
-          </div>
-          {/* Stats rápidos */}
-          <div className="flex gap-3 shrink-0">
-            {[
-              {icon: Flame, val: perfil.streak_dias, label: 'Racha', color: 'text-orange-400'},
-              {icon: Target, val: perfil.misiones_activas, label: 'Misiones', color: 'text-[#D4AF37]'},
-              {icon: Trophy, val: perfil.logros_desbloqueados, label: 'Logros', color: 'text-yellow-400'},
-            ].map(({icon: Icon, val, label, color}) => (
-              <div key={label} className="text-center p-3 bg-[#111] rounded-xl border border-[#222]">
-                <Icon size={14} className={clsx(color, 'mx-auto mb-1')}/>
-                <p className="text-[#E8E8E8] font-bold text-sm">{val}</p>
-                <p className="text-[#666] text-xs">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats RPG */}
-        <div className="mt-4 grid grid-cols-5 gap-2">
-          {[
-            {k:'inteligencia', e:'🧠', l:'INT'},
-            {k:'creatividad',  e:'🎨', l:'CRE'},
-            {k:'colaboracion', e:'🤝', l:'COL'},
-            {k:'resiliencia',  e:'🛡️', l:'RES'},
-            {k:'velocidad',    e:'⚡', l:'VEL'},
-          ].map(({k, e, l}) => (
-            <div key={k} className="flex flex-col items-center gap-1 p-2 bg-[#111]
-                                     rounded-xl border border-[#222]">
-              <span className="text-base">{e}</span>
-              <span className="text-[#D4AF37] font-bold text-sm">{perfil.stats[k]}</span>
-              <span className="text-[#666] text-xs">{l}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {([
-          {id:'cursos',   label:'Cursos',   icon: BookOpen},
-          {id:'misiones', label:'Misiones', icon: Target},
-          {id:'logros',   label:'Logros',   icon: Trophy},
-          {id:'ranking',  label:'Ranking',  icon: TrendingUp},
-        ] as const).map(({id, label, icon: Icon}) => (
-          <button key={id} onClick={() => setTab(id)}
-            className={clsx(
-              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
-              tab===id
-                ? 'bg-[#D4AF37] text-[#0A0A0A]'
-                : 'bg-[#161616] text-[#666] hover:text-[#E8E8E8] border border-[#222]'
-            )}>
-            <Icon size={14}/>{label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab content */}
-      {tab==='cursos'   && <CursosView cursos={cursos} onSelect={(slug) => { /* TODO: navigate */ }} />}
-      {tab==='misiones' && <MisionesView misiones={misiones} onCompletar={completarMision}/>}
-      {tab==='logros'   && <LogrosView logros={logros}/>}
-      {tab==='ranking'  && <RankingView ranking={ranking}/>}
-    </div>
-  )
-}
+          </

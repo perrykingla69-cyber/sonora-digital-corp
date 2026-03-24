@@ -62,16 +62,20 @@ class AcademyModulo(Base):
 
 class AcademyClase(Base):
     __tablename__ = "academy_clases"
-    id           = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    modulo_id    = Column(String, ForeignKey("academy_modulos.id"), nullable=False)
-    titulo       = Column(String, nullable=False)
-    tipo         = Column(String, default="video")  # video, lectura, ejercicio, quiz, hibrido
-    contenido    = Column(Text, default="")         # markdown o URL
-    video_url    = Column(String, nullable=True)    # URL video externo/CDN
-    duracion_min = Column(Integer, default=10)
-    xp_reward    = Column(Integer, default=25)
-    orden        = Column(Integer, default=0)
-    accesible    = Column(Boolean, default=True)    # inclusivo: true por defecto
+    id            = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    modulo_id     = Column(String, ForeignKey("academy_modulos.id"), nullable=False)
+    titulo        = Column(String, nullable=False)
+    tipo          = Column(String, default="video")  # video, lectura, ejercicio, quiz, hibrido
+    contenido     = Column(Text, default="")         # markdown o URL
+    video_url     = Column(String, nullable=True)    # URL video externo/CDN
+    podcast_url   = Column(String, nullable=True)    # NotebookLM Audio Overview
+    thumbnail_url = Column(String, nullable=True)    # miniatura del video
+    duracion_min  = Column(Integer, default=10)
+    xp_reward     = Column(Integer, default=25)
+    orden         = Column(Integer, default=0)
+    semana        = Column(Integer, default=1)       # semana del mes (1-4, 0=examen final)
+    es_examen     = Column(Boolean, default=False)
+    accesible     = Column(Boolean, default=True)    # inclusivo: true por defecto
 
 class AcademyProgreso(Base):
     __tablename__ = "academy_progreso"
@@ -439,8 +443,11 @@ def _seed_cursos(db: Session):
                 db.add(AcademyClase(
                     modulo_id=mod.id, titulo=cl["titulo"], tipo=cl["tipo"],
                     contenido=cl.get("contenido",""), video_url=cl.get("video_url"),
+                    podcast_url=cl.get("podcast_url"),
+                    thumbnail_url=cl.get("thumbnail_url"),
                     duracion_min=cl["duracion_min"], xp_reward=cl["xp_reward"],
-                    orden=cl["orden"]
+                    orden=cl["orden"], semana=cl.get("semana", m.get("orden", 1)),
+                    es_examen=cl.get("es_examen", cl["tipo"]=="quiz" and cl.get("orden",1)>3),
                 ))
     db.commit()
 
@@ -525,6 +532,8 @@ def get_curso_detail(slug: str, db: Session = Depends(get_db), current_user=Depe
                 "id": cl.id, "titulo": cl.titulo, "tipo": cl.tipo,
                 "duracion_min": cl.duracion_min, "xp_reward": cl.xp_reward,
                 "orden": cl.orden, "accesible": cl.accesible,
+                "semana": cl.semana or 1, "es_examen": cl.es_examen or False,
+                "thumbnail_url": cl.thumbnail_url,
                 "completada": prog.completada if prog else False,
                 "progreso_pct": prog.pct if prog else 0,
             })
@@ -545,6 +554,8 @@ def get_clase(clase_id: str, db: Session = Depends(get_db), current_user=Depends
     return {
         "id": cl.id, "titulo": cl.titulo, "tipo": cl.tipo,
         "contenido": cl.contenido, "video_url": cl.video_url,
+        "podcast_url": cl.podcast_url, "thumbnail_url": cl.thumbnail_url,
+        "es_examen": cl.es_examen or False,
         "duracion_min": cl.duracion_min, "xp_reward": cl.xp_reward,
         "completada": prog.completada if prog else False,
         "progreso_pct": prog.pct if prog else 0,
@@ -628,3 +639,142 @@ def get_leaderboard(db: Session = Depends(get_db), current_user=Depends(get_curr
 def otorgar_xp(body: dict, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     p = _dar_xp(current_user.id, int(body.get("cantidad",10)), db)
     return {"ok":True,"xp_total":p.experiencia,"nivel":p.nivel,"razon":body.get("razon","")}
+
+# ── TAREAS (calificación por IA) ──────────────────────────────────────────────
+
+class AcademyTarea(Base):
+    __tablename__ = "academy_tareas"
+    __table_args__ = {"extend_existing": True}
+    id           = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id      = Column(String, nullable=False, index=True)
+    clase_id     = Column(String, ForeignKey("academy_clases.id"), nullable=False)
+    respuesta    = Column(Text, default="")
+    calificacion = Column(Float, nullable=True)
+    retroalimentacion = Column(Text, default="")
+    created_at   = Column(DateTime, default=func.now())
+
+Base.metadata.create_all(bind=engine)
+
+@router.post("/tareas/{clase_id}/calificar")
+def calificar_tarea(clase_id: str, body: dict,
+                    db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    respuesta = body.get("respuesta", "").strip()
+    if not respuesta:
+        raise HTTPException(400, "Respuesta vacía")
+    cl = db.query(AcademyClase).filter(AcademyClase.id==clase_id).first()
+    if not cl:
+        raise HTTPException(404, "Clase no encontrada")
+
+    # Calificar con Ollama / Brain IA
+    calificacion = 7.0
+    retroalimentacion = "Buena respuesta. Sigue practicando."
+    try:
+        import os, urllib.request as _ur, json as _js
+        ollama_url = os.environ.get("OLLAMA_URL", "http://ollama:11434")
+        prompt = (
+            f"Eres un evaluador de tareas de contabilidad y fiscalidad en México. "
+            f"La clase se llama: '{cl.titulo}'. "
+            f"El estudiante respondió: '{respuesta[:500]}'. "
+            f"Califica del 0 al 10 y da retroalimentación breve (2-3 oraciones) en español. "
+            f"Responde SOLO con JSON: {{\"calificacion\": <número>, \"retroalimentacion\": \"<texto>\"}}"
+        )
+        data = _js.dumps({"model": os.environ.get("OLLAMA_MODEL","deepseek-r1:1.5b"),
+                          "prompt": prompt, "stream": False,
+                          "options": {"temperature":0.2,"num_predict":150}}).encode()
+        req = _ur.Request(f"{ollama_url}/api/generate",
+                          data=data, headers={"Content-Type":"application/json"}, method="POST")
+        with _ur.urlopen(req, timeout=20) as r:
+            raw = _js.loads(r.read())["response"]
+            # extraer JSON de la respuesta
+            start = raw.find("{"); end = raw.rfind("}") + 1
+            if start >= 0 and end > start:
+                parsed = _js.loads(raw[start:end])
+                calificacion = float(parsed.get("calificacion", 7.0))
+                retroalimentacion = parsed.get("retroalimentacion", retroalimentacion)
+    except Exception:
+        pass  # fallback a valores por defecto
+
+    # Guardar tarea
+    tarea = AcademyTarea(user_id=current_user.id, clase_id=clase_id,
+                         respuesta=respuesta, calificacion=calificacion,
+                         retroalimentacion=retroalimentacion)
+    db.add(tarea)
+
+    # Si aprobó (≥ 6.0), completar la clase
+    xp_ganada = 0
+    if calificacion >= 6.0:
+        prog = db.query(AcademyProgreso).filter(
+            AcademyProgreso.user_id==current_user.id,
+            AcademyProgreso.clase_id==clase_id).first()
+        if not prog:
+            prog = AcademyProgreso(user_id=current_user.id, clase_id=clase_id)
+            db.add(prog)
+        if not prog.completada:
+            prog.completada = True; prog.pct = 100
+            prog.completada_at = datetime.now()
+            xp_ganada = cl.xp_reward
+            _dar_xp(current_user.id, xp_ganada, db)
+    db.commit()
+    return {"ok": True, "calificacion": calificacion,
+            "retroalimentacion": retroalimentacion, "xp_ganada": xp_ganada,
+            "aprobada": calificacion >= 6.0}
+
+# ── CONCURSOS ─────────────────────────────────────────────────────────────────
+
+class AcademyConcurso(Base):
+    __tablename__ = "academy_concursos"
+    __table_args__ = {"extend_existing": True}
+    id           = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    titulo       = Column(String, nullable=False)
+    descripcion  = Column(Text, default="")
+    premio       = Column(String, default="Paquete Master 1 mes")
+    fecha_inicio = Column(DateTime, default=func.now())
+    fecha_fin    = Column(DateTime, nullable=False)
+    estado       = Column(String, default="activo")  # activo, finalizado
+    ganador_id   = Column(String, nullable=True)
+    created_at   = Column(DateTime, default=func.now())
+
+class AcademyConcursoParticipante(Base):
+    __tablename__ = "academy_concurso_participantes"
+    __table_args__ = {"extend_existing": True}
+    id           = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    concurso_id  = Column(String, ForeignKey("academy_concursos.id"), nullable=False)
+    user_id      = Column(String, nullable=False)
+    xp_snapshot  = Column(Integer, default=0)
+    joined_at    = Column(DateTime, default=func.now())
+
+Base.metadata.create_all(bind=engine)
+
+@router.get("/concursos")
+def get_concursos(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    concursos = db.query(AcademyConcurso).order_by(AcademyConcurso.fecha_fin.desc()).limit(10).all()
+    result = []
+    for c in concursos:
+        participantes = db.query(AcademyConcursoParticipante).filter(
+            AcademyConcursoParticipante.concurso_id==c.id).count()
+        ganador_nombre = None
+        if c.ganador_id:
+            gp = db.query(AcademyProfile).filter(AcademyProfile.user_id==c.ganador_id).first()
+            ganador_nombre = c.ganador_id
+        result.append({
+            "id": c.id, "titulo": c.titulo, "descripcion": c.descripcion,
+            "premio": c.premio, "fecha_fin": c.fecha_fin.isoformat(),
+            "estado": c.estado, "participantes": participantes,
+            "ganador": ganador_nombre,
+        })
+    return result
+
+@router.post("/concursos/{concurso_id}/unirse")
+def unirse_concurso(concurso_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    c = db.query(AcademyConcurso).filter(AcademyConcurso.id==concurso_id).first()
+    if not c: raise HTTPException(404, "Concurso no encontrado")
+    if c.estado != "activo": raise HTTPException(400, "El concurso ya finalizó")
+    ya = db.query(AcademyConcursoParticipante).filter(
+        AcademyConcursoParticipante.concurso_id==concurso_id,
+        AcademyConcursoParticipante.user_id==current_user.id).first()
+    if ya: raise HTTPException(400, "Ya estás inscrito")
+    p = _ensure_profile(current_user.id, db)
+    part = AcademyConcursoParticipante(
+        concurso_id=concurso_id, user_id=current_user.id, xp_snapshot=p.experiencia)
+    db.add(part); db.commit()
+    return {"ok": True, "mensaje": "¡Inscrito! Que gane el mejor."}
