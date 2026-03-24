@@ -2,355 +2,390 @@
 
 import { useEffect, useState } from 'react'
 import {
-  Trophy, Star, Zap, Flame, Target, CheckCircle2,
-  Lock, TrendingUp, Award, Users, ChevronRight
+  Trophy, Zap, Flame, Target, CheckCircle2, BookOpen,
+  Users, Play, FileText, HelpCircle, Layers, Lock,
+  ChevronRight, Star, TrendingUp, GraduationCap, Clock
 } from 'lucide-react'
 import clsx from 'clsx'
 import { api } from '@/lib/api'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Perfil {
-  nombre: string
-  nivel: number
-  experiencia: number
-  xp_siguiente_nivel: number
-  progreso_pct: number
-  rango: string
-  rango_emoji: string
-  streak_dias: number
-  misiones_activas: number
-  logros_desbloqueados: number
+  nombre: string; nivel: number; experiencia: number
+  xp_siguiente_nivel: number; progreso_pct: number
+  rango: string; rango_emoji: string; streak_dias: number
+  misiones_activas: number; logros_desbloqueados: number; total_logros: number
   stats: Record<string, number>
 }
-
+interface Curso {
+  id: string; slug: string; titulo: string; descripcion: string
+  categoria: string; nivel_req: number; xp_total: number
+  duracion_min: number; icono: string; desbloqueado: boolean
+  progreso_pct: number; clases_completadas: number; total_clases: number
+}
 interface Mision {
-  id: string
-  titulo: string
-  descripcion: string
-  tipo: string
-  xp_reward: number
-  progreso: number
-  objetivo: number
-  progreso_pct: number
-  completada: boolean
+  id: string; titulo: string; descripcion: string; tipo: string
+  xp_reward: number; progreso: number; objetivo: number
+  progreso_pct: number; completada: boolean
 }
-
 interface Logro {
-  id: string
-  nombre: string
-  emoji: string
-  xp_reward: number
-  desbloqueado: boolean
+  id: string; nombre: string; emoji: string; xp_reward: number; desbloqueado: boolean
 }
-
 interface LeaderEntry {
-  posicion: number
-  user_id: string
-  nivel: number
-  experiencia: number
-  rango: string
-  emoji: string
-  streak: number
+  posicion: number; user_id: string; nivel: number
+  experiencia: number; rango: string; emoji: string; streak: number
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
+const tipoIcon: Record<string, any> = {
+  video: Play, lectura: FileText, ejercicio: Target,
+  quiz: HelpCircle, hibrido: Layers
+}
 const tipoColor: Record<string, string> = {
-  diaria: 'text-sovereign-gold border-sovereign-gold/30 bg-sovereign-gold/10',
+  diaria:  'text-sovereign-gold border-sovereign-gold/30 bg-sovereign-gold/10',
   semanal: 'text-blue-400 border-blue-400/30 bg-blue-400/10',
-  especial: 'text-purple-400 border-purple-400/30 bg-purple-400/10',
+  especial:'text-purple-400 border-purple-400/30 bg-purple-400/10',
+}
+const catColor: Record<string, string> = {
+  contabilidad: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  fiscal:       'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  tecnologia:   'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  soft_skills:  'bg-green-500/10 text-green-400 border-green-500/20',
 }
 
-// ── Componentes ───────────────────────────────────────────────────────────────
-
-function XPBar({ pct }: { pct: number }) {
+function XPBar({ pct, className }: { pct: number; className?: string }) {
   return (
-    <div className="w-full h-2 bg-sovereign-border rounded-full overflow-hidden">
-      <div
-        className="h-full bg-gradient-to-r from-sovereign-gold to-yellow-300 rounded-full transition-all duration-700"
-        style={{ width: `${pct}%` }}
-      />
+    <div className={clsx('w-full h-2 bg-[#222] rounded-full overflow-hidden', className)}>
+      <div className="h-full bg-gradient-to-r from-[#D4AF37] to-yellow-300 rounded-full transition-all duration-700"
+           style={{ width: `${pct}%` }} />
     </div>
   )
 }
 
-function StatBadge({ label, value, icon }: { label: string; value: number; icon: string }) {
+function Toast({ msg }: { msg: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 p-3 bg-sovereign-card rounded-xl border border-sovereign-border">
-      <span className="text-xl">{icon}</span>
-      <span className="text-sovereign-gold font-bold text-lg">{value}</span>
-      <span className="text-sovereign-muted text-xs">{label}</span>
+    <div className="fixed top-4 right-4 z-50 bg-[#161616] border border-[#D4AF37]/40
+                    text-[#D4AF37] px-4 py-3 rounded-xl text-sm shadow-lg animate-fade-up">
+      {msg}
     </div>
   )
 }
 
-function MisionCard({ mision, onCompletar }: { mision: Mision; onCompletar: (id: string) => void }) {
+// ── Sub-páginas ───────────────────────────────────────────────────────────────
+function CursosView({ cursos, onSelect }: { cursos: Curso[]; onSelect: (slug: string) => void }) {
   return (
-    <div className={clsx(
-      'glass rounded-xl p-4 border transition-all',
-      mision.completada ? 'opacity-50 border-sovereign-border' : 'border-sovereign-border hover:border-sovereign-gold/40'
-    )}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={clsx(
-              'text-xs px-2 py-0.5 rounded-full border capitalize',
-              tipoColor[mision.tipo] ?? tipoColor.diaria
-            )}>
-              {mision.tipo}
-            </span>
-            <span className="text-sovereign-gold text-xs font-mono">+{mision.xp_reward} XP</span>
-          </div>
-          <p className="text-sovereign-text font-medium text-sm">{mision.titulo}</p>
-          <p className="text-sovereign-muted text-xs mt-0.5">{mision.descripcion}</p>
-        </div>
-        {mision.completada ? (
-          <CheckCircle2 size={20} className="text-green-400 shrink-0 mt-0.5" />
-        ) : (
-          <button
-            onClick={() => onCompletar(mision.id)}
-            className="shrink-0 px-3 py-1.5 bg-sovereign-gold/10 hover:bg-sovereign-gold/20 border border-sovereign-gold/30 text-sovereign-gold text-xs rounded-lg transition-colors"
-          >
-            Completar
-          </button>
-        )}
-      </div>
-      {!mision.completada && (
-        <div className="mt-3">
-          <div className="flex justify-between text-xs text-sovereign-muted mb-1">
-            <span>Progreso</span>
-            <span>{mision.progreso}/{mision.objetivo}</span>
-          </div>
-          <XPBar pct={mision.progreso_pct} />
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Página Principal ──────────────────────────────────────────────────────────
-export default function AcademyPage() {
-  const [perfil, setPerfil]       = useState<Perfil | null>(null)
-  const [misiones, setMisiones]   = useState<Mision[]>([])
-  const [logros, setLogros]       = useState<Logro[]>([])
-  const [ranking, setRanking]     = useState<LeaderEntry[]>([])
-  const [tab, setTab]             = useState<'misiones' | 'logros' | 'ranking'>('misiones')
-  const [loading, setLoading]     = useState(true)
-  const [toast, setToast]         = useState<string | null>(null)
-
-  useEffect(() => {
-    Promise.all([
-      api.get<Perfil>('/academy/perfil'),
-      api.get<Mision[]>('/academy/misiones'),
-      api.get<Logro[]>('/academy/logros'),
-      api.get<LeaderEntry[]>('/academy/leaderboard'),
-    ]).then(([p, m, l, r]) => {
-      setPerfil(p); setMisiones(m); setLogros(l); setRanking(r)
-    }).catch(console.error)
-      .finally(() => setLoading(false))
-  }, [])
-
-  const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3000)
-  }
-
-  const completarMision = async (id: string) => {
-    try {
-      const res = await api.post<{xp_ganada:number;nivel_actual:number;experiencia:number;rango:string}>(`/academy/misiones/${id}/completar`, {})
-      setMisiones(prev => prev.map(m => m.id === id ? { ...m, completada: true } : m))
-      setPerfil(prev => prev ? { ...prev, experiencia: res.experiencia, nivel: res.nivel_actual, rango: res.rango } : prev)
-      showToast(`+${res.xp_ganada} XP — ¡Misión completada!`)
-    } catch {
-      showToast('Error al completar misión')
-    }
-  }
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="w-8 h-8 border-2 border-sovereign-gold border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  if (!perfil) return (
-    <div className="p-8 text-sovereign-muted text-center">No se pudo cargar tu perfil de Academy.</div>
-  )
-
-  const misionesActivas = misiones.filter(m => !m.completada)
-  const misionesCompletadas = misiones.filter(m => m.completada)
-
-  return (
-    <div className="min-h-screen bg-sovereign-bg p-4 md:p-8 space-y-6 animate-fade-up">
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-4 right-4 z-50 glass-gold border border-sovereign-gold/40 text-sovereign-gold px-4 py-3 rounded-xl text-sm animate-fade-up">
-          {toast}
-        </div>
-      )}
-
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-sovereign-text">Mystic Academy</h1>
-        <p className="text-sovereign-muted text-sm mt-1">Gamificación — tu progreso como usuario Mystic</p>
-      </div>
-
-      {/* Perfil Card */}
-      <div className="glass rounded-2xl p-6 border border-sovereign-border">
-        <div className="flex flex-col md:flex-row md:items-center gap-6">
-          {/* Avatar / Rango */}
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-sovereign-gold/10 border border-sovereign-gold/30 flex items-center justify-center text-4xl">
-              {perfil.rango_emoji}
-            </div>
-            <div>
-              <p className="text-sovereign-text font-bold text-lg">{perfil.nombre}</p>
-              <p className="text-sovereign-gold text-sm">{perfil.rango_emoji} {perfil.rango}</p>
-              <p className="text-sovereign-muted text-xs">Nivel {perfil.nivel}</p>
-            </div>
-          </div>
-
-          {/* XP Bar */}
-          <div className="flex-1">
-            <div className="flex justify-between text-xs text-sovereign-muted mb-2">
-              <span>Experiencia</span>
-              <span className="text-sovereign-gold font-mono">{perfil.experiencia} / {perfil.xp_siguiente_nivel} XP</span>
-            </div>
-            <XPBar pct={perfil.progreso_pct} />
-            <p className="text-sovereign-muted text-xs mt-1">{perfil.progreso_pct.toFixed(1)}% al siguiente nivel</p>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="flex gap-3">
-            <div className="text-center p-3 bg-sovereign-card rounded-xl border border-sovereign-border">
-              <Flame size={16} className="text-orange-400 mx-auto mb-1" />
-              <p className="text-sovereign-text font-bold">{perfil.streak_dias}</p>
-              <p className="text-sovereign-muted text-xs">Racha</p>
-            </div>
-            <div className="text-center p-3 bg-sovereign-card rounded-xl border border-sovereign-border">
-              <Target size={16} className="text-sovereign-gold mx-auto mb-1" />
-              <p className="text-sovereign-text font-bold">{perfil.misiones_activas}</p>
-              <p className="text-sovereign-muted text-xs">Misiones</p>
-            </div>
-            <div className="text-center p-3 bg-sovereign-card rounded-xl border border-sovereign-border">
-              <Trophy size={16} className="text-yellow-400 mx-auto mb-1" />
-              <p className="text-sovereign-text font-bold">{perfil.logros_desbloqueados}</p>
-              <p className="text-sovereign-muted text-xs">Logros</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats RPG */}
-        <div className="mt-6 grid grid-cols-5 gap-2">
-          {Object.entries(perfil.stats).map(([k, v]) => (
-            <StatBadge key={k} label={k.slice(0,4).toUpperCase()} value={v} icon={
-              k === 'inteligencia' ? '🧠' : k === 'creatividad' ? '🎨' :
-              k === 'colaboracion' ? '🤝' : k === 'resiliencia' ? '🛡️' : '⚡'
-            } />
-          ))}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2">
-        {(['misiones', 'logros', 'ranking'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
+    <div className="space-y-4">
+      <h2 className="text-[#E8E8E8] font-semibold text-lg flex items-center gap-2">
+        <BookOpen size={18} className="text-[#D4AF37]" /> Cursos disponibles
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {cursos.map(c => (
+          <div key={c.id}
+            onClick={() => c.desbloqueado && onSelect(c.slug)}
             className={clsx(
-              'px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors',
-              tab === t
-                ? 'bg-sovereign-gold text-sovereign-bg'
-                : 'bg-sovereign-card text-sovereign-muted hover:text-sovereign-text border border-sovereign-border'
+              'bg-[#161616] border rounded-2xl p-5 transition-all',
+              c.desbloqueado
+                ? 'border-[#222] hover:border-[#D4AF37]/40 cursor-pointer'
+                : 'border-[#222] opacity-60 cursor-not-allowed'
+            )}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <span className="text-3xl">{c.icono}</span>
+              <div className="flex flex-col items-end gap-1">
+                <span className={clsx('text-xs px-2 py-0.5 rounded-full border capitalize',
+                  catColor[c.categoria] ?? catColor.contabilidad)}>
+                  {c.categoria.replace('_',' ')}
+                </span>
+                {!c.desbloqueado && (
+                  <span className="flex items-center gap-1 text-xs text-[#666]">
+                    <Lock size={10}/> Nivel {c.nivel_req}
+                  </span>
+                )}
+              </div>
+            </div>
+            <h3 className="text-[#E8E8E8] font-semibold text-sm mb-1">{c.titulo}</h3>
+            <p className="text-[#666] text-xs mb-3 line-clamp-2">{c.descripcion}</p>
+            <div className="flex items-center gap-3 text-xs text-[#666] mb-3">
+              <span className="flex items-center gap-1"><Clock size={10}/> {c.duracion_min}min</span>
+              <span className="flex items-center gap-1"><Zap size={10} className="text-[#D4AF37]"/> {c.xp_total} XP</span>
+              <span>{c.clases_completadas}/{c.total_clases} clases</span>
+            </div>
+            {c.progreso_pct > 0 && (
+              <>
+                <XPBar pct={c.progreso_pct} />
+                <p className="text-[#666] text-xs mt-1">{c.progreso_pct}% completado</p>
+              </>
             )}
-          >
-            {t}
-          </button>
+            {c.desbloqueado && c.progreso_pct === 0 && (
+              <div className="mt-2 flex items-center gap-1 text-[#D4AF37] text-xs font-medium">
+                Comenzar <ChevronRight size={12}/>
+              </div>
+            )}
+          </div>
         ))}
       </div>
+    </div>
+  )
+}
 
-      {/* Tab: Misiones */}
-      {tab === 'misiones' && (
-        <div className="space-y-4">
-          {misionesActivas.length > 0 && (
-            <div>
-              <h3 className="text-sovereign-text font-semibold mb-3 flex items-center gap-2">
-                <Zap size={16} className="text-sovereign-gold" /> Activas ({misionesActivas.length})
-              </h3>
-              <div className="space-y-3">
-                {misionesActivas.map(m => (
-                  <MisionCard key={m.id} mision={m} onCompletar={completarMision} />
-                ))}
-              </div>
-            </div>
-          )}
-          {misionesCompletadas.length > 0 && (
-            <div>
-              <h3 className="text-sovereign-muted font-semibold mb-3 flex items-center gap-2">
-                <CheckCircle2 size={16} /> Completadas ({misionesCompletadas.length})
-              </h3>
-              <div className="space-y-3">
-                {misionesCompletadas.map(m => (
-                  <MisionCard key={m.id} mision={m} onCompletar={completarMision} />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab: Logros */}
-      {tab === 'logros' && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {logros.map(l => (
-            <div key={l.id} className={clsx(
-              'glass rounded-xl p-4 border text-center transition-all',
-              l.desbloqueado
-                ? 'border-sovereign-gold/40 bg-sovereign-gold/5'
-                : 'border-sovereign-border opacity-50 grayscale'
-            )}>
-              <div className="text-3xl mb-2">{l.desbloqueado ? l.emoji : '🔒'}</div>
-              <p className="text-sovereign-text text-xs font-medium">{l.nombre}</p>
-              <p className="text-sovereign-gold text-xs mt-1">+{l.xp_reward} XP</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Tab: Ranking */}
-      {tab === 'ranking' && (
-        <div className="glass rounded-2xl border border-sovereign-border overflow-hidden">
-          <div className="p-4 border-b border-sovereign-border">
-            <h3 className="text-sovereign-text font-semibold flex items-center gap-2">
-              <Users size={16} className="text-sovereign-gold" /> Leaderboard Top 10
-            </h3>
-          </div>
-          <div className="divide-y divide-sovereign-border">
-            {ranking.map(r => (
-              <div key={r.user_id} className="flex items-center gap-4 px-4 py-3 hover:bg-sovereign-surface/50 transition-colors">
-                <span className={clsx(
-                  'w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold',
-                  r.posicion === 1 ? 'bg-yellow-400/20 text-yellow-400' :
-                  r.posicion === 2 ? 'bg-gray-400/20 text-gray-400' :
-                  r.posicion === 3 ? 'bg-amber-700/20 text-amber-600' :
-                  'text-sovereign-muted'
-                )}>
-                  {r.posicion}
-                </span>
-                <span className="text-xl">{r.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sovereign-text text-sm font-medium truncate">{r.user_id}</p>
-                  <p className="text-sovereign-muted text-xs">{r.rango} · Nivel {r.nivel}</p>
+function MisionesView({ misiones, onCompletar }: { misiones: Mision[]; onCompletar: (id: string) => void }) {
+  const activas = misiones.filter(m => !m.completada)
+  const hechas  = misiones.filter(m => m.completada)
+  return (
+    <div className="space-y-6">
+      {activas.length > 0 && (
+        <div>
+          <h3 className="text-[#E8E8E8] font-semibold mb-3 flex items-center gap-2">
+            <Zap size={16} className="text-[#D4AF37]"/> Activas ({activas.length})
+          </h3>
+          <div className="space-y-3">
+            {activas.map(m => (
+              <div key={m.id} className="bg-[#161616] border border-[#222] rounded-xl p-4
+                                         hover:border-[#D4AF37]/30 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={clsx('text-xs px-2 py-0.5 rounded-full border capitalize',
+                        tipoColor[m.tipo] ?? tipoColor.diaria)}>{m.tipo}</span>
+                      <span className="text-[#D4AF37] text-xs font-mono">+{m.xp_reward} XP</span>
+                    </div>
+                    <p className="text-[#E8E8E8] font-medium text-sm">{m.titulo}</p>
+                    <p className="text-[#666] text-xs mt-0.5">{m.descripcion}</p>
+                  </div>
+                  <button onClick={() => onCompletar(m.id)}
+                    className="shrink-0 px-3 py-1.5 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20
+                               border border-[#D4AF37]/30 text-[#D4AF37] text-xs rounded-lg transition-colors">
+                    Completar
+                  </button>
                 </div>
-                <div className="text-right">
-                  <p className="text-sovereign-gold text-sm font-mono">{r.experiencia.toLocaleString()} XP</p>
-                  {r.streak > 0 && <p className="text-orange-400 text-xs">🔥 {r.streak}d</p>}
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-[#666] mb-1">
+                    <span>Progreso</span><span>{m.progreso}/{m.objetivo}</span>
+                  </div>
+                  <XPBar pct={m.progreso_pct}/>
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
+      {hechas.length > 0 && (
+        <div>
+          <h3 className="text-[#666] font-semibold mb-3 flex items-center gap-2">
+            <CheckCircle2 size={16}/> Completadas ({hechas.length})
+          </h3>
+          <div className="space-y-2">
+            {hechas.map(m => (
+              <div key={m.id} className="bg-[#161616] border border-[#222] rounded-xl p-3
+                                         opacity-50 flex items-center gap-3">
+                <CheckCircle2 size={16} className="text-green-400 shrink-0"/>
+                <span className="text-[#666] text-sm">{m.titulo}</span>
+                <span className="ml-auto text-[#D4AF37] text-xs">+{m.xp_reward} XP</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LogrosView({ logros }: { logros: Logro[] }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {logros.map(l => (
+        <div key={l.id} className={clsx(
+          'bg-[#161616] border rounded-xl p-4 text-center transition-all',
+          l.desbloqueado ? 'border-[#D4AF37]/40 bg-[#D4AF37]/5' : 'border-[#222] opacity-40 grayscale'
+        )}>
+          <div className="text-3xl mb-2">{l.desbloqueado ? l.emoji : '🔒'}</div>
+          <p className="text-[#E8E8E8] text-xs font-medium">{l.nombre}</p>
+          <p className="text-[#D4AF37] text-xs mt-1">+{l.xp_reward} XP</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function RankingView({ ranking }: { ranking: LeaderEntry[] }) {
+  return (
+    <div className="bg-[#161616] border border-[#222] rounded-2xl overflow-hidden">
+      <div className="p-4 border-b border-[#222]">
+        <h3 className="text-[#E8E8E8] font-semibold flex items-center gap-2">
+          <Users size={16} className="text-[#D4AF37]"/> Top 10 Usuarios
+        </h3>
+      </div>
+      <div className="divide-y divide-[#222]">
+        {ranking.map(r => (
+          <div key={r.user_id} className="flex items-center gap-4 px-4 py-3
+                                           hover:bg-[#111] transition-colors">
+            <span className={clsx(
+              'w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold',
+              r.posicion===1?'bg-yellow-400/20 text-yellow-400':
+              r.posicion===2?'bg-gray-400/20 text-gray-400':
+              r.posicion===3?'bg-amber-700/20 text-amber-600':'text-[#666]'
+            )}>{r.posicion}</span>
+            <span className="text-xl">{r.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[#E8E8E8] text-sm font-medium truncate">{r.user_id}</p>
+              <p className="text-[#666] text-xs">{r.rango} · Nivel {r.nivel}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[#D4AF37] text-sm font-mono">{r.experiencia.toLocaleString()} XP</p>
+              {r.streak>0 && <p className="text-orange-400 text-xs">🔥 {r.streak}d</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Página Principal ──────────────────────────────────────────────────────────
+export default function AcademyPage() {
+  const [perfil, setPerfil]     = useState<Perfil | null>(null)
+  const [cursos, setCursos]     = useState<Curso[]>([])
+  const [misiones, setMisiones] = useState<Mision[]>([])
+  const [logros, setLogros]     = useState<Logro[]>([])
+  const [ranking, setRanking]   = useState<LeaderEntry[]>([])
+  const [tab, setTab]           = useState<'cursos'|'misiones'|'logros'|'ranking'>('cursos')
+  const [loading, setLoading]   = useState(true)
+  const [toast, setToast]       = useState<string|null>(null)
+  const [error, setError]       = useState(false)
+
+  const showToast = (msg: string) => {
+    setToast(msg); setTimeout(() => setToast(null), 3000)
+  }
+
+  useEffect(() => {
+    Promise.all([
+      api.get<Perfil>('/academy/perfil'),
+      api.get<Curso[]>('/academy/cursos'),
+      api.get<Mision[]>('/academy/misiones'),
+      api.get<Logro[]>('/academy/logros'),
+      api.get<LeaderEntry[]>('/academy/leaderboard'),
+    ]).then(([p, c, m, l, r]) => {
+      setPerfil(p); setCursos(c); setMisiones(m); setLogros(l); setRanking(r)
+    }).catch(() => setError(true))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const completarMision = async (id: string) => {
+    try {
+      const res = await api.post<any>(`/academy/misiones/${id}/completar`, {})
+      setMisiones(prev => prev.map(m => m.id===id ? {...m, completada:true} : m))
+      setPerfil(prev => prev ? {...prev, experiencia:res.experiencia, nivel:res.nivel, rango:res.rango} : prev)
+      showToast(`+${res.xp_ganada} XP — ¡Misión completada!`)
+    } catch { showToast('Error al completar misión') }
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin"/>
+    </div>
+  )
+
+  if (error || !perfil) return (
+    <div className="p-8 text-center">
+      <GraduationCap size={40} className="text-[#666] mx-auto mb-3"/>
+      <p className="text-[#666]">No se pudo cargar la Academy. Intenta recargar la página.</p>
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-[#0A0A0A] p-4 md:p-6 space-y-6">
+      {toast && <Toast msg={toast}/>}
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-[#E8E8E8] flex items-center gap-2">
+            <GraduationCap size={22} className="text-[#D4AF37]"/> Mystic Academy
+          </h1>
+          <p className="text-[#666] text-sm mt-0.5">Tu progreso como usuario Mystic</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[#D4AF37] font-bold">{perfil.rango_emoji} {perfil.rango}</p>
+          <p className="text-[#666] text-xs">Nivel {perfil.nivel}</p>
+        </div>
+      </div>
+
+      {/* Perfil Card */}
+      <div className="bg-[#161616] border border-[#222] rounded-2xl p-5">
+        <div className="flex flex-col md:flex-row md:items-center gap-5">
+          {/* Avatar */}
+          <div className="w-16 h-16 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30
+                          flex items-center justify-center text-4xl shrink-0">
+            {perfil.rango_emoji}
+          </div>
+          {/* XP */}
+          <div className="flex-1">
+            <div className="flex justify-between text-xs text-[#666] mb-2">
+              <span className="text-[#E8E8E8] font-medium">{perfil.nombre}</span>
+              <span className="text-[#D4AF37] font-mono">{perfil.experiencia} / {perfil.xp_siguiente_nivel} XP</span>
+            </div>
+            <XPBar pct={perfil.progreso_pct}/>
+            <p className="text-[#666] text-xs mt-1">{perfil.progreso_pct}% al siguiente nivel</p>
+          </div>
+          {/* Stats rápidos */}
+          <div className="flex gap-3 shrink-0">
+            {[
+              {icon: Flame, val: perfil.streak_dias, label: 'Racha', color: 'text-orange-400'},
+              {icon: Target, val: perfil.misiones_activas, label: 'Misiones', color: 'text-[#D4AF37]'},
+              {icon: Trophy, val: perfil.logros_desbloqueados, label: 'Logros', color: 'text-yellow-400'},
+            ].map(({icon: Icon, val, label, color}) => (
+              <div key={label} className="text-center p-3 bg-[#111] rounded-xl border border-[#222]">
+                <Icon size={14} className={clsx(color, 'mx-auto mb-1')}/>
+                <p className="text-[#E8E8E8] font-bold text-sm">{val}</p>
+                <p className="text-[#666] text-xs">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats RPG */}
+        <div className="mt-4 grid grid-cols-5 gap-2">
+          {[
+            {k:'inteligencia', e:'🧠', l:'INT'},
+            {k:'creatividad',  e:'🎨', l:'CRE'},
+            {k:'colaboracion', e:'🤝', l:'COL'},
+            {k:'resiliencia',  e:'🛡️', l:'RES'},
+            {k:'velocidad',    e:'⚡', l:'VEL'},
+          ].map(({k, e, l}) => (
+            <div key={k} className="flex flex-col items-center gap-1 p-2 bg-[#111]
+                                     rounded-xl border border-[#222]">
+              <span className="text-base">{e}</span>
+              <span className="text-[#D4AF37] font-bold text-sm">{perfil.stats[k]}</span>
+              <span className="text-[#666] text-xs">{l}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {([
+          {id:'cursos',   label:'Cursos',   icon: BookOpen},
+          {id:'misiones', label:'Misiones', icon: Target},
+          {id:'logros',   label:'Logros',   icon: Trophy},
+          {id:'ranking',  label:'Ranking',  icon: TrendingUp},
+        ] as const).map(({id, label, icon: Icon}) => (
+          <button key={id} onClick={() => setTab(id)}
+            className={clsx(
+              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
+              tab===id
+                ? 'bg-[#D4AF37] text-[#0A0A0A]'
+                : 'bg-[#161616] text-[#666] hover:text-[#E8E8E8] border border-[#222]'
+            )}>
+            <Icon size={14}/>{label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      {tab==='cursos'   && <CursosView cursos={cursos} onSelect={(slug) => { /* TODO: navigate */ }} />}
+      {tab==='misiones' && <MisionesView misiones={misiones} onCompletar={completarMision}/>}
+      {tab==='logros'   && <LogrosView logros={logros}/>}
+      {tab==='ranking'  && <RankingView ranking={ranking}/>}
     </div>
   )
 }
