@@ -1333,14 +1333,21 @@ export default function HomePage() {
       {/* ── MERCH ─────────────────────────────────────────────────────────── */}
       <section className="py-24 bg-[#F5F0E8]">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <p className="text-sm font-bold uppercase tracking-widest text-[#8B7520] mb-3">Tienda Mystic</p>
             <h2 className="text-4xl font-black text-[#1a1a1a]">
               Porta la identidad.<br />
               <span className="text-[#8B7520]">Cierra negocios con estilo.</span>
             </h2>
+            {/* Ventana limitada */}
+            <div className="inline-flex items-center gap-2 mt-5 bg-[#1a1a1a] border border-[#D4AF37]/30 rounded-full px-5 py-2 text-sm text-[#D4AF37] font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
+              Ventana abierta · Cierra 1 de Abril · Solo bajo paquete activo
+            </div>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+          {/* Merch propio Mystic */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
             {[
               { name: 'USB Mystic 32GB', desc: 'Agente digital en el bolsillo. Precargada con herramientas Mystic + biblioteca fiscal.', emoji: '💾', price: '$299' },
               { name: 'Kit Ejecutivo', desc: 'Pluma cromada + cuaderno de piel + stickers. Para cerrar tratos de alto valor.', emoji: '🖊️', price: '$249' },
@@ -1361,6 +1368,95 @@ export default function HomePage() {
                 </div>
               </TiltCard>
             ))}
+          </div>
+
+          {/* Tu propia línea de merch con Mystic */}
+          <div className="rounded-3xl bg-gradient-to-br from-[#1a1200] to-[#0a0a0f] border border-[#D4AF37]/20 p-8">
+            <div className="grid lg:grid-cols-2 gap-10 items-center">
+              <div>
+                <span className="text-[10px] font-black bg-[#D4AF37]/20 text-[#D4AF37] px-3 py-1 rounded-full uppercase tracking-widest">Plan Soberanía / Poder</span>
+                <h3 className="text-2xl font-black text-white mt-4 mb-3">
+                  Vende tu propia línea de merch<br />
+                  <span className="text-[#D4AF37]">bajo tu marca. Nosotros la gestionamos.</span>
+                </h3>
+                <p className="text-white/50 text-sm leading-relaxed mb-6">
+                  Manda tu diseño o elige uno de nuestra colección por temporada. Mystic se encarga de producción, empaque y logística. Tú cobras, nosotros operamos.
+                </p>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Tu ingreso por venta', val: '60%', color: 'text-emerald-400' },
+                    { label: 'Mystic (logística + operación)', val: '40%', color: 'text-[#D4AF37]' },
+                    { label: 'Producción', val: 'Cargo de Mystic', color: 'text-white/40' },
+                    { label: 'Disponibilidad', val: 'Solo en ventanas limitadas', color: 'text-amber-400' },
+                  ].map(r => (
+                    <div key={r.label} className="flex justify-between items-center border-b border-white/5 pb-2">
+                      <span className="text-white/60 text-sm">{r.label}</span>
+                      <span className={`font-black text-sm ${r.color}`}>{r.val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <p className="text-white/40 text-xs uppercase tracking-wider mb-4">Posibilidades de merch personalizado</p>
+                {[
+                  { emoji: '👕', item: 'Ropa con tu marca', desc: 'Playeras, hoodies, gorras — tú eliges la colección' },
+                  { emoji: '📦', item: 'Accesorios de oficina', desc: 'Cuadernos, bolígrafos, material ejecutivo' },
+                  { emoji: '💻', item: 'Tech items', desc: 'Fundas, USBs, gadgets con tu logotipo' },
+                  { emoji: '📅', item: 'Ediciones especiales', desc: 'Por temporada, evento o lanzamiento de cliente' },
+                ].map(m => (
+                  <div key={m.item} className="flex items-start gap-3 bg-white/3 rounded-xl p-3">
+                    <span className="text-xl shrink-0">{m.emoji}</span>
+                    <div>
+                      <p className="text-white text-sm font-bold">{m.item}</p>
+                      <p className="text-white/40 text-xs">{m.desc}</p>
+                    </div>
+                  </div>
+                ))}
+                <p className="text-white/25 text-xs mt-3 text-center">Disponible solo cuando tienes paquete activo y aprobación de diseño</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── ALIANZAS ESTRATÉGICAS ──────────────────────────────────────────── */}
+      <section className="py-20 bg-[#F5F0E8]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <p className="text-sm font-bold uppercase tracking-widest text-[#8B7520] mb-3">Alianzas Estratégicas</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#1a1a1a]">
+              Intercambia valor.<br />
+              <span className="text-[#8B7520]">Construye red, no solo clientes.</span>
+            </h2>
+            <p className="text-[#666] mt-3 max-w-lg mx-auto text-sm">
+              Mystic se asocia con empresas que quieren ofrecer tecnología de clase mundial a sus redes. Pagamos con software, licencias y visibilidad.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { emoji: '🏢', title: 'Despachos y Oficinas', desc: 'A cambio de espacio de trabajo o sala de eventos, tus clientes obtienen licencias Mystic con tu branding.', tag: 'SWAP' },
+              { emoji: '🚗', title: 'Autos · Inmuebles', desc: 'Intercambiamos software y desarrollo digital por bienes. Si tienes activos que ofrecer, conversemos.', tag: 'BARTER' },
+              { emoji: '🏛️', title: 'A.C.s y Fundaciones', desc: 'Alianzas con organizaciones para beneficios fiscales mutuos. Tu A.C. deduce, nosotros aportamos tecnología.', tag: 'A.C.' },
+              { emoji: '🛒', title: 'Proveedores de Mayoreo', desc: 'Buscamos proveedores para merch de calidad: ropa, gadgets, papelería. Volumen garantizado por nuestra red.', tag: 'PROVEEDOR' },
+              { emoji: '📦', title: 'Reventa de Productos', desc: 'Si fabricas o importas productos de calidad, los integramos en la tienda Mystic para tu distribución digital.', tag: 'DISTRIBUCIÓN' },
+              { emoji: '🤝', title: 'Proyectos de Gobierno', desc: 'Digitalización de procesos fiscales para municipios y estados. Sonora Digital Foundation como puente.', tag: 'GOB' },
+            ].map(a => (
+              <div key={a.title} className="rounded-2xl border border-[#D4AF37]/20 bg-white p-6 hover:border-[#D4AF37]/50 transition-colors">
+                <div className="flex items-start gap-4">
+                  <span className="text-3xl shrink-0">{a.emoji}</span>
+                  <div>
+                    <span className="text-[9px] font-black bg-[#1a1a1a] text-[#D4AF37] px-2 py-0.5 rounded-full uppercase">{a.tag}</span>
+                    <h3 className="text-[#1a1a1a] font-black mt-2 mb-1">{a.title}</h3>
+                    <p className="text-[#666] text-xs leading-relaxed">{a.desc}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <a href="mailto:sonoradigitalcorp@gmail.com" className="inline-flex items-center gap-2 border-2 border-[#D4AF37] text-[#8B7520] font-bold py-3 px-8 rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all text-sm">
+              Proponer alianza →
+            </a>
           </div>
         </div>
       </section>
