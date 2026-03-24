@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Calculator,
   Package, CheckSquare, LogOut, Zap,
-  MessageCircle, Send, Brain, ShieldCheck, CreditCard, Receipt, BookUser, Building2, Menu, GraduationCap,
+  MessageCircle, Send, Brain, ShieldCheck, CreditCard, Receipt, BookUser, Building2, Menu, GraduationCap, UserCheck,
 } from 'lucide-react'
 import { logout, getUser } from '@/lib/auth'
 import clsx from 'clsx'
@@ -24,6 +24,7 @@ const NAV_CEO = [
   { href: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/facturas',   icon: FileText,         label: 'Facturas' },
   { href: '/nomina',     icon: Users,             label: 'Nómina' },
+  { href: '/clientes',   icon: UserCheck,         label: 'Clientes' },
   { href: '/directorio', icon: Building2,         label: 'Directorio' },
   { href: '/cierre',     icon: Calculator,        label: 'Cierre' },
   { href: '/mve',        icon: Package,           label: 'MVE' },
@@ -35,6 +36,7 @@ const NAV_ADMIN_PANEL = [
   { href: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/facturas',   icon: FileText,         label: 'Facturas' },
   { href: '/nomina',     icon: Users,             label: 'Nómina' },
+  { href: '/clientes',   icon: UserCheck,         label: 'Clientes' },
   { href: '/directorio', icon: Building2,         label: 'Directorio' },
   { href: '/cierre',     icon: Calculator,        label: 'Cierre' },
   { href: '/mve',        icon: Package,           label: 'MVE' },
