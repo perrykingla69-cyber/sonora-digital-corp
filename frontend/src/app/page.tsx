@@ -196,25 +196,30 @@ const PLANS = [
   {
     id: 'acceso',
     name: 'Acceso',
-    subtitle: 'Tu primer paso hacia la autonomía',
+    subtitle: 'Tu primer paso hacia la autonomía — con $100 USD de crédito incluido',
     badge: '🌱 FREEMIUM',
     badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
     price: '$0',
+    originalValue: '$2,400',
+    valuePitch: 'Valor real del paquete: $2,400 MXN/mes',
+    cryptoNote: '🪙 $100 USD en crédito Mystic Token al registrarte',
     period: '/mes para siempre',
     highlight: false,
     borderColor: 'border-emerald-500/20',
     bg: 'bg-[#F8F5EE]',
     textColor: 'text-[#1a1a1a]',
     subtextColor: 'text-[#555]',
-    cta: 'Empezar gratis',
+    cta: 'Empezar gratis — recibir $100 USD',
     ctaClass: 'border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white',
     features: [
       '30 facturas CFDI 4.0 / mes',
       '1 usuario',
       '10 consultas Brain IA / día',
-      '5 posts de contenido / mes',
-      '2 módulos de Academia',
+      '1 generación de contenido IA (prueba gratuita)',
+      '2 módulos de Academia — preview completo',
       'Dashboard fiscal básico',
+      '1 uso de MVE Antimultas (feature premium)',
+      '⚠️ Sin MVE activo → riesgo de multas $50K-$500K MXN',
       'Soporte comunidad',
     ],
   },
@@ -225,7 +230,10 @@ const PLANS = [
     badge: '🔑 LIBERTAD',
     badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/25',
     price: '$1,999',
-    monthsNote: 'o 3 pagos de $720',
+    originalValue: '$8,500',
+    valuePitch: 'Valor equivalente: $8,500 MXN/mes — pagas $1,999',
+    cryptoNote: '5% descuento pagando en BTC/USDC',
+    monthsNote: 'o 3 pagos de $720 MXN',
     networkNote: 'Trae 3 aliados → $500 de descuento permanente',
     period: '/mes',
     highlight: false,
@@ -256,7 +264,11 @@ const PLANS = [
     badge: '⚡ MÁS POPULAR',
     badgeClass: 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/30',
     price: '$3,900',
-    monthsNote: 'o 3 pagos de $1,400',
+    originalValue: '$22,000',
+    valuePitch: 'Valor equivalente: $22,000 MXN/mes — pagas $3,900',
+    cryptoNote: '8% descuento pagando en BTC/USDC',
+    fomoBanner: '⚡ SIN MVE ACTIVO: riesgo real de multas $50K–$500K + rechazo de pedimentos',
+    monthsNote: 'o 3 pagos de $1,400 MXN',
     networkNote: 'Trae 10 aliados → tu plan es GRATIS para siempre',
     period: '/mes',
     highlight: true,
@@ -290,7 +302,11 @@ const PLANS = [
     badge: '👑 ELITE',
     badgeClass: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
     price: '$7,999',
-    monthsNote: 'o 3 pagos de $2,870',
+    originalValue: '$45,000',
+    valuePitch: 'Valor equivalente: $45,000 MXN/mes — pagas $7,999',
+    cryptoNote: '10% descuento pagando en BTC/USDC',
+    fomoBanner: '🔥 OFERTA DE LANZAMIENTO MVE — precio sube el 1 de Mayo',
+    monthsNote: 'o 3 pagos de $2,870 MXN',
     networkNote: 'Pack 10 licencias con descuento grupal — revende como tu tech',
     period: '/mes',
     highlight: false,
@@ -752,6 +768,23 @@ export default function HomePage() {
             )}
           </div>
 
+          {/* Token de crédito inicial — estilo Google $200 */}
+          <div className="mb-10 max-w-2xl mx-auto bg-gradient-to-r from-[#1a1200] to-[#0a0a0f] border border-[#D4AF37]/30 rounded-3xl p-6 flex items-center gap-5 shadow-[0_0_30px_rgba(212,175,55,0.1)]">
+            <div className="shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#f0c842] flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.4)]">
+              <span className="text-2xl font-black text-black">$M</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-white font-black text-lg leading-tight">$100 USD en crédito Mystic Token — gratis al registrarte</p>
+              <p className="text-white/50 text-xs mt-0.5">Sin tarjeta requerida. Úsalo en Brain IA, generación de contenido, módulos premium y más.</p>
+              <div className="mt-2 flex items-center gap-2">
+                <div className="h-1.5 rounded-full bg-white/10 flex-1 overflow-hidden">
+                  <div className="h-full w-3/4 bg-gradient-to-r from-[#D4AF37] to-[#f0c842] rounded-full" />
+                </div>
+                <span className="text-[#D4AF37] text-[10px] font-bold">$100 USD disponibles</span>
+              </div>
+            </div>
+          </div>
+
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {PLANS.map(plan => {
               const isRecommended = recommendedPlan === plan.id
@@ -766,29 +799,52 @@ export default function HomePage() {
                     {plan.highlight && (
                       <div className="absolute -top-px left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent rounded-t-3xl" />
                     )}
-                    <div className={`self-start text-[11px] font-bold px-3 py-1 rounded-full border ${plan.badgeClass} mb-5`}>
+                    {/* FOMO banner */}
+                    {(plan as any).fomoBanner && (
+                      <div className="absolute -top-3 left-3 right-3 bg-red-600 text-white text-[9px] font-black px-2 py-1 rounded-full text-center uppercase tracking-wide">
+                        {(plan as any).fomoBanner}
+                      </div>
+                    )}
+                    <div className={`self-start text-[11px] font-bold px-3 py-1 rounded-full border ${plan.badgeClass} mb-3`}>
                       {plan.badge}
                     </div>
-                    <p className={`text-2xl font-black ${plan.textColor} mb-1`}>{plan.name}</p>
-                    <p className={`text-xs ${plan.subtextColor} mb-5 leading-snug`}>{plan.subtitle}</p>
+                    {/* Valor tachado */}
+                    {(plan as any).originalValue && (
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`line-through text-sm opacity-40 ${plan.textColor}`}>{(plan as any).originalValue}</span>
+                        <span className="text-[10px] bg-red-500/15 text-red-500 font-bold px-1.5 py-0.5 rounded">VALOR REAL</span>
+                      </div>
+                    )}
+                    <p className={`text-2xl font-black ${plan.textColor} mb-0.5`}>{plan.name}</p>
+                    <p className={`text-xs ${plan.subtextColor} mb-3 leading-snug`}>{plan.subtitle}</p>
                     <div className="flex items-end gap-1 mb-1">
                       <span className={`text-4xl font-black ${plan.textColor}`}>{plan.price}</span>
                       <span className={`${plan.subtextColor} mb-1.5 text-xs`}>{plan.period}</span>
                     </div>
                     {(plan as any).monthsNote && (
-                      <p className={`text-[11px] mb-2 opacity-60 ${plan.textColor}`}>{(plan as any).monthsNote}</p>
+                      <p className={`text-[11px] mb-1.5 opacity-60 ${plan.textColor}`}>{(plan as any).monthsNote}</p>
+                    )}
+                    {/* Descuento cripto */}
+                    {(plan as any).cryptoNote && (
+                      <div className={`text-[10px] font-bold px-2 py-1 rounded-lg mb-2 flex items-center gap-1 ${plan.highlight ? 'bg-[#D4AF37]/15 text-[#D4AF37]' : 'bg-amber-500/10 text-amber-700'}`}>
+                        ₿ {(plan as any).cryptoNote}
+                      </div>
                     )}
                     {(plan as any).networkNote && (
-                      <div className={`text-[10px] font-bold px-2.5 py-1.5 rounded-lg mb-4 ${plan.highlight ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-emerald-500/10 text-emerald-700'}`}>
+                      <div className={`text-[10px] font-bold px-2 py-1 rounded-lg mb-3 ${plan.highlight ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-500/10 text-emerald-700'}`}>
                         🤝 {(plan as any).networkNote}
                       </div>
                     )}
-                    {!(plan as any).networkNote && <div className="mb-4" />}
-                    <ul className="space-y-2.5 flex-1 mb-8">
+                    {!(plan as any).networkNote && <div className="mb-3" />}
+                    <ul className="space-y-2 flex-1 mb-6">
                       {plan.features.map(f => (
-                        <li key={f} className={`flex items-start gap-2 text-xs ${plan.subtextColor}`}>
-                          <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${f.startsWith('🔒') ? 'text-[#D4AF37]' : 'text-emerald-500'}`} />
-                          {f}
+                        <li key={f} className={`flex items-start gap-2 text-xs ${f.startsWith('⚠️') ? 'text-red-500 font-semibold' : plan.subtextColor}`}>
+                          {f.startsWith('⚠️') ? (
+                            <span className="w-3.5 h-3.5 shrink-0 mt-0.5 text-red-500">⚠</span>
+                          ) : (
+                            <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${f.startsWith('🔒') ? 'text-[#D4AF37]' : 'text-emerald-500'}`} />
+                          )}
+                          {f.startsWith('⚠️') ? f.replace('⚠️ ', '') : f}
                         </li>
                       ))}
                     </ul>
@@ -804,12 +860,38 @@ export default function HomePage() {
             })}
           </div>
 
-          <p className="text-center mt-8 text-sm text-[#888]">
-            Paga con SPEI · BTC · USDC · Tarjeta MX · OXXO — Factura fiscal disponible
-          </p>
-          <p className="text-center mt-2 text-xs text-[#aaa]">
-            ¿Eres contador y ya tienes clientes? Pregunta por nuestro precio de revendedor. Tu plan se paga solo con el primer cliente que migryes.
-          </p>
+          {/* Métodos de pago + descuento cripto */}
+          <div className="mt-10 max-w-3xl mx-auto">
+            <p className="text-center text-sm text-[#888] mb-4">
+              Paga con SPEI · BTC · USDC · Tarjeta MX · OXXO — Factura fiscal disponible · Pago a meses disponible
+            </p>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[
+                { icon: '₿', label: 'Bitcoin / BTC', discount: '–10%', color: 'text-orange-500 bg-orange-500/10 border-orange-500/20' },
+                { icon: '◎', label: 'USDC / USDT', discount: '–8%', color: 'text-sky-500 bg-sky-500/10 border-sky-500/20' },
+                { icon: '🏦', label: 'SPEI / Tarjeta', discount: 'precio base', color: 'text-gray-500 bg-gray-500/10 border-gray-500/20' },
+              ].map(m => (
+                <div key={m.label} className={`rounded-2xl border p-3 text-center ${m.color}`}>
+                  <div className="text-2xl mb-1">{m.icon}</div>
+                  <p className="text-xs font-bold">{m.label}</p>
+                  <p className="text-[10px] font-black mt-0.5">{m.discount}</p>
+                </div>
+              ))}
+            </div>
+            <div className="text-center flex items-center justify-center gap-2">
+              <div className="w-8 h-8 bg-[#1a1a1a] rounded-lg flex items-center justify-center">
+                <div className="grid grid-cols-5 gap-px w-5 h-5">
+                  {Array.from({length:25}).map((_,i) => (
+                    <div key={i} className={`rounded-[1px] ${[0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24].includes(i) ? 'bg-white' : 'bg-transparent'}`} />
+                  ))}
+                </div>
+              </div>
+              <span className="text-xs text-[#888]">Escanea para pagar con BTC · QR real disponible al checkout</span>
+            </div>
+            <p className="text-center mt-3 text-xs text-[#aaa]">
+              ¿Contador con cartera de clientes? Un cliente migrado cubre tu plan. Pregunta por precios de revendedor.
+            </p>
+          </div>
         </div>
       </section>
 
