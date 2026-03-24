@@ -38,7 +38,7 @@ export interface DashboardData {
   alertas: string[]
   kpis: { margen_bruto_pct: number; ratio_cobro_pago: number; salud: 'verde' | 'amarillo' | 'rojo' }
 }
-export interface TipoCambio { fecha: string; tipo_cambio: number; variacion_pct?: number; fuente?: string }
+export interface TipoCambio { fecha: string; usd_mxn: number; usd_mxn_ayer?: number; tipo_cambio?: number; variacion_pct?: number; fuente?: string }
 export interface CierreCompleto {
   periodo: string; tenant_id: string; ingresos: number; gastos: number; utilidad_bruta: number; utilidad_neta: number
   iva_cobrado: number; iva_pagado: number; iva_neto: number; isr_estimado: number; ptu: number; ebitda: number

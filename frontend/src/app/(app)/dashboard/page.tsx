@@ -45,7 +45,9 @@ export default function DashboardPage() {
   const [facturas, setFacturas] = useState<Factura[]>([])
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState('')
+  const [tcTick, setTcTick]     = useState(0)   // pulso visual al actualizar
 
+  // Carga inicial de todo
   useEffect(() => {
     const now = new Date()
     Promise.allSettled([
@@ -62,6 +64,18 @@ export default function DashboardPage() {
     }).finally(() => setLoading(false))
   }, [])
 
+  // Polling tipo de cambio cada 60 segundos
+  useEffect(() => {
+    const poll = () => {
+      api.get<TipoCambio>('/tipo-cambio/hoy').then(data => {
+        setTc(data)
+        setTcTick(t => t + 1)
+      }).catch(() => {})
+    }
+    const id = setInterval(poll, 60_000)
+    return () => clearInterval(id)
+  }, [])
+
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="flex items-center gap-3 text-sovereign-muted">
@@ -74,7 +88,7 @@ export default function DashboardPage() {
   if (!dash) return null
 
   const { resumen, kpis, alertas, periodo } = dash
-  const tcVal = tc?.tipo_cambio || 0
+  const tcVal = tc?.usd_mxn || tc?.tipo_cambio || 0
   const salud = SALUD_CONFIG[kpis.salud]
 
   const MESES = ['Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar']
@@ -99,14 +113,25 @@ export default function DashboardPage() {
           <p className="text-xs text-sovereign-muted mt-0.5">Periodo: {periodo} · Tenant: {dash.tenant_id}</p>
         </div>
         {tcVal > 0 && (
-          <div className="text-right glass rounded-xl px-4 py-2">
-            <p className="text-xs text-sovereign-muted">Tipo de cambio</p>
-            <p className="text-lg font-bold text-sovereign-gold">${tcVal.toFixed(2)} <span className="text-xs font-normal text-sovereign-muted">MXN/USD</span></p>
-            {tc?.variacion_pct !== undefined && (
-              <p className={`text-xs ${tc.variacion_pct >= 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                {tc.variacion_pct >= 0 ? '▲' : '▼'} {Math.abs(tc.variacion_pct).toFixed(2)}%
+          <div className="text-right glass rounded-xl px-4 py-2.5 min-w-[140px]">
+            <div className="flex items-center justify-end gap-1.5 mb-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-[10px] text-sovereign-muted uppercase tracking-wider">USD/MXN · En vivo</p>
+            </div>
+            <p className="text-xl font-black text-sovereign-gold tabular-nums">
+              ${tcVal.toFixed(4)}
+            </p>
+            <div className="flex items-center justify-end gap-2 mt-0.5">
+              {tc?.usd_mxn_ayer && tc.usd_mxn_ayer > 0 && (
+                <p className={`text-[10px] font-semibold ${tcVal >= tc.usd_mxn_ayer ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {tcVal >= tc.usd_mxn_ayer ? '▲' : '▼'} {Math.abs(((tcVal - tc.usd_mxn_ayer) / tc.usd_mxn_ayer) * 100).toFixed(2)}%
+                </p>
+              )}
+              <p className="text-[10px] text-sovereign-muted">
+                {tc?.fuente === 'open.er-api.com' ? 'openexchangerates' : tc?.fuente || ''}
               </p>
-            )}
+            </div>
+            <p className="text-[9px] text-sovereign-muted/50 mt-0.5">Actualiza c/60s</p>
           </div>
         )}
       </div>
