@@ -301,12 +301,12 @@ const PLANS = [
     subtitle: 'Infraestructura de alto rendimiento para imperios',
     badge: '👑 ELITE',
     badgeClass: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
-    price: '$7,999',
+    price: '$6,999',
     originalValue: '$45,000',
-    valuePitch: 'Valor equivalente: $45,000 MXN/mes — pagas $7,999',
+    valuePitch: 'Valor equivalente: $45,000 MXN/mes — pagas $6,999',
     cryptoNote: '10% descuento pagando en BTC/USDC',
     fomoBanner: '🔥 OFERTA DE LANZAMIENTO MVE — precio sube el 1 de Mayo',
-    monthsNote: 'o 3 pagos de $2,870 MXN',
+    monthsNote: 'o 3 pagos de $2,500 MXN',
     networkNote: 'Pack 10 licencias con descuento grupal — revende como tu tech',
     period: '/mes',
     highlight: false,
@@ -1120,6 +1120,82 @@ export default function HomePage() {
                 </div>
               </TiltCard>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 20 FORMAS DE GENERAR ECONOMÍA ─────────────────────────────────── */}
+      <section className="py-24 bg-[#020208]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-14">
+            <p className="text-sm font-bold uppercase tracking-widest text-[#D4AF37]/70 mb-3">Infinitas Posibilidades</p>
+            <h2 className="text-4xl sm:text-5xl font-black text-white mb-4">
+              20 formas de generar economía<br />
+              <span className="text-[#D4AF37]">con un solo sistema.</span>
+            </h2>
+            <p className="text-white/40 max-w-xl mx-auto">
+              Un contador promedio gana $35,000 MXN/mes. Con Mystic, el mismo contador puede generar $150,000+. Aquí están los caminos — elige los que más te apasionen.
+            </p>
+          </div>
+
+          {/* ROI Estimado para contador */}
+          <div className="grid grid-cols-3 gap-4 mb-12 max-w-3xl mx-auto">
+            {[
+              { plan: 'Libertad $1,999', clientes: '35', ingreso: '$63,000', roi: '+80%', color: 'border-sky-500/30 text-sky-400' },
+              { plan: 'Soberanía $3,900', clientes: '50', ingreso: '$112,500', roi: '+220%', color: 'border-[#D4AF37]/40 text-[#D4AF37]' },
+              { plan: 'Poder $6,999', clientes: '80+', ingreso: '$200,000+', roi: '+470%', color: 'border-violet-500/30 text-violet-400' },
+            ].map(r => (
+              <div key={r.plan} className={`rounded-2xl border ${r.color.split(' ')[0]} bg-white/3 p-5 text-center`}>
+                <p className={`text-xs font-bold mb-2 ${r.color.split(' ')[1]}`}>{r.plan}</p>
+                <p className="text-white/40 text-[10px]">{r.clientes} clientes × $2,250/mes</p>
+                <p className="text-white font-black text-xl mt-1">{r.ingreso}</p>
+                <p className={`text-sm font-black mt-1 ${r.color.split(' ')[1]}`}>{r.roi} ingresos</p>
+                <p className="text-white/25 text-[9px] mt-1">por cada $1 invertido en Mystic</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { n: '01', title: 'Cartera de clientes escalada', desc: 'Automatizas contabilidad → atiendes 2-3x más clientes sin contratar más staff. Cada cliente extra = ingreso puro.', tag: 'CORE', color: 'text-[#D4AF37]' },
+              { n: '02', title: 'Incremento de honorarios', desc: 'Entregas más valor (reportes IA, alertas SAT, CFDI automático) → justificas cobrar $2,500-$4,000/mes vs $1,200 anterior.', tag: 'PRECIO', color: 'text-[#D4AF37]' },
+              { n: '03', title: 'Vender el sistema a colegas', desc: 'Revendes licencias Mystic a otros contadores. Pack de 10 = $25,000 de margen mensual como operador de red.', tag: 'NETWORK', color: 'text-emerald-400' },
+              { n: '04', title: 'White-label tu propia academia', desc: 'Con plan Poder, tu academia lleva tu nombre. Vendes cursos a $500-$2,000 cada uno con tu marca y nuestro contenido.', tag: 'ACADEMIA', color: 'text-sky-400' },
+              { n: '05', title: 'Sistema Antimultas MVE como servicio', desc: 'Cobras $500-$1,500/mes por cliente importador para gestionar su MVE. 10 clientes = $10,000+ adicionales.', tag: 'MVE', color: 'text-red-400' },
+              { n: '06', title: 'Consultoría fiscal de alto valor', desc: 'Con el arsenal de IA, das asesorías estratégicas $2,500-$5,000/sesión que antes no podías ofrecer.', tag: 'CONSULTING', color: 'text-[#D4AF37]' },
+              { n: '07', title: 'Onboarding cripto empresarial', desc: 'Ayudas a clientes a adoptar BTC/USDC como reserva de valor. $1,500/sesión + comisión por volumen.', tag: 'CRIPTO', color: 'text-orange-400' },
+              { n: '08', title: 'Contenido educativo monetizado', desc: 'Mystic genera tu contenido. Tus redes crecen. Monetizas con afiliados, patrocinios y ventas directas.', tag: 'CONTENIDO', color: 'text-pink-400' },
+              { n: '09', title: 'Red de aliados multi-nivel', desc: 'Cada contador que refieres a Mystic te genera descuentos o comisiones. 10 aliados activos = plan gratis para siempre.', tag: 'ALIADOS', color: 'text-emerald-400' },
+              { n: '10', title: 'Pack para despachos', desc: '10 licencias con descuento grupal. Equipa a todo tu despacho y cobra a cada socio $800 más de lo que pagas.', tag: 'EMPRESA', color: 'text-violet-400' },
+              { n: '11', title: 'Clon digital — tu escuela', desc: 'Tu imagen, voz IA, cursos firmados por ti. Vendes acceso mensual a tu comunidad de aprendizaje.', tag: 'IDENTIDAD', color: 'text-[#D4AF37]' },
+              { n: '12', title: 'Leads calificados como activo', desc: 'El sistema genera 100 leads/día para ti. Cierras 2-3/semana. A $1,999 promedio = $15,992 extra/mes.', tag: 'VENTAS', color: 'text-sky-400' },
+              { n: '13', title: 'Asesoría RESICO especializada', desc: 'El régimen más popular de México. Automatizas declaraciones y cobras $800/mes por cliente RESICO.', tag: 'FISCAL', color: 'text-[#D4AF37]' },
+              { n: '14', title: 'Servicios de nómina + IMSS', desc: 'Brain IA calcula dispersión automática. Cobras $500-$1,000/mes por nómina de empresa.', tag: 'NÓMINA', color: 'text-emerald-400' },
+              { n: '15', title: 'Merch y activos físicos Mystic', desc: 'En temporadas exclusivas abres ventana de venta. Tu marca en productos físicos = ingresos pasivos.', tag: 'MERCH', color: 'text-pink-400' },
+              { n: '16', title: 'Clases en vivo por suscripción', desc: 'Impartes masterclasses semanales de 15min. 100 alumnos × $299/mes = $29,900 mensual recurrente.', tag: 'EDUCACIÓN', color: 'text-sky-400' },
+              { n: '17', title: 'Partner de gobierno y despachos', desc: 'Con A.C. Sonora Digital Foundation tramitas contratos educativos con municipios y estados.', tag: 'GOB', color: 'text-violet-400' },
+              { n: '18', title: 'Add-on de leads para clientes', desc: 'Vendes el servicio de 100 leads/día a tus clientes contadores como servicio adicional $500/semana.', tag: 'ADD-ON', color: 'text-orange-400' },
+              { n: '19', title: 'Royalties perpetuos por red', desc: 'Cada cliente que traes genera comisión mientras siga activo. Tu red trabaja aunque tú no.', tag: 'PASIVO', color: 'text-[#D4AF37]' },
+              { n: '20', title: 'Inclusión y accesibilidad como diferenciador', desc: 'Eres el primer despacho certificado en tecnología accesible para personas con discapacidad. Nichos sin competencia.', tag: 'IMPACTO', color: 'text-emerald-400' },
+            ].map(item => (
+              <div key={item.n} className="rounded-2xl border border-white/8 bg-white/3 p-4 hover:border-[#D4AF37]/30 transition-colors group">
+                <div className="flex items-start gap-3">
+                  <span className={`text-xl font-black ${item.color} shrink-0 leading-none mt-0.5`}>{item.n}</span>
+                  <div>
+                    <span className={`text-[9px] font-black ${item.color} opacity-70`}>{item.tag}</span>
+                    <p className="text-white font-bold text-xs mt-0.5 leading-snug">{item.title}</p>
+                    <p className="text-white/35 text-[10px] mt-1 leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <p className="text-white/30 text-sm mb-4">Estas son solo 20 de infinitas posibilidades. La única limitante es cuántas quieres activar.</p>
+            <Link href="/login" className="inline-flex items-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#f0c842] text-black font-black py-4 px-10 rounded-2xl hover:shadow-[0_0_40px_rgba(212,175,55,0.4)] transition-all text-sm">
+              Quiero activar mi sistema → entrar gratis
+            </Link>
           </div>
         </div>
       </section>
