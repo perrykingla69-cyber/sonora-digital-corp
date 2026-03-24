@@ -10,6 +10,8 @@ import {
   BookOpen, Code2, Coins, Layers, TrendingUp, MessageSquare,
   Rocket, Lock, Wallet, ExternalLink, Award, Briefcase,
   ChevronDown, X, CheckSquare, BarChart3, Target,
+  AlertTriangle, ShieldOff, TrendingDown, Hexagon, Quote,
+  Trophy, BadgeCheck, Image as ImageIcon, Cpu,
 } from 'lucide-react'
 
 // ─── Logo SVG — Ojo Místico ────────────────────────────────────────────────
@@ -344,6 +346,161 @@ const CONSULTING_SERVICES = [
   { icon: Target, title: 'Arquitectura de Ingresos', desc: 'Diseñamos juntos tu modelo de negocio: precios, paquetes, canales de venta, funnel automático con IA. Te ayudamos a cobrar lo que mereces.', price: '$3,500 / sesión', tag: 'VENTAS' },
   { icon: Globe, title: 'Expansión Digital', desc: 'Estrategia de contenido + presencia web + automatización completa. De 0 a 500 seguidores calificados en 90 días con el sistema Mystic.', price: '$4,000 / mes', tag: 'MARKETING' },
   { icon: Wallet, title: 'Onboarding Cripto Empresarial', desc: 'Te llevamos de la mano: wallet segura, primera transacción en BTC/USDC, integración en tu negocio, estrategia de reserva de valor.', price: '$1,500 / sesión', tag: 'CRIPTO' },
+]
+
+// ─── Score Segments ──────────────────────────────────────────────────────────
+const SCORE_SEGMENTS = [
+  {
+    name: 'Explorador',
+    range: '0 – 249',
+    color: 'text-slate-400',
+    bg: 'bg-slate-500/10 border-slate-500/20',
+    bar: 'bg-slate-400',
+    pct: 25,
+    desc: 'Acaba de descubrir el sistema. Le mostramos valor rápido.',
+    signal: ['< 10 facturas/mes', 'Poco uso Brain IA', 'Sin cursos completados'],
+    offer: 'Flash: 1er mes Libertad a $399',
+  },
+  {
+    name: 'Activo',
+    range: '250 – 499',
+    color: 'text-sky-400',
+    bg: 'bg-sky-500/10 border-sky-500/20',
+    bar: 'bg-sky-400',
+    pct: 50,
+    desc: 'Usa la plataforma con regularidad. Listo para escalar.',
+    signal: ['30-100 facturas/mes', '10+ consultas/día Brain', '1-2 módulos academia'],
+    offer: 'Upgrade a Soberanía + 1 sesión consultoría gratis',
+  },
+  {
+    name: 'Estratégico',
+    range: '500 – 749',
+    color: 'text-[#D4AF37]',
+    bg: 'bg-amber-500/10 border-amber-500/20',
+    bar: 'bg-[#D4AF37]',
+    pct: 75,
+    desc: 'Operador de alto rendimiento. Candidato a Poder.',
+    signal: ['100+ facturas/mes', 'Referidos activos', '3+ cursos completados'],
+    offer: 'NFT Estratega + acceso beta features',
+  },
+  {
+    name: 'Élite',
+    range: '750 – 1000',
+    color: 'text-violet-400',
+    bg: 'bg-violet-500/10 border-violet-500/20',
+    bar: 'bg-violet-500',
+    pct: 100,
+    desc: 'Embajador Mystic. Acceso total + mentoría 1v1.',
+    signal: ['500+ facturas/mes', '5+ referidos activos', 'Academia certificado'],
+    offer: 'NFT Élite + mentoría semanal 1v1 + merch exclusivo',
+  },
+]
+
+// ─── NFT Tiers ────────────────────────────────────────────────────────────────
+const NFT_TIERS = [
+  {
+    tier: 'Acceso',
+    symbol: '◈',
+    color: 'text-slate-300',
+    border: 'border-slate-500/30',
+    bg: 'from-slate-800/30',
+    price: '50 $MYS',
+    perks: ['Acceso a sala privada Telegram', 'Badge verificado en perfil', 'Descuentos en merch básico'],
+  },
+  {
+    tier: 'Estratega',
+    symbol: '⬡',
+    color: 'text-[#D4AF37]',
+    border: 'border-amber-500/40',
+    bg: 'from-amber-900/20',
+    price: '250 $MYS',
+    perks: ['Acceso anticipado a features beta', 'Hack fiscal exclusivo / mes', 'Foto de perfil NFT certificada', 'Insignia oro en todo el ecosistema'],
+  },
+  {
+    tier: 'Élite',
+    symbol: '◆',
+    color: 'text-violet-400',
+    border: 'border-violet-500/40',
+    bg: 'from-violet-900/20',
+    price: '1,000 $MYS',
+    perks: ['Mentoría 1v1 mensual (4 sesiones)', 'Acceso vitalicio a un módulo', 'NFT coleccionable edición limitada', 'Voto en roadmap de features', 'Comisiones 20% para siempre'],
+  },
+]
+
+// ─── Testimonials ────────────────────────────────────────────────────────────
+const TESTIMONIALS = [
+  {
+    name: 'María E. González Ruiz',
+    role: 'Contadora Pública',
+    city: 'Hermosillo, Sonora',
+    avatar: 'MG',
+    avatarBg: 'bg-rose-700',
+    score: 820,
+    tier: 'Élite',
+    quote: 'Antes tardaba 3 días en cerrar la contabilidad de cada cliente. Ahora lo hago en 40 minutos con el Brain IA. Subí mis honorarios un 60% porque entrego más valor en menos tiempo.',
+    result: '+$18,000 MXN/mes extra en honorarios',
+    stars: 5,
+  },
+  {
+    name: 'Carlos R. Valenzuela',
+    role: 'Importador y Agente Aduanal',
+    city: 'Nogales, Sonora',
+    avatar: 'CV',
+    avatarBg: 'bg-sky-700',
+    score: 710,
+    tier: 'Estratégico',
+    quote: 'El sistema MVE antimultas me salvó de una multa de $240,000 MXN. El aviso llegó por Telegram a las 6am antes de que venciera el plazo. Eso solo ya pagó el sistema por 10 años.',
+    result: '$240,000 MXN en multas evitadas',
+    stars: 5,
+  },
+  {
+    name: 'Ana Sofía Beltrán',
+    role: 'Emprendedora · E-commerce',
+    city: 'Guaymas, Sonora',
+    avatar: 'AB',
+    avatarBg: 'bg-violet-700',
+    score: 490,
+    tier: 'Activo',
+    quote: 'No tenía contador y tenía miedo de los impuestos. Mystic me enseñó RESICO en un fin de semana y ahora declaro yo misma. La academia de Blockchain me abrió un mundo completamente nuevo.',
+    result: '$8,500 MXN/mes ahorrado en contador',
+    stars: 5,
+  },
+  {
+    name: 'Roberto A. Félix Mendez',
+    role: 'Dueño de Restaurantes (3 sucursales)',
+    city: 'Ciudad Obregón, Sonora',
+    avatar: 'RF',
+    avatarBg: 'bg-emerald-700',
+    score: 650,
+    tier: 'Estratégico',
+    quote: 'Tenía a un contador cobrándome $15,000/mes por hacer lo mismo que Mystic hace automáticamente. Ahora ese dinero va a expandir mi negocio. La IA nunca se enferma, nunca llega tarde.',
+    result: '$180,000 MXN ahorrado al año',
+    stars: 5,
+  },
+  {
+    name: 'Ing. Patricia Morales',
+    role: 'Despacho Contable (12 clientes)',
+    city: 'Culiacán, Sinaloa',
+    avatar: 'PM',
+    avatarBg: 'bg-amber-700',
+    score: 890,
+    tier: 'Élite',
+    quote: 'Tengo 12 clientes y con Mystic los atiendo sola. Antes necesitaba 2 asistentes. El Content Factory genera el contenido para mis clientes automáticamente. Mis clientes están felices y yo duermo 8 horas.',
+    result: '$35,000 MXN/mes más sin contratar personal',
+    stars: 5,
+  },
+  {
+    name: 'Miguel Á. Contreras',
+    role: 'Contador PYME · RESICO',
+    city: 'Los Mochis, Sinaloa',
+    avatar: 'MC',
+    avatarBg: 'bg-indigo-700',
+    score: 380,
+    tier: 'Activo',
+    quote: 'Empecé con el plan Acceso para probar. A las 2 semanas ya estaba en Soberanía. El Brain IA resuelve en segundos lo que me tomaba consultar libros por horas. Es como tener un SAT advisor 24/7.',
+    result: 'De 5 a 18 clientes en 3 meses',
+    stars: 5,
+  },
 ]
 
 const UNIFORMS = [
@@ -1021,6 +1178,260 @@ export default function HomePage() {
               </TiltCard>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── ANTIMULTAS MVE — PRODUCTO #1 ─────────────────────────────────── */}
+      <section className="py-24 bg-[#020208] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-rose-900/10 to-transparent pointer-events-none" />
+        <div className="max-w-6xl mx-auto px-6 relative">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-rose-500/15 border border-rose-500/30 rounded-full px-4 py-2 text-sm text-rose-300 font-bold mb-6">
+                <Flame className="w-4 h-4" /> PRODUCTO #1 MÁS VENDIDO
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-black text-white mb-6 leading-tight">
+                Sistema<br />
+                <span className="text-rose-400">Antimultas MVE.</span><br />
+                <span className="text-white/60 text-3xl font-bold">No te corran. No pagues de más.</span>
+              </h2>
+              <p className="text-white/50 leading-relaxed mb-8">
+                Las multas por pedimentos fuera de plazo, errores en Manifestación de Valor o datos incorrectos pueden superar los <strong className="text-white">$300,000 MXN por evento</strong>. Mystic monitorea tus obligaciones aduanales 24/7 y te avisa antes de que venzan — por Telegram, voz y push notification.
+              </p>
+              <div className="space-y-4 mb-10">
+                {[
+                  { icon: AlertTriangle, t: 'Alertas de vencimiento MVE', d: 'Te avisamos 72h, 24h y 1h antes del plazo', c: 'text-rose-400' },
+                  { icon: ShieldOff, t: 'Detección de errores en pedimentos', d: 'Revisión automática antes de presentar al SAT', c: 'text-amber-400' },
+                  { icon: TrendingDown, t: 'Estrategias para reducir valor en aduana', d: 'Optimización legal de base gravable y aranceles', c: 'text-emerald-400' },
+                  { icon: Users, t: 'Formación de clientes en comercio exterior', d: 'Ofrece este servicio a tus clientes y cobra más', c: 'text-sky-400' },
+                ].map(({ icon: Icon, t, d, c }) => (
+                  <div key={t} className="flex gap-4 items-start">
+                    <div className={`w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5`}>
+                      <Icon className={`w-5 h-5 ${c}`} />
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-sm">{t}</p>
+                      <p className="text-white/40 text-xs">{d}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link href="/login" className="inline-flex items-center gap-3 px-8 py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl transition-all hover:shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+                <ShieldCheck className="w-5 h-5" /> Activar Antimultas MVE
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="space-y-4">
+              {/* Fake alert card */}
+              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
+                  <span className="text-xs text-rose-300 font-bold uppercase tracking-wider">Alerta activa — vence en 18 horas</span>
+                </div>
+                <p className="text-white font-bold mb-1">MVE Pedimento #8765432 — Importación maquinaria</p>
+                <p className="text-white/50 text-sm">Manifestación de Valor pendiente. Multa potencial: <span className="text-rose-300 font-bold">$180,000 MXN</span></p>
+                <div className="mt-4 flex gap-2">
+                  <button className="flex-1 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg">Resolver ahora</button>
+                  <button className="px-3 py-2 border border-white/15 text-white/60 text-xs rounded-lg">Ver detalles</button>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs text-emerald-300 font-bold uppercase tracking-wider">Resuelta — hace 2 días</span>
+                </div>
+                <p className="text-white/70 text-sm">Pedimento #8765288 — Multa evitada: <span className="text-emerald-400 font-black">$240,000 MXN</span></p>
+              </div>
+              <div className="rounded-2xl border border-white/8 bg-white/3 p-5 text-center">
+                <p className="text-3xl font-black text-[#D4AF37]">$2.4M MXN</p>
+                <p className="text-white/40 text-sm mt-1">en multas evitadas para clientes este trimestre</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SCORE DE CLIENTE ──────────────────────────────────────────────── */}
+      <section className="py-24 bg-[#F5F0E8]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <p className="text-sm font-bold uppercase tracking-widest text-[#8B7520] mb-3">Sistema de Score</p>
+            <h2 className="text-4xl font-black text-[#1a1a1a] mb-4">
+              Cuanto más usas Mystic,<br />
+              <span className="text-[#8B7520]">más te recompensamos.</span>
+            </h2>
+            <p className="text-[#666] max-w-xl mx-auto">
+              Tu score se calcula con señales de comportamiento — sin acceder a datos sensibles. Solo cómo usas la plataforma. Más activo = mejores ofertas, acceso anticipado y recompensas exclusivas.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+            {SCORE_SEGMENTS.map((seg) => (
+              <TiltCard key={seg.name}>
+                <div className={`rounded-3xl border ${seg.bg} p-6 h-full flex flex-col`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className={`text-lg font-black ${seg.color}`}>{seg.name}</span>
+                    <span className="text-xs text-[#888] bg-[#e8e0d0] px-2 py-0.5 rounded-full">{seg.range}</span>
+                  </div>
+                  {/* Score bar */}
+                  <div className="h-2 bg-[#e8e0d0] rounded-full mb-4 overflow-hidden">
+                    <div className={`h-full ${seg.bar} rounded-full transition-all`} style={{ width: `${seg.pct}%` }} />
+                  </div>
+                  <p className="text-xs text-[#666] mb-3 flex-1">{seg.desc}</p>
+                  <div className="space-y-1 mb-4">
+                    {seg.signal.map(s => (
+                      <p key={s} className="text-[10px] text-[#888] flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-[#D4AF37] inline-block" />{s}
+                      </p>
+                    ))}
+                  </div>
+                  <div className="text-[11px] bg-[#D4AF37]/15 border border-[#D4AF37]/30 rounded-xl px-3 py-2 text-[#8B7520] font-bold">
+                    🎯 {seg.offer}
+                  </div>
+                </div>
+              </TiltCard>
+            ))}
+          </div>
+          <div className="rounded-3xl border-2 border-[#D4AF37]/20 bg-white p-8 text-center shadow-sm">
+            <p className="text-[#888] text-sm mb-2">Tu score se calcula automáticamente. Sin formularios. Sin encuestas. Solo actúa.</p>
+            <p className="text-[#1a1a1a] font-black text-lg">Facturas · Consultas Brain IA · Cursos completados · Referidos activos · Pagos puntuales</p>
+            <p className="text-[#D4AF37] text-xs mt-2 font-semibold">Cero datos personales sensibles utilizados en el cálculo</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── TOKEN $MYS + NFTs ────────────────────────────────────────────── */}
+      <section className="py-24 bg-[#0d0d12]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <p className="text-sm font-bold uppercase tracking-widest text-[#D4AF37]/70 mb-3">Ecosistema $MYS</p>
+            <h2 className="text-4xl font-black text-white mb-4">
+              No solo pagas. <span className="text-[#D4AF37]">Ganas.</span><br />
+              <span className="text-white/50 text-2xl font-bold">Token de utilidad + NFTs de acceso</span>
+            </h2>
+            <p className="text-white/40 max-w-xl mx-auto">
+              Cada factura emitida, curso completado y referido activo te genera tokens $MYS. Úsalos para acceder a contenido exclusivo, merch, mentorías y NFTs con beneficios reales.
+            </p>
+          </div>
+
+          {/* Token earn/spend */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+            <div className="rounded-3xl border border-[#D4AF37]/20 bg-[#D4AF37]/3 p-8">
+              <p className="text-[#D4AF37] font-black text-lg mb-5 flex items-center gap-2">
+                <Zap className="w-5 h-5" /> Cómo ganar $MYS
+              </p>
+              <div className="space-y-3">
+                {[
+                  { a: 'Pagar suscripción mensual', v: '+100 $MYS' },
+                  { a: 'Emitir factura CFDI 4.0', v: '+2 $MYS c/u' },
+                  { a: 'Completar módulo academia', v: '+25 $MYS' },
+                  { a: 'Referir un cliente activo', v: '+200 $MYS' },
+                  { a: 'Pagar en BTC/USDC', v: '+50 $MYS bonus' },
+                  { a: 'Reseña verificada', v: '+30 $MYS' },
+                ].map(({ a, v }) => (
+                  <div key={a} className="flex items-center justify-between py-2.5 border-b border-white/5">
+                    <span className="text-white/60 text-sm">{a}</span>
+                    <span className="text-[#D4AF37] font-black text-sm">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-3xl border border-violet-500/20 bg-violet-500/3 p-8">
+              <p className="text-violet-400 font-black text-lg mb-5 flex items-center gap-2">
+                <Hexagon className="w-5 h-5" /> Qué puedes hacer con $MYS
+              </p>
+              <div className="space-y-3">
+                {[
+                  { a: 'NFT Acceso (badge perfil)', v: '50 $MYS' },
+                  { a: 'Hack fiscal exclusivo', v: '80 $MYS' },
+                  { a: 'Módulo academia premium', v: '150 $MYS' },
+                  { a: 'Kit merch Mystic', v: '300 $MYS' },
+                  { a: 'NFT Estratega + beneficios', v: '250 $MYS' },
+                  { a: 'Mentoría 1v1 mensual (4 sesiones)', v: '1,000 $MYS' },
+                ].map(({ a, v }) => (
+                  <div key={a} className="flex items-center justify-between py-2.5 border-b border-white/5">
+                    <span className="text-white/60 text-sm">{a}</span>
+                    <span className="text-violet-400 font-black text-sm">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* NFT Tiers */}
+          <div className="grid sm:grid-cols-3 gap-5">
+            {NFT_TIERS.map((nft) => (
+              <TiltCard key={nft.tier}>
+                <div className={`rounded-3xl border-2 ${nft.border} bg-gradient-to-b ${nft.bg} to-transparent p-7 text-center`}>
+                  <div className={`text-5xl ${nft.color} font-black mb-3`}>{nft.symbol}</div>
+                  <p className={`text-xl font-black ${nft.color} mb-1`}>NFT {nft.tier}</p>
+                  <p className="text-white/30 text-xs mb-5">{nft.price}</p>
+                  <ul className="space-y-2.5 text-left">
+                    {nft.perks.map(p => (
+                      <li key={p} className="flex items-start gap-2 text-xs text-white/60">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                  <button className={`mt-6 w-full py-3 rounded-xl border ${nft.border} ${nft.color} text-sm font-bold hover:bg-white/5 transition-colors`}>
+                    Mintear NFT
+                  </button>
+                </div>
+              </TiltCard>
+            ))}
+          </div>
+          <p className="text-center mt-6 text-xs text-white/25">$MYS token en red Polygon · Próximo lanzamiento Q2 2026 · Whitelist abierta</p>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALES ─────────────────────────────────────────────────── */}
+      <section className="py-24 bg-[#F5F0E8]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <p className="text-sm font-bold uppercase tracking-widest text-[#8B7520] mb-3">Resultados Reales</p>
+            <h2 className="text-4xl font-black text-[#1a1a1a] mb-4">
+              Ellos ya lo hicieron.<br />
+              <span className="text-[#8B7520]">¿Cuándo empiezas tú?</span>
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {TESTIMONIALS.map((t) => (
+              <TiltCard key={t.name}>
+                <div className="flex flex-col h-full rounded-3xl border border-[#D4AF37]/15 bg-white shadow-sm p-7">
+                  <Quote className="w-8 h-8 text-[#D4AF37]/30 mb-4" />
+                  <p className="text-[#444] text-sm leading-relaxed flex-1 mb-6 italic">"{t.quote}"</p>
+                  <div className="pt-4 border-t border-[#e8e0d0]">
+                    <div className="flex items-center gap-1 mb-3">
+                      {[...Array(t.stars)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-[#D4AF37] text-[#D4AF37]" />)}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full ${t.avatarBg} flex items-center justify-center text-white font-black text-xs shrink-0`}>
+                        {t.avatar}
+                      </div>
+                      <div>
+                        <p className="text-[#1a1a1a] font-bold text-sm">{t.name}</p>
+                        <p className="text-[#888] text-xs">{t.role}</p>
+                        <p className="text-[#aaa] text-xs">{t.city}</p>
+                      </div>
+                      <div className="ml-auto text-right">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                          t.tier === 'Élite' ? 'bg-violet-100 text-violet-700' :
+                          t.tier === 'Estratégico' ? 'bg-amber-100 text-amber-700' :
+                          'bg-sky-100 text-sky-700'
+                        }`}>{t.tier}</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2">
+                      <p className="text-emerald-700 font-black text-xs">✓ {t.result}</p>
+                    </div>
+                  </div>
+                </div>
+              </TiltCard>
+            ))}
+          </div>
+          <p className="text-center mt-8 text-xs text-[#bbb]">
+            * Resultados basados en casos de uso reales de la plataforma. Los resultados individuales pueden variar.
+          </p>
         </div>
       </section>
 
