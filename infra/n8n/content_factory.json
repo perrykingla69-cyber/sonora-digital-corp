@@ -1,0 +1,258 @@
+{
+  "id": "cf001a2b-3c4d-5e6f-a7b8-c9d0e1f20001",
+  "name": "Mystic Content Factory",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 0 * * *" },
+            { "field": "cronExpression", "expression": "0 6 * * *" },
+            { "field": "cronExpression", "expression": "0 12 * * *" },
+            { "field": "cronExpression", "expression": "0 18 * * *" }
+          ]
+        }
+      },
+      "name": "Trigger Cada 6 Horas",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Selecciona el tema rotando en ciclo de 9 basado en hora actual\n// Temas: 3 educativos, 3 producto, 3 visión\nconst temas = [\n  {\n    id: 'cfdi40',\n    categoria: 'educativo',\n    titulo: 'CFDI 4.0',\n    descripcion: 'Novedades, cambios y obligaciones del CFDI 4.0 para PYMEs mexicanas',\n    keywords: ['CFDI 4.0', 'factura electrónica', 'SAT', 'complementos', 'cancelación']\n  },\n  {\n    id: 'resico',\n    categoria: 'educativo',\n    titulo: 'RESICO',\n    descripcion: 'Régimen Simplificado de Confianza: ventajas, requisitos y obligaciones fiscales',\n    keywords: ['RESICO', 'régimen simplificado', 'ISR', 'personas físicas', 'facilidades SAT']\n  },\n  {\n    id: 'imss_nomina',\n    categoria: 'educativo',\n    titulo: 'IMSS y Nómina',\n    descripcion: 'Cuotas IMSS, timbrado de nómina, SUA y cumplimiento laboral en México',\n    keywords: ['IMSS', 'nómina', 'SUA', 'cuotas patronales', 'timbrado nómina']\n  },\n  {\n    id: 'mve_demo',\n    categoria: 'producto',\n    titulo: 'Demo Mystic MVE',\n    descripcion: 'Demostración de funciones clave de Mystic: facturación, CRM y Brain IA en un flujo real',\n    keywords: ['Mystic', 'demo', 'facturación automática', 'CRM PYME', 'Brain IA WhatsApp']\n  },\n  {\n    id: 'caso_exito',\n    categoria: 'producto',\n    titulo: 'Caso de Éxito Mystic',\n    descripcion: 'Historia real de una PYME sonorense que automatizó su contabilidad con Mystic',\n    keywords: ['caso de éxito', 'automatización contable', 'PYME Sonora', 'ahorro tiempo', 'Mystic']\n  },\n  {\n    id: 'manual_vs_mystic',\n    categoria: 'producto',\n    titulo: 'Manual vs Mystic',\n    descripcion: 'Comparativa: procesos contables manuales tradicionales versus automatización con Mystic',\n    keywords: ['automatización', 'contabilidad manual', 'eficiencia', 'errores humanos', 'Mystic']\n  },\n  {\n    id: 'digitalizacion_sonora',\n    categoria: 'vision',\n    titulo: 'Digitalización en Sonora',\n    descripcion: 'El estado de la transformación digital de las PYMEs en Sonora y el noroeste de México',\n    keywords: ['digitalización', 'Sonora', 'PYMEs', 'transformación digital', 'noroeste México']\n  },\n  {\n    id: 'ia_contabilidad',\n    categoria: 'vision',\n    titulo: 'IA en Contabilidad',\n    descripcion: 'Cómo la inteligencia artificial está revolucionando la contabilidad y la fiscalía en México',\n    keywords: ['inteligencia artificial', 'contabilidad IA', 'automatización fiscal', 'futuro contable']\n  },\n  {\n    id: 'futuro_fiscal',\n    categoria: 'vision',\n    titulo: 'El Futuro Fiscal en México',\n    descripcion: 'Tendencias fiscales, tecnología SAT y qué esperar en los próximos años para las PYMEs',\n    keywords: ['futuro fiscal', 'SAT digital', 'tendencias impuestos', 'facturación 2025', 'PYME México']\n  }\n];\n\n// Índice rotativo: usa el timestamp de la ejecución para seleccionar el tema\nconst ahora = new Date();\nconst horasDesdeEpoch = Math.floor(ahora.getTime() / (1000 * 60 * 60));\nconst idx = horasDesdeEpoch % temas.length;\nconst tema = temas[idx];\n\n// Determinar slot horario para personalizar tono\nconst hora = ahora.getHours();\nlet slotHorario = 'mañana';\nif (hora >= 6 && hora < 12) slotHorario = 'mañana';\nelse if (hora >= 12 && hora < 18) slotHorario = 'tarde';\nelse slotHorario = 'noche';\n\nreturn [{\n  json: {\n    tema,\n    slotHorario,\n    horaLocal: ahora.toLocaleString('es-MX', { timeZone: 'America/Hermosillo' }),\n    temaIdx: idx\n  }\n}];"
+      },
+      "name": "Seleccionar Tema Rotativo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Construye el prompt para Anthropic Claude Haiku\nconst { tema, slotHorario, horaLocal } = $input.item.json;\n\nconst systemPrompt = `Eres el community manager experto de Mystic, un AI Orchestrator SaaS para PYMEs mexicanas de Sonora Digital Corp.\nTu tono es profesional pero cercano, en español mexicano. Usas emojis con moderación.\nSiempre incluyes un CTA claro hacia Mystic.\nConoces perfectamente: CFDI 4.0, SAT, IMSS, nómina, RESICO, y automatización contable.`;\n\nconst userPrompt = `Genera contenido de marketing para redes sociales sobre el tema: \"${tema.titulo}\"\n\nDescripción del tema: ${tema.descripcion}\nPalabras clave: ${tema.keywords.join(', ')}\nCategoría: ${tema.categoria}\nHora de publicación: ${slotHorario} (${horaLocal})\n\nGenera EXACTAMENTE los siguientes 4 formatos, separados por los marcadores indicados:\n\n---INSTAGRAM---\nCaption para Instagram (máximo 150 palabras). Incluye emojis relevantes, hashtags al final (#Mystic #PYMEMéxico #ContabilidadDigital #Sonora y 5 más específicos del tema), y un CTA para visitar el link en bio.\n\n---LINKEDIN---\nPost para LinkedIn (máximo 300 palabras). Tono más formal y profesional. Storytelling con dato/estadística, problema, solución con Mystic, y CTA para agendar demo. Sin exceso de emojis.\n\n---TIKTOK---\nGuión para TikTok de 60 segundos. Formato: [0-5s] gancho visual, [5-20s] problema, [20-45s] solución/demo, [45-55s] resultado, [55-60s] CTA. Incluir indicaciones de texto en pantalla entre corchetes.\n\n---TWITTER---\nHilo de Twitter/X con exactamente 5 tweets numerados (1/5, 2/5... 5/5). El tweet 1 debe ser el gancho con estadística o pregunta provocadora. El tweet 5 debe ser el CTA con link placeholder. Máximo 280 caracteres por tweet.`;\n\nreturn [{\n  json: {\n    tema,\n    slotHorario,\n    horaLocal,\n    anthropicPayload: {\n      model: 'claude-haiku-4-5-20251001',\n      max_tokens: 2048,\n      system: systemPrompt,\n      messages: [\n        { role: 'user', content: userPrompt }\n      ]\n    }\n  }\n}];"
+      },
+      "name": "Construir Prompt Anthropic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "{{ANTHROPIC_API_KEY}}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.anthropicPayload) }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "name": "Generar Contenido Anthropic",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrae y parsea las 4 variantes de contenido del response de Anthropic\nconst anthropicResponse = $input.item.json;\nconst temaData = $('Construir Prompt Anthropic').first().json;\n\n// Extraer texto generado\nconst contenidoRaw = anthropicResponse?.content?.[0]?.text || '';\n\nif (!contenidoRaw) {\n  throw new Error('Anthropic no retornó contenido. Response: ' + JSON.stringify(anthropicResponse).slice(0, 300));\n}\n\n// Parsear secciones por marcadores\nfunction extraerSeccion(texto, marcador) {\n  const regex = new RegExp(`---${marcador}---([\\\\s\\\\S]*?)(?=---[A-Z]+---|$)`, 'i');\n  const match = texto.match(regex);\n  return match ? match[1].trim() : `[Contenido ${marcador} no generado]`;\n}\n\nconst instagram = extraerSeccion(contenidoRaw, 'INSTAGRAM');\nconst linkedin = extraerSeccion(contenidoRaw, 'LINKEDIN');\nconst tiktok = extraerSeccion(contenidoRaw, 'TIKTOK');\nconst twitter = extraerSeccion(contenidoRaw, 'TWITTER');\n\n// Construir mensaje resumen para Telegram\nconst tema = temaData.tema;\nconst horaLocal = temaData.horaLocal;\n\nconst mensajeTelegram = `🚀 *Mystic Content Factory*\\n` +\n  `📅 ${horaLocal}\\n` +\n  `🏷️ Tema: *${tema.titulo}* (${tema.categoria})\\n` +\n  `📊 Índice #${$('Seleccionar Tema Rotativo').first().json.temaIdx + 1}/9\\n\\n` +\n  `━━━━━━━━━━━━━━━━━━━━\\n` +\n  `📸 *INSTAGRAM*\\n${instagram.slice(0, 400)}${instagram.length > 400 ? '...' : ''}\\n\\n` +\n  `━━━━━━━━━━━━━━━━━━━━\\n` +\n  `💼 *LINKEDIN* (preview)\\n${linkedin.slice(0, 300)}${linkedin.length > 300 ? '...' : ''}\\n\\n` +\n  `━━━━━━━━━━━━━━━━━━━━\\n` +\n  `🎵 *TIKTOK* (preview)\\n${tiktok.slice(0, 250)}${tiktok.length > 250 ? '...' : ''}\\n\\n` +\n  `━━━━━━━━━━━━━━━━━━━━\\n` +\n  `🐦 *TWITTER/X*\\n${twitter.slice(0, 300)}${twitter.length > 300 ? '...' : ''}\\n\\n` +\n  `✅ Contenido generado con Claude Haiku 4.5`;\n\nreturn [{\n  json: {\n    tema: tema.titulo,\n    categoria: tema.categoria,\n    horaLocal,\n    contenidoCompleto: {\n      instagram,\n      linkedin,\n      tiktok,\n      twitter\n    },\n    mensajeTelegram,\n    tokensUsados: anthropicResponse?.usage?.output_tokens || 0\n  }\n}];"
+      },
+      "name": "Parsear Variantes de Contenido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.mensajeTelegram }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "name": "Contenido Valido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: '@mystic_content', text: $json.mensajeTelegram, parse_mode: 'Markdown', disable_web_page_preview: true }) }}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "name": "Publicar en Telegram Channel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log del contenido completo al API interno de Mystic para registro y auditoría\nconst datos = $input.item.json;\nreturn [{\n  json: {\n    evento: 'content_factory_generated',\n    tema: datos.tema,\n    categoria: datos.categoria,\n    horaLocal: datos.horaLocal,\n    tokensUsados: datos.tokensUsados,\n    plataformas: ['instagram', 'linkedin', 'tiktok', 'twitter'],\n    timestampUtc: new Date().toISOString()\n  }\n}];"
+      },
+      "name": "Registrar en Log Mystic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 380]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/brain/feedback",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Enviar Log a Mystic API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Manejo de errores del flujo principal\nconst err = $input.item.json;\nconst workflow = 'Mystic Content Factory';\nconst ahora = new Date().toLocaleString('es-MX', { timeZone: 'America/Hermosillo' });\n\nconst errorDetalle = typeof err === 'object'\n  ? JSON.stringify(err).slice(0, 400)\n  : String(err).slice(0, 400);\n\nconst mensajeError = `⚠️ *ERROR — Content Factory*\\n\\n` +\n  `🕐 ${ahora}\\n` +\n  `🔴 Workflow: ${workflow}\\n` +\n  `📋 Detalle:\\n\\`\\`\\`${errorDetalle}\\`\\`\\`\\n\\n` +\n  `👉 Revisar N8N: /workflows`;\n\nreturn [{\n  json: {\n    mensajeError,\n    errorDetalle,\n    workflow,\n    timestampUtc: new Date().toISOString()\n  }\n}];"
+      },
+      "name": "Handler Error General",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 520]
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: '@mystic_content', text: $json.mensajeError, parse_mode: 'Markdown' }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "name": "Notificar Error Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 520]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Contenido vacío o inválido — alerta para revisión\nconst datos = $input.item.json;\nconst msg = `⚠️ *Content Factory — Contenido Vacío*\\n\\n` +\n  `Tema: ${datos.tema || 'desconocido'}\\n` +\n  `El modelo no generó contenido parseable.\\n` +\n  `Tokens usados: ${datos.tokensUsados || 0}\\n` +\n  `🕐 ${datos.horaLocal}`;\nreturn [{ json: { mensajeError: msg } }];"
+      },
+      "name": "Alerta Contenido Vacio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 480]
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: '@mystic_content', text: $json.mensajeError, parse_mode: 'Markdown' }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "name": "Notificar Vacio Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 480]
+    }
+  ],
+  "connections": {
+    "Trigger Cada 6 Horas": {
+      "main": [
+        [{ "node": "Seleccionar Tema Rotativo", "type": "main", "index": 0 }]
+      ]
+    },
+    "Seleccionar Tema Rotativo": {
+      "main": [
+        [{ "node": "Construir Prompt Anthropic", "type": "main", "index": 0 }]
+      ]
+    },
+    "Construir Prompt Anthropic": {
+      "main": [
+        [{ "node": "Generar Contenido Anthropic", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generar Contenido Anthropic": {
+      "main": [
+        [{ "node": "Parsear Variantes de Contenido", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parsear Variantes de Contenido": {
+      "main": [
+        [{ "node": "Contenido Valido?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Contenido Valido?": {
+      "main": [
+        [{ "node": "Publicar en Telegram Channel", "type": "main", "index": 0 }],
+        [{ "node": "Alerta Contenido Vacio", "type": "main", "index": 0 }]
+      ]
+    },
+    "Publicar en Telegram Channel": {
+      "main": [
+        [{ "node": "Registrar en Log Mystic", "type": "main", "index": 0 }]
+      ]
+    },
+    "Registrar en Log Mystic": {
+      "main": [
+        [{ "node": "Enviar Log a Mystic API", "type": "main", "index": 0 }]
+      ]
+    },
+    "Handler Error General": {
+      "main": [
+        [{ "node": "Notificar Error Telegram", "type": "main", "index": 0 }]
+      ]
+    },
+    "Alerta Contenido Vacio": {
+      "main": [
+        [{ "node": "Notificar Vacio Telegram", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "errorWorkflow": "",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["content", "marketing", "anthropic", "telegram"],
+  "triggerCount": 0,
+  "updatedAt": "2026-03-24T00:00:00.000Z",
+  "versionId": "cf001a2b-0001"
+}
