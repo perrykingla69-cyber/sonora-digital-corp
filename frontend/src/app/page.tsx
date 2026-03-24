@@ -689,7 +689,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid sm:grid-cols-3 gap-6 text-center">
             {[
-              { n: '2,200%', l: 'ROI promedio primer mes', sub: 'vs costo de Soberanía $3,900' },
+              { n: '4x', l: 'retorno promedio primer mes', sub: 'plan Soberanía $3,900 — 1 cliente extra lo paga' },
               { n: '40 hrs', l: 'Ahorradas por contador/mes', sub: 'Que puedes vender a $500/hr' },
               { n: '$20,000+', l: 'Valor extra que puedes cobrar', sub: 'Con los mismos clientes actuales' },
             ].map(({ n, l, sub }) => (
@@ -993,7 +993,7 @@ export default function HomePage() {
                 {[
                   { p: 'Instagram', e: '📸', c: 'from-purple-600/15 to-pink-600/15 border-purple-500/25', t: '🔮 Tu contador está cobrándote $8,000/mes por hacer esto en 2 horas. Nosotros lo automatizamos en 3 minutos. #FiscalIA #PYMEsMéxico #Hermosillo' },
                   { p: 'TikTok', e: '🎵', c: 'from-gray-700/15 to-black/20 border-gray-600/25', t: 'Truco que tu contador no quiere que sepas: con IA puedes generar tu declaración anual en 4 minutos. Thread 🧵 #Contador #ISR2026' },
-                  { p: 'LinkedIn', e: '💼', c: 'from-blue-700/15 to-blue-900/15 border-blue-600/25', t: 'Las PYMEs que automatizaron su contabilidad con IA en Q1 2026 reportan un ahorro promedio de 40hrs/mes. ROI del sistema: 10,910%. El dato completo ↓' },
+                  { p: 'LinkedIn', e: '💼', c: 'from-blue-700/15 to-blue-900/15 border-blue-600/25', t: 'Las PYMEs que automatizaron su contabilidad con IA en Q1 2026 reportan un ahorro promedio de 40hrs/mes. El sistema se paga en el primer cliente adicional que consigues. El dato completo ↓' },
                   { p: 'X / Twitter', e: '✖️', c: 'from-gray-600/15 to-gray-800/15 border-gray-500/25', t: 'Si eres contador y no tienes IA en tu flujo de trabajo, alguien más ya está ofreciendo lo mismo que tú por la mitad del tiempo y el doble de margen →' },
                 ].map(({ p, e, c, t }) => (
                   <div key={p} className={`rounded-2xl border bg-gradient-to-br ${c} p-4`}>
@@ -1134,23 +1134,24 @@ export default function HomePage() {
               <span className="text-[#D4AF37]">con un solo sistema.</span>
             </h2>
             <p className="text-white/40 max-w-xl mx-auto">
-              Un contador promedio gana $35,000 MXN/mes. Con Mystic, el mismo contador puede generar $150,000+. Aquí están los caminos — elige los que más te apasionen.
+              Un contador promedio tiene 17-18 clientes y cobra $1,350/mes c/u = ~$23,000/mes. Con Mystic, el mismo contador atiende más clientes, cobra más por cliente y ofrece servicios que antes no podía dar.
             </p>
           </div>
 
-          {/* ROI Estimado para contador */}
+          {/* ROI Estimado para contador — números realistas */}
           <div className="grid grid-cols-3 gap-4 mb-12 max-w-3xl mx-auto">
             {[
-              { plan: 'Libertad $1,999', clientes: '35', ingreso: '$63,000', roi: '+80%', color: 'border-sky-500/30 text-sky-400' },
-              { plan: 'Soberanía $3,900', clientes: '50', ingreso: '$112,500', roi: '+220%', color: 'border-[#D4AF37]/40 text-[#D4AF37]' },
-              { plan: 'Poder $6,999', clientes: '80+', ingreso: '$200,000+', roi: '+470%', color: 'border-violet-500/30 text-violet-400' },
+              { plan: 'Libertad $1,999', clientes: '21', precio: '$1,450', ingreso: '$30,450', extra: '+$7,500/mes neto', roi: '+33%', color: 'border-sky-500/30 text-sky-400' },
+              { plan: 'Soberanía $3,900', clientes: '25', precio: '$1,700', ingreso: '$42,500', extra: '+$15,600/mes neto', roi: '+85%', color: 'border-[#D4AF37]/40 text-[#D4AF37]' },
+              { plan: 'Poder $6,999', clientes: '30', precio: '$2,000', ingreso: '$60,000', extra: '+$30,000/mes neto', roi: '+161%', color: 'border-violet-500/30 text-violet-400' },
             ].map(r => (
               <div key={r.plan} className={`rounded-2xl border ${r.color.split(' ')[0]} bg-white/3 p-5 text-center`}>
                 <p className={`text-xs font-bold mb-2 ${r.color.split(' ')[1]}`}>{r.plan}</p>
-                <p className="text-white/40 text-[10px]">{r.clientes} clientes × $2,250/mes</p>
+                <p className="text-white/40 text-[10px]">{r.clientes} clientes × {r.precio}/mes</p>
                 <p className="text-white font-black text-xl mt-1">{r.ingreso}</p>
-                <p className={`text-sm font-black mt-1 ${r.color.split(' ')[1]}`}>{r.roi} ingresos</p>
-                <p className="text-white/25 text-[9px] mt-1">por cada $1 invertido en Mystic</p>
+                <p className={`text-[10px] font-black mt-0.5 ${r.color.split(' ')[1]}`}>{r.extra}</p>
+                <p className={`text-sm font-black mt-1 ${r.color.split(' ')[1]}`}>{r.roi} vs línea base</p>
+                <p className="text-white/25 text-[9px] mt-1">vs. contador sin sistema</p>
               </div>
             ))}
           </div>
@@ -1168,7 +1169,7 @@ export default function HomePage() {
               { n: '09', title: 'Red de aliados multi-nivel', desc: 'Cada contador que refieres a Mystic te genera descuentos o comisiones. 10 aliados activos = plan gratis para siempre.', tag: 'ALIADOS', color: 'text-emerald-400' },
               { n: '10', title: 'Pack para despachos', desc: '10 licencias con descuento grupal. Equipa a todo tu despacho y cobra a cada socio $800 más de lo que pagas.', tag: 'EMPRESA', color: 'text-violet-400' },
               { n: '11', title: 'Clon digital — tu escuela', desc: 'Tu imagen, voz IA, cursos firmados por ti. Vendes acceso mensual a tu comunidad de aprendizaje.', tag: 'IDENTIDAD', color: 'text-[#D4AF37]' },
-              { n: '12', title: 'Leads calificados como activo', desc: 'El sistema genera 100 leads/día para ti. Cierras 2-3/semana. A $1,999 promedio = $15,992 extra/mes.', tag: 'VENTAS', color: 'text-sky-400' },
+              { n: '12', title: 'Leads calificados como activo', desc: 'El sistema genera leads diarios. Cierras 1-2 nuevos clientes/mes. A $1,700/mes cada uno = $3,400 extra recurrente desde el primer mes.', tag: 'VENTAS', color: 'text-sky-400' },
               { n: '13', title: 'Asesoría RESICO especializada', desc: 'El régimen más popular de México. Automatizas declaraciones y cobras $800/mes por cliente RESICO.', tag: 'FISCAL', color: 'text-[#D4AF37]' },
               { n: '14', title: 'Servicios de nómina + IMSS', desc: 'Brain IA calcula dispersión automática. Cobras $500-$1,000/mes por nómina de empresa.', tag: 'NÓMINA', color: 'text-emerald-400' },
               { n: '15', title: 'Merch y activos físicos Mystic', desc: 'En temporadas exclusivas abres ventana de venta. Tu marca en productos físicos = ingresos pasivos.', tag: 'MERCH', color: 'text-pink-400' },
