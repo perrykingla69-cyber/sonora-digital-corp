@@ -54,6 +54,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://sonoradigitalcorp.com}
       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
       OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+      OLLAMA_TIMEOUT: ${OLLAMA_TIMEOUT:-90}
       BRAIN_CACHE_TTL: ${BRAIN_CACHE_TTL:-3600}
       ENVIRONMENT: production
     depends_on:

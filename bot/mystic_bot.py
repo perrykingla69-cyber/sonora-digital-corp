@@ -37,7 +37,7 @@ _user_tokens: dict[int, str] = {}
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _api(method: str, path: str, data: dict = None, token: str = None) -> dict:
+def _api(method: str, path: str, data: dict = None, token: str = None, timeout: int = 15) -> dict:
     url = f"{API_URL}{path}"
     headers = {"Content-Type": "application/json"}
     if token:
@@ -45,7 +45,7 @@ def _api(method: str, path: str, data: dict = None, token: str = None) -> dict:
     body = json.dumps(data).encode() if data else None
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=15) as r:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
         txt = e.read().decode()
@@ -267,7 +267,7 @@ async def cmd_tc(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if "error" in data:
         await update.message.reply_text(f"❌ {data['error']}")
         return
-    tc  = data.get("tipo_cambio", data.get("value", 0))
+    tc  = data.get("usd_mxn", data.get("tipo_cambio", data.get("value", 0)))
     fec = data.get("fecha", data.get("date", datetime.now().strftime("%Y-%m-%d")))
     await update.message.reply_text(
         f"💵 *USD/MXN*\n\n${tc:.4f} MXN\n📅 {fec}",
@@ -486,20 +486,29 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.chat.send_action("typing")
     resp = _api("POST", "/api/brain/ask", {
         "question": text,
-        "context": context,
+        "tenant_id": 1,
         "session_id": f"telegram:{uid}",
-    })
+        "channel": "telegram",
+    }, timeout=120)
 
     if "error" in resp:
         await update.message.reply_text(
-            f"❌ Brain IA no disponible.\nUsa /ayuda para ver comandos."
+            f"🤔 No pude conectarme al cerebro en este momento. Intenta con `/ayuda`.",
+            parse_mode="Markdown",
         )
         return
 
-    respuesta = resp.get("respuesta", "Sin respuesta")
-    fuente    = resp.get("fuente", "")
-    cached    = resp.get("cached", False)
-    footer    = f"\n\n_Fuente: {fuente}{'  ·  caché' if cached else ''}_" if fuente else ""
+    respuesta = resp.get("answer", "").strip()
+    if not respuesta:
+        # Fallback conversacional cuando Ollama retorna vacío
+        respuesta = (
+            "Hola, soy Mystic Consulting 🔮\n"
+            "Puedo ayudarte con contabilidad, facturas, impuestos y más.\n"
+            "Escribe tu pregunta o usa /ayuda para ver los comandos disponibles."
+        )
+    fuente = resp.get("source", "")
+    cached = resp.get("cached", False)
+    footer = f"\n\n_🔮 {fuente}{'  · caché' if cached else ''}_" if fuente else ""
     await update.message.reply_text(f"{respuesta}{footer}", parse_mode="Markdown")
 
 
