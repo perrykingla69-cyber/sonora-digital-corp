@@ -287,11 +287,11 @@ export default function HomePage() {
             >
               {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
-            <Link href="/panel/login" className="px-4 py-2 text-sm text-white/70 hover:text-white transition-colors">
+            <Link href="/login" className="px-4 py-2 text-sm text-white/70 hover:text-white transition-colors">
               Entrar
             </Link>
             <Link
-              href="/panel/login"
+              href="/login"
               className="px-4 py-2 bg-[#D4AF37] text-black text-sm font-bold rounded-xl hover:bg-[#f0c842] transition-colors"
             >
               Registrarme gratis
@@ -344,7 +344,7 @@ export default function HomePage() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/panel/login"
+              href="/login"
               className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#D4AF37] to-[#f0c842] text-black font-black text-base rounded-2xl hover:shadow-[0_0_40px_rgba(212,175,55,0.4)] transition-all"
             >
               <Zap className="w-5 h-5" />
@@ -541,7 +541,7 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Link
-                  href="/panel/login"
+                  href="/login"
                   className={`block text-center py-3.5 rounded-2xl text-sm font-bold transition-all ${plan.ctaClass}`}
                 >
                   {plan.cta}
@@ -598,7 +598,7 @@ export default function HomePage() {
 
           <div className="mt-12 text-center">
             <Link
-              href="/panel/login"
+              href="/login"
               className="inline-flex items-center gap-2 px-8 py-4 bg-violet-600 hover:bg-violet-500 text-white font-bold text-base rounded-2xl transition-all"
             >
               <BookOpen className="w-5 h-5" /> Acceder a la Academia
@@ -669,7 +669,7 @@ export default function HomePage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
-                href="/panel/login"
+                href="/login"
                 className="inline-flex items-center gap-2 px-7 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-2xl transition-all"
               >
                 <Users className="w-4 h-4" /> Unirme al programa
@@ -735,7 +735,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/panel/login"
+              href="/login"
               className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-[#D4AF37] to-[#f0c842] text-black font-black text-lg rounded-2xl hover:shadow-[0_0_60px_rgba(212,175,55,0.5)] transition-all"
             >
               <Sparkles className="w-5 h-5" />
@@ -786,7 +786,7 @@ export default function HomePage() {
                 <li>sonoradigitalcorp@gmail.com</li>
                 <li>Hermosillo, Sonora, México</li>
                 <li className="pt-2">
-                  <Link href="/panel/login" className="text-[#D4AF37] hover:underline">Panel de control →</Link>
+                  <Link href="/login" className="text-[#D4AF37] hover:underline">Panel de control →</Link>
                 </li>
               </ul>
             </div>

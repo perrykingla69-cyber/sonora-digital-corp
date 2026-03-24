@@ -11,7 +11,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   if (token) headers['Authorization'] = `Bearer ${token}`
   const res = await fetch(`${BASE}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined })
   if (res.status === 401) {
-    if (typeof window !== 'undefined') { localStorage.removeItem('mystic_token'); window.location.href = '/panel/login' }
+    if (typeof window !== 'undefined') { localStorage.removeItem('mystic_token'); window.location.href = '/login' }
     throw new Error('No autorizado')
   }
   if (!res.ok) {

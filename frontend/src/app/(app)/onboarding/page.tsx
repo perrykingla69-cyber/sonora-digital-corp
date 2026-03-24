@@ -276,7 +276,7 @@ export default function OnboardingPage() {
     setLoading(true)
     try {
       await api.post('/onboarding/complete', { session_id: sessionId })
-      router.push('/panel/dashboard')
+      router.push('/dashboard')
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error al completar el onboarding')
     } finally {
