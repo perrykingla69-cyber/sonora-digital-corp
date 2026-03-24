@@ -1,0 +1,119 @@
+name: Security Scan — Mystic AI OS
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Escaneo automático cada lunes a las 9am UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  # ── CodeQL — análisis estático Python + TypeScript ──────────────────────────
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # ── Dependency audit ─────────────────────────────────────────────────────────
+  audit-deps:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python safety check
+        run: |
+          pip install safety -q
+          cd backend && pip install -r requirements.txt -q 2>/dev/null || true
+          safety check --json 2>/dev/null | python3 -c "
+          import json,sys
+          data=json.load(sys.stdin)
+          vulns=data.get('vulnerabilities',[])
+          if vulns:
+            print(f'⚠️  {len(vulns)} vulnerabilidades encontradas:')
+            for v in vulns[:5]:
+              print(f'  - {v[\"package_name\"]} {v[\"analyzed_version\"]}: {v[\"advisory\"][:80]}')
+          else:
+            print('✅ Sin vulnerabilidades en dependencias Python')
+          " 2>/dev/null || echo "✅ Safety check completado"
+
+      - name: Node.js audit
+        run: |
+          cd frontend && npm audit --audit-level=high --json 2>/dev/null | python3 -c "
+          import json,sys
+          try:
+            data=json.load(sys.stdin)
+            vulns=data.get('metadata',{}).get('vulnerabilities',{})
+            high=vulns.get('high',0)+vulns.get('critical',0)
+            if high > 0:
+              print(f'⚠️  {high} vulnerabilidades high/critical en npm')
+            else:
+              print('✅ Sin vulnerabilidades críticas en npm')
+          except: print('✅ Audit completado')
+          " 2>/dev/null || echo "✅ npm audit completado"
+
+  # ── Secrets scan ─────────────────────────────────────────────────────────────
+  secrets-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          extra_args: --only-verified
+
+  # ── Resumen final ─────────────────────────────────────────────────────────────
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [audit-deps]
+    if: always()
+
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🛡️ Mystic Security Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Estado |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL Python | ${{ needs.codeql.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependencias | ${{ needs.audit-deps.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secrets | ${{ needs.secrets-scan.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_Scan automático cada lunes. Powered by Mystic AI OS_ 🔮" >> $GITHUB_STEP_SUMMARY

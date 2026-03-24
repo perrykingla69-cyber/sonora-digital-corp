@@ -457,4 +457,67 @@ export default function AcademyPage() {
           <div className="w-16 h-16 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30
                           flex items-center justify-center text-4xl shrink-0">
             {perfil.rango_emoji}
-          </
+          </div>
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="text-[#E8E8E8] font-bold">{perfil.nombre || 'Usuario'}</span>
+              <span className="px-2 py-0.5 rounded-full text-xs bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20">
+                {perfil.rango}
+              </span>
+              {perfil.streak_dias > 0 && (
+                <span className="text-xs text-orange-400 flex items-center gap-1">
+                  <Flame size={12}/> {perfil.streak_dias}d racha
+                </span>
+              )}
+            </div>
+            <p className="text-[#666] text-xs mb-2">Nivel {perfil.nivel}</p>
+            <XPBar pct={perfil.progreso_pct} />
+            <p className="text-[#666] text-xs mt-1">
+              {perfil.experiencia.toLocaleString()} / {perfil.xp_siguiente_nivel.toLocaleString()} XP
+            </p>
+          </div>
+          {/* Stats rápidos */}
+          <div className="flex md:flex-col gap-4 md:gap-2 text-center md:text-right shrink-0">
+            <div>
+              <p className="text-[#D4AF37] font-bold text-lg">{perfil.stats?.cursos_completados ?? 0}</p>
+              <p className="text-[#666] text-xs">Cursos</p>
+            </div>
+            <div>
+              <p className="text-[#D4AF37] font-bold text-lg">{perfil.logros_desbloqueados}</p>
+              <p className="text-[#666] text-xs">Logros</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-[#111] p-1 rounded-xl overflow-x-auto">
+        {([
+          {id:'cursos',    label:'Cursos',    icon: BookOpen},
+          {id:'misiones',  label:'Misiones',  icon: Target},
+          {id:'logros',    label:'Logros',    icon: Trophy},
+          {id:'ranking',   label:'Ranking',   icon: TrendingUp},
+          {id:'concursos', label:'Concursos', icon: Swords},
+        ] as const).map(({id, label, icon: Icon}) => (
+          <button key={id} onClick={() => setTab(id)}
+            className={clsx(
+              'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all',
+              tab===id
+                ? 'bg-[#D4AF37] text-[#0A0A0A]'
+                : 'text-[#666] hover:text-[#E8E8E8]'
+            )}>
+            <Icon size={13}/> {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      {tab==='cursos'    && <CursosView cursos={cursos} onSelect={(slug) => router.push(`/academy/curso/${slug}`)} />}
+      {tab==='misiones'  && <MisionesView misiones={misiones} onCompletar={completarMision}/>}
+      {tab==='logros'    && <LogrosView logros={logros}/>}
+      {tab==='ranking'   && <RankingView ranking={ranking}/>}
+      {tab==='concursos' && <ConcursosView />}
+    </div>
+  )
+}
