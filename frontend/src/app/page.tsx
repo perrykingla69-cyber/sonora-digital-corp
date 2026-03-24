@@ -224,7 +224,9 @@ const PLANS = [
     subtitle: 'Para el profesional que empieza a escalar',
     badge: '🔑 LIBERTAD',
     badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/25',
-    price: '$699',
+    price: '$1,999',
+    monthsNote: 'o 3 pagos de $720',
+    networkNote: 'Trae 3 aliados → $500 de descuento permanente',
     period: '/mes',
     highlight: false,
     borderColor: 'border-sky-500/20',
@@ -234,14 +236,17 @@ const PLANS = [
     cta: 'Activar Libertad',
     ctaClass: 'border-2 border-sky-600 text-sky-700 hover:bg-sky-600 hover:text-white',
     features: [
-      '150 facturas / mes',
-      '3 usuarios',
+      '150 facturas CFDI 4.0 / mes',
+      '3 usuarios + roles',
       '50 consultas Brain IA / día',
       '20 posts de contenido / mes',
-      '10 módulos de Academia',
-      'CRM básico (50 contactos)',
-      'Alertas SAT + IMSS',
+      '15 módulos de Academia (clips 10-15min)',
+      'CRM básico (100 contactos)',
+      'Alertas SAT + IMSS automáticas',
+      'Recordatorio de pago 3 días antes',
+      'Red Mystic: gana descuentos por aliados',
       'Soporte chat 24/7',
+      '🔒 Powered by Mystic IA',
     ],
   },
   {
@@ -250,7 +255,9 @@ const PLANS = [
     subtitle: 'El arsenal completo del consultor de élite',
     badge: '⚡ MÁS POPULAR',
     badgeClass: 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/30',
-    price: '$1,699',
+    price: '$3,900',
+    monthsNote: 'o 3 pagos de $1,400',
+    networkNote: 'Trae 10 aliados → tu plan es GRATIS para siempre',
     period: '/mes',
     highlight: true,
     borderColor: 'border-[#D4AF37]/50',
@@ -261,15 +268,19 @@ const PLANS = [
     ctaClass: 'bg-gradient-to-r from-[#D4AF37] to-[#f0c842] text-black font-black hover:shadow-[0_0_30px_rgba(212,175,55,0.4)]',
     features: [
       '500 facturas / mes',
-      '8 usuarios',
+      '8 usuarios + permisos avanzados',
       'Brain IA completo + voz bidireccional',
       'Contenido ilimitado (4 plataformas)',
-      'Academia completa con certificación',
+      'Academia completa + certificación Mystic',
+      'Clases en clips de 10-15 min + progreso',
       'CRM avanzado (500 contactos)',
-      'Alertas configurables + push notifications',
-      'Red de Aliados (recibe comisiones)',
+      'Alertas configurables + push móvil',
+      'Red de Aliados — comisiones + descuentos',
+      'Misiones de gamificación (compartir = puntos)',
       'Consultoría IA mensual (1 sesión)',
-      'Soporte prioritario 24/7',
+      'Recordatorio amable antes de tu día de pago',
+      'Soporte prioritario + gestor asignado',
+      '🔒 Powered by Mystic IA (siempre presente)',
     ],
   },
   {
@@ -278,7 +289,9 @@ const PLANS = [
     subtitle: 'Infraestructura de alto rendimiento para imperios',
     badge: '👑 ELITE',
     badgeClass: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
-    price: '$3,999',
+    price: '$7,999',
+    monthsNote: 'o 3 pagos de $2,870',
+    networkNote: 'Pack 10 licencias con descuento grupal — revende como tu tech',
     period: '/mes',
     highlight: false,
     borderColor: 'border-violet-500/20',
@@ -288,17 +301,20 @@ const PLANS = [
     cta: 'Construir mi Imperio',
     ctaClass: 'border-2 border-violet-600 text-violet-700 hover:bg-violet-600 hover:text-white',
     features: [
-      '2,000 facturas / mes',
+      '2,000 facturas / mes + ilimitado con add-on',
       '20 usuarios + roles personalizados',
-      'Agente IA personal (OpenClaw)',
-      'Academia white-label para tus clientes',
+      'Agente IA personal dedicado (OpenClaw)',
+      'Academia white-label: véndela como tuya',
       'CRM empresarial ilimitado',
-      'Estrategia de reinversión personalizada',
+      'Pack para 10 clientes con descuento grupal',
+      'Estrategia de red personalizada por IA',
       'Kit merch: USB + kit ejecutivo Mystic',
-      '4 sesiones de consultoría mensual',
+      '4 sesiones consultoría / mes',
+      'Trae 10 clientes → certificados GRATIS perpetuos',
       'Publicidad cruzada en Red Mystic',
-      'SLA 99.9% + onboarding dedicado',
-      'A.C. donataria — deducción fiscal',
+      'SLA 99.9% uptime + onboarding dedicado',
+      'A.C. donataria — deducción fiscal comprobable',
+      '🔒 Powered by Mystic IA — tu marca + nuestra tech',
     ],
   },
 ]
@@ -359,7 +375,7 @@ const SCORE_SEGMENTS = [
     pct: 25,
     desc: 'Acaba de descubrir el sistema. Le mostramos valor rápido.',
     signal: ['< 10 facturas/mes', 'Poco uso Brain IA', 'Sin cursos completados'],
-    offer: 'Flash: 1er mes Libertad a $399',
+    offer: 'Oferta bienvenida: 1er mes Libertad a $999',
   },
   {
     name: 'Activo',
@@ -370,7 +386,7 @@ const SCORE_SEGMENTS = [
     pct: 50,
     desc: 'Usa la plataforma con regularidad. Listo para escalar.',
     signal: ['30-100 facturas/mes', '10+ consultas/día Brain', '1-2 módulos academia'],
-    offer: 'Upgrade a Soberanía + 1 sesión consultoría gratis',
+    offer: 'Upgrade a Soberanía + estrategia de red personalizada',
   },
   {
     name: 'Estratégico',
@@ -657,7 +673,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid sm:grid-cols-3 gap-6 text-center">
             {[
-              { n: '10,910%', l: 'ROI promedio primer mes', sub: 'vs costo de Soberanía $1,699' },
+              { n: '2,200%', l: 'ROI promedio primer mes', sub: 'vs costo de Soberanía $3,900' },
               { n: '40 hrs', l: 'Ahorradas por contador/mes', sub: 'Que puedes vender a $500/hr' },
               { n: '$20,000+', l: 'Valor extra que puedes cobrar', sub: 'Con los mismos clientes actuales' },
             ].map(({ n, l, sub }) => (
@@ -755,14 +771,23 @@ export default function HomePage() {
                     </div>
                     <p className={`text-2xl font-black ${plan.textColor} mb-1`}>{plan.name}</p>
                     <p className={`text-xs ${plan.subtextColor} mb-5 leading-snug`}>{plan.subtitle}</p>
-                    <div className="flex items-end gap-1 mb-6">
+                    <div className="flex items-end gap-1 mb-1">
                       <span className={`text-4xl font-black ${plan.textColor}`}>{plan.price}</span>
                       <span className={`${plan.subtextColor} mb-1.5 text-xs`}>{plan.period}</span>
                     </div>
+                    {(plan as any).monthsNote && (
+                      <p className={`text-[11px] mb-2 opacity-60 ${plan.textColor}`}>{(plan as any).monthsNote}</p>
+                    )}
+                    {(plan as any).networkNote && (
+                      <div className={`text-[10px] font-bold px-2.5 py-1.5 rounded-lg mb-4 ${plan.highlight ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-emerald-500/10 text-emerald-700'}`}>
+                        🤝 {(plan as any).networkNote}
+                      </div>
+                    )}
+                    {!(plan as any).networkNote && <div className="mb-4" />}
                     <ul className="space-y-2.5 flex-1 mb-8">
                       {plan.features.map(f => (
                         <li key={f} className={`flex items-start gap-2 text-xs ${plan.subtextColor}`}>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                          <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${f.startsWith('🔒') ? 'text-[#D4AF37]' : 'text-emerald-500'}`} />
                           {f}
                         </li>
                       ))}
@@ -1093,8 +1118,8 @@ export default function HomePage() {
               <div className="space-y-4">
                 <div className="rounded-2xl bg-[#F5F0E8] border border-[#D4AF37]/20 p-6">
                   <p className="text-xs text-[#888] uppercase tracking-wider mb-2">Ejemplo real</p>
-                  <p className="text-3xl font-black text-[#1a1a1a]">$25,485 MXN</p>
-                  <p className="text-sm text-[#666] mt-1">ingreso mensual con 10 aliados activos en plan Soberanía</p>
+                  <p className="text-3xl font-black text-[#1a1a1a]">$39,000 MXN</p>
+                  <p className="text-sm text-[#666] mt-1">ingreso mensual con 10 aliados activos en plan Soberanía — o tu plan gratis</p>
                 </div>
                 <Link
                   href="/login"
