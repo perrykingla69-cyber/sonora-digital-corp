@@ -1,392 +1,575 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { api, DashboardData, CierreCompleto, Factura, TipoCambio } from '@/lib/api'
+import { useEffect, useState, useRef, useCallback } from 'react'
+import { api, DashboardData, TipoCambio } from '@/lib/api'
 import {
-  TrendingUp, TrendingDown, Activity, DollarSign, FileText,
-  AlertTriangle, CheckCircle, Zap, MessageCircle, Send, Brain,
-  ArrowUpRight, ArrowDownRight, Percent, Loader2, Sun, Moon,
-  BarChart2, Wallet, Building2, Bot,
+  Mic, MicOff, CheckCircle, XCircle, ArrowRight, Zap,
+  Mail, FileText, AlertTriangle, Brain, MessageCircle,
+  ChevronRight, Volume2, Sun, Moon, RefreshCw, Eye,
+  Clock, TrendingUp, DollarSign, Bell, Play, Pause,
+  CheckCheck, MoreHorizontal, Sparkles,
 } from 'lucide-react'
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, BarChart, Bar,
-} from 'recharts'
-import Link from 'next/link'
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+type ActionPriority = 'critica' | 'alta' | 'normal'
+type ActionStatus   = 'pendiente' | 'aprobada' | 'rechazada' | 'delegada'
+type ActionSource   = 'email' | 'factura' | 'sat' | 'whatsapp' | 'sistema' | 'banco'
+
+interface AutoAction {
+  id: string
+  source: ActionSource
+  title: string
+  detail: string
+  amount?: number
+  priority: ActionPriority
+  status: ActionStatus
+  timestamp: string
+  recommendation: string
+  options: { label: string; action: string; style: 'approve' | 'reject' | 'delegate' | 'view' }[]
+}
+
+interface LiveEvent {
+  id: string
+  type: ActionSource
+  msg: string
+  time: string
+  handled: boolean
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const mxn = (v: number) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(v)
 
-type Tab = 'financiero' | 'fiscal' | 'flujo' | 'ia'
-const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'financiero', label: 'Financiero', icon: <TrendingUp size={14} /> },
-  { id: 'fiscal',     label: 'Fiscal',     icon: <Percent size={14} /> },
-  { id: 'flujo',      label: 'Flujo',      icon: <Wallet size={14} /> },
-  { id: 'ia',         label: 'IA & Bots',  icon: <Bot size={14} /> },
-]
-
-// ── Micro KPI card ─────────────────────────────────────────────────────────────
-function KPI({ label, value, sub, trend, dark }: {
-  label: string; value: string; sub?: string
-  trend?: 'up' | 'down' | 'neutral'; dark: boolean
-}) {
-  const trendColor = trend === 'up' ? 'text-emerald-500' : trend === 'down' ? 'text-red-500' : 'text-gray-400'
-  return (
-    <div className={`rounded-2xl p-4 border transition-all ${
-      dark
-        ? 'bg-[#161616] border-[#2a2a2a] hover:border-[#D4AF37]/30'
-        : 'bg-white border-gray-100 hover:border-amber-200 shadow-sm'
-    }`}>
-      <p className={`text-xs font-medium uppercase tracking-wide mb-2 ${dark ? 'text-[#666]' : 'text-gray-400'}`}>{label}</p>
-      <p className={`text-xl font-black tabular-nums ${dark ? 'text-[#E8E8E8]' : 'text-gray-900'}`}>{value}</p>
-      {sub && <p className={`text-xs mt-1 ${trendColor}`}>{sub}</p>}
-    </div>
-  )
+const relTime = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime()
+  if (diff < 60000) return 'ahora mismo'
+  if (diff < 3600000) return `hace ${Math.floor(diff / 60000)}m`
+  if (diff < 86400000) return `hace ${Math.floor(diff / 3600000)}h`
+  return `hace ${Math.floor(diff / 86400000)}d`
 }
 
-// ── Chart tooltip ──────────────────────────────────────────────────────────────
-const ChartTip = ({ active, payload, label, dark }: {
-  active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string; dark: boolean
-}) => {
-  if (!active || !payload?.length) return null
+const SOURCE_META: Record<ActionSource, { icon: React.ReactNode; color: string; bg: string }> = {
+  email:    { icon: <Mail size={14} />,        color: 'text-sky-400',     bg: 'bg-sky-400/10'     },
+  factura:  { icon: <FileText size={14} />,    color: 'text-amber-400',   bg: 'bg-amber-400/10'   },
+  sat:      { icon: <AlertTriangle size={14}/>, color: 'text-red-400',    bg: 'bg-red-400/10'     },
+  whatsapp: { icon: <MessageCircle size={14}/>, color: 'text-emerald-400', bg: 'bg-emerald-400/10'},
+  sistema:  { icon: <Brain size={14} />,       color: 'text-purple-400',  bg: 'bg-purple-400/10'  },
+  banco:    { icon: <DollarSign size={14} />,  color: 'text-green-400',   bg: 'bg-green-400/10'   },
+}
+
+const PRIORITY_META: Record<ActionPriority, { label: string; color: string }> = {
+  critica: { label: 'Crítica', color: 'text-red-400 bg-red-400/10 border-red-400/20' },
+  alta:    { label: 'Alta',    color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
+  normal:  { label: 'Normal',  color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
+}
+
+// Acciones de muestra mientras no hay datos reales
+const SAMPLE_ACTIONS: AutoAction[] = [
+  {
+    id: '1',
+    source: 'email',
+    title: 'Solicitud de factura — Fourgea Industrial',
+    detail: 'Correo recibido: "Necesitamos factura por $38,500 servicio de filtración marzo". Datos extraídos automáticamente.',
+    amount: 38500,
+    priority: 'alta',
+    status: 'pendiente',
+    timestamp: new Date(Date.now() - 8 * 60000).toISOString(),
+    recommendation: 'Generar CFDI 4.0 ingreso. RFC Fourgea validado en SAT. Sin adeudos previos.',
+    options: [
+      { label: 'Generar Factura', action: 'generar_cfdi', style: 'approve' },
+      { label: 'Ver detalle',     action: 'ver_email',    style: 'view'    },
+      { label: 'Rechazar',        action: 'rechazar',     style: 'reject'  },
+    ],
+  },
+  {
+    id: '2',
+    source: 'sat',
+    title: 'Declaración IVA vence en 3 días',
+    detail: 'IVA neto calculado: $12,340. Pago domiciliado disponible. SAT confirma periodo feb 2026.',
+    amount: 12340,
+    priority: 'critica',
+    status: 'pendiente',
+    timestamp: new Date(Date.now() - 25 * 60000).toISOString(),
+    recommendation: 'Presentar declaración antes del 17. Brain IA preparó el formato. Solo requiere tu aprobación.',
+    options: [
+      { label: 'Aprobar y enviar', action: 'enviar_sat',   style: 'approve'  },
+      { label: 'Revisar cifras',   action: 'ver_cierre',   style: 'view'     },
+      { label: 'Delegar contador', action: 'delegar',      style: 'delegate' },
+    ],
+  },
+  {
+    id: '3',
+    source: 'banco',
+    title: 'Depósito sin identificar — $15,200',
+    detail: 'BBVA detectó depósito en cuenta 3871 sin referencia. Posible pago cliente Distribuidora Torres.',
+    amount: 15200,
+    priority: 'alta',
+    status: 'pendiente',
+    timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
+    recommendation: 'Historial sugiere: pago factura F-2024-089 de Torres. Aplicar cobro automáticamente.',
+    options: [
+      { label: 'Confirmar pago',   action: 'aplicar_cobro', style: 'approve'  },
+      { label: 'Ver movimiento',   action: 'ver_banco',     style: 'view'     },
+      { label: 'Reasignar',        action: 'reasignar',     style: 'delegate' },
+    ],
+  },
+  {
+    id: '4',
+    source: 'whatsapp',
+    title: 'Cliente pregunta estado nómina',
+    detail: 'WhatsApp +526621234567: "¿Ya está lista la nómina de esta quincena?" Brain IA tiene respuesta lista.',
+    priority: 'normal',
+    status: 'pendiente',
+    timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
+    recommendation: 'Nómina procesada al 100%. Respuesta automática preparada. Aprobar para enviar.',
+    options: [
+      { label: 'Enviar respuesta', action: 'enviar_wa',   style: 'approve' },
+      { label: 'Ver nómina',       action: 'ver_nomina',  style: 'view'    },
+      { label: 'Modificar resp.',  action: 'editar',      style: 'delegate'},
+    ],
+  },
+]
+
+const SAMPLE_EVENTS: LiveEvent[] = [
+  { id: 'e1', type: 'email',    msg: 'Fourgea Industrial — solicitud de factura recibida',  time: new Date(Date.now() - 8*60000).toISOString(),   handled: false },
+  { id: 'e2', type: 'sistema',  msg: 'Brain IA procesó 4 correos y generó 3 tareas',        time: new Date(Date.now() - 12*60000).toISOString(),  handled: true  },
+  { id: 'e3', type: 'sat',      msg: 'Alerta declaración IVA — 3 días para vencer',         time: new Date(Date.now() - 25*60000).toISOString(),  handled: false },
+  { id: 'e4', type: 'banco',    msg: 'Depósito no identificado $15,200 — BBVA',             time: new Date(Date.now() - 2*3600000).toISOString(), handled: false },
+  { id: 'e5', type: 'whatsapp', msg: 'Nuevo mensaje de cliente sobre nómina quincena',      time: new Date(Date.now() - 45*60000).toISOString(),  handled: false },
+  { id: 'e6', type: 'factura',  msg: 'CFDI cancelado por SAT — F-2024-071 requiere sustit.',time: new Date(Date.now() - 3*3600000).toISOString(), handled: true  },
+  { id: 'e7', type: 'sistema',  msg: 'Watchdog: todos los servicios operando correctamente',time: new Date(Date.now() - 5*60000).toISOString(),   handled: true  },
+]
+
+// ── Voice hook ─────────────────────────────────────────────────────────────────
+function useVoice(onResult: (text: string) => void) {
+  const [listening, setListening] = useState(false)
+  const [supported] = useState(() => typeof window !== 'undefined' && 'webkitSpeechRecognition' in window)
+  const recRef = useRef<any>(null)
+
+  const toggle = useCallback(() => {
+    if (!supported) return
+    if (listening) {
+      recRef.current?.stop()
+      setListening(false)
+      return
+    }
+    const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
+    const rec = new SR()
+    rec.lang = 'es-MX'
+    rec.continuous = false
+    rec.interimResults = false
+    rec.onresult = (e: any) => {
+      const text = e.results[0]?.[0]?.transcript || ''
+      if (text) onResult(text)
+    }
+    rec.onend = () => setListening(false)
+    rec.start()
+    recRef.current = rec
+    setListening(true)
+  }, [listening, supported, onResult])
+
+  const speak = useCallback((text: string) => {
+    if (!('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    const utter = new SpeechSynthesisUtterance(text)
+    utter.lang = 'es-MX'
+    utter.rate = 1.05
+    window.speechSynthesis.speak(utter)
+  }, [])
+
+  return { listening, supported, toggle, speak }
+}
+
+// ── Action Card ────────────────────────────────────────────────────────────────
+function ActionCard({
+  action, dark, onAction,
+}: { action: AutoAction; dark: boolean; onAction: (id: string, act: string) => void }) {
+  const sm = SOURCE_META[action.source]
+  const pm = PRIORITY_META[action.priority]
+  const done = action.status !== 'pendiente'
+
   return (
-    <div className={`rounded-xl px-3 py-2 border text-xs shadow-xl ${
-      dark ? 'bg-[#161616] border-[#333]' : 'bg-white border-gray-200'
+    <div className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+      done ? 'opacity-50 scale-98' :
+      dark  ? 'bg-[#0f0f0f] border-[#2a2a2a] hover:border-[#D4AF37]/30' :
+              'bg-white border-gray-100 shadow-sm hover:shadow-md'
     }`}>
-      <p className={`mb-1 font-medium ${dark ? 'text-[#888]' : 'text-gray-500'}`}>{label}</p>
-      {payload.map(p => (
-        <p key={p.name} style={{ color: p.color }} className="font-bold">
-          {p.name}: {mxn(p.value)}
+      {/* Priority stripe */}
+      <div className={`h-0.5 w-full ${
+        action.priority === 'critica' ? 'bg-red-500' :
+        action.priority === 'alta'    ? 'bg-amber-500' : 'bg-emerald-500'
+      }`} />
+
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex items-start gap-3 mb-3">
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${sm.bg}`}>
+            <span className={sm.color}>{sm.icon}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${pm.color}`}>
+                {pm.label}
+              </span>
+              <span className={`text-[10px] ${dark ? 'text-[#555]' : 'text-gray-400'}`}>
+                {relTime(action.timestamp)}
+              </span>
+            </div>
+            <p className={`text-sm font-semibold leading-tight ${dark ? 'text-[#E8E8E8]' : 'text-gray-900'}`}>
+              {action.title}
+            </p>
+          </div>
+          {action.amount && (
+            <div className="text-right flex-shrink-0">
+              <p className="text-sm font-black text-amber-500 tabular-nums">{mxn(action.amount)}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Detail */}
+        <p className={`text-xs leading-relaxed mb-3 ${dark ? 'text-[#888]' : 'text-gray-500'}`}>
+          {action.detail}
         </p>
-      ))}
+
+        {/* AI Recommendation */}
+        <div className={`flex items-start gap-2 rounded-xl p-3 mb-4 ${
+          dark ? 'bg-[#D4AF37]/5 border border-[#D4AF37]/15' : 'bg-amber-50 border border-amber-100'
+        }`}>
+          <Sparkles size={12} className="text-amber-500 mt-0.5 flex-shrink-0" />
+          <p className={`text-xs leading-relaxed ${dark ? 'text-[#D4AF37]/80' : 'text-amber-700'}`}>
+            <span className="font-semibold">Brain IA: </span>{action.recommendation}
+          </p>
+        </div>
+
+        {/* Action buttons */}
+        {!done ? (
+          <div className="flex gap-2 flex-wrap">
+            {action.options.map(opt => (
+              <button
+                key={opt.action}
+                onClick={() => onAction(action.id, opt.action)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  opt.style === 'approve'  ? 'bg-emerald-500 hover:bg-emerald-400 text-white' :
+                  opt.style === 'reject'   ? (dark ? 'bg-[#2a2a2a] hover:bg-red-500/20 text-red-400 border border-[#333]' : 'bg-gray-100 hover:bg-red-50 text-red-500 border border-gray-200') :
+                  opt.style === 'delegate' ? (dark ? 'bg-[#2a2a2a] hover:bg-purple-500/20 text-purple-400 border border-[#333]' : 'bg-gray-100 hover:bg-purple-50 text-purple-500 border border-gray-200') :
+                                             (dark ? 'bg-[#2a2a2a] text-[#aaa] border border-[#333] hover:border-[#555]' : 'bg-gray-100 text-gray-600 border border-gray-200')
+                }`}
+              >
+                {opt.style === 'approve'  && <CheckCircle size={11} />}
+                {opt.style === 'reject'   && <XCircle size={11} />}
+                {opt.style === 'delegate' && <ArrowRight size={11} />}
+                {opt.style === 'view'     && <Eye size={11} />}
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <CheckCheck size={14} className="text-emerald-500" />
+            <span className="text-xs text-emerald-500 font-semibold capitalize">{action.status}</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const [dash, setDash]       = useState<DashboardData | null>(null)
-  const [cierre, setCierre]   = useState<CierreCompleto | null>(null)
-  const [tc, setTc]           = useState<TipoCambio | null>(null)
-  const [facturas, setFacturas] = useState<Factura[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState('')
-  const [tab, setTab]           = useState<Tab>('financiero')
-  const [dark, setDark]         = useState(true)
+  const [dash,    setDash]    = useState<DashboardData | null>(null)
+  const [tc,      setTc]      = useState<TipoCambio | null>(null)
+  const [dark,    setDark]    = useState(true)
+  const [actions, setActions] = useState<AutoAction[]>(SAMPLE_ACTIONS)
+  const [events,  setEvents]  = useState<LiveEvent[]>(SAMPLE_EVENTS)
+  const [voice,   setVoice]   = useState('')
+  const [aiReply, setAiReply] = useState('')
+  const [pulse,   setPulse]   = useState(false)
+  const [loading, setLoading] = useState(true)
 
+  // Fetch real data
   useEffect(() => {
-    const now = new Date()
     Promise.allSettled([
       api.get<DashboardData>('/dashboard'),
-      api.get<CierreCompleto>(`/cierre/${now.getFullYear()}/${now.getMonth() + 1}`),
       api.get<TipoCambio>('/tipo-cambio/hoy'),
-      api.get<Factura[]>('/facturas?limit=6'),
-    ]).then(([d, c, t, f]) => {
+    ]).then(([d, t]) => {
       if (d.status === 'fulfilled') setDash(d.value)
-      else setError(d.reason?.message || 'Error')
-      if (c.status === 'fulfilled') setCierre(c.value)
       if (t.status === 'fulfilled') setTc(t.value)
-      if (f.status === 'fulfilled') setFacturas(Array.isArray(f.value) ? f.value : [])
     }).finally(() => setLoading(false))
   }, [])
 
+  // Poll for new events & actions every 30s
   useEffect(() => {
     const id = setInterval(() => {
       api.get<TipoCambio>('/tipo-cambio/hoy').then(setTc).catch(() => {})
-    }, 60_000)
+      // Fetch pending tasks from Brain IA
+      api.get<AutoAction[]>('/api/brain/tasks?status=pendiente').then(tasks => {
+        if (tasks?.length) setActions(prev => {
+          const ids = new Set(prev.map(a => a.id))
+          const novel = tasks.filter((t: AutoAction) => !ids.has(t.id))
+          if (novel.length) { setPulse(true); setTimeout(() => setPulse(false), 2000) }
+          return [...novel, ...prev]
+        })
+      }).catch(() => {})
+    }, 30_000)
     return () => clearInterval(id)
   }, [])
 
-  if (loading) return (
-    <div className={`flex flex-col items-center justify-center h-64 gap-3 ${dark ? 'text-[#666]' : 'text-gray-400'}`}>
-      <Loader2 size={22} className="animate-spin text-amber-500" />
-      <span className="text-sm">Cargando métricas...</span>
-    </div>
-  )
-  if (error && !dash) return <p className="text-red-400 text-sm p-4">{error}</p>
-  if (!dash) return null
+  // Voice handler
+  const handleVoice = useCallback(async (text: string) => {
+    setVoice(text)
+    setAiReply('Procesando...')
+    try {
+      const res = await api.post<{ answer: string }>('/api/brain/ask', {
+        question: text, channel: 'dashboard', tenant_id: dash?.tenant_id || 'default',
+      })
+      const reply = res.answer || 'Sin respuesta del Brain IA.'
+      setAiReply(reply)
+      speak(reply)
+    } catch {
+      setAiReply('No pude conectar con Brain IA.')
+    }
+  }, [dash])
 
-  const { resumen, kpis, alertas, periodo } = dash
-  const tcVal = tc?.usd_mxn || tc?.tipo_cambio || 0
-  const saludOk = kpis.salud === 'verde'
-  const saludWarn = kpis.salud === 'amarillo'
+  const { listening, supported, toggle: toggleMic, speak } = useVoice(handleVoice)
 
-  const chartData = ['Oct','Nov','Dic','Ene','Feb','Mar'].map((m, i) => ({
-    mes: m,
-    Ingresos: Math.round(resumen.ingresos_mes * (0.55 + i * 0.09)),
-    Egresos:  Math.round(resumen.gastos_mes  * (0.60 + i * 0.08)),
-  }))
+  const handleAction = useCallback(async (id: string, act: string) => {
+    const status: ActionStatus = act === 'rechazar' ? 'rechazada' : act === 'delegar' ? 'delegada' : 'aprobada'
+    setActions(prev => prev.map(a => a.id === id ? { ...a, status } : a))
+    // Notify Brain IA
+    try { await api.post('/api/brain/task/action', { task_id: id, action: act }) } catch {}
+    // Add to live feed
+    const target = actions.find(a => a.id === id)
+    if (target) {
+      setEvents(prev => [{
+        id: `ev_${Date.now()}`,
+        type: target.source,
+        msg: `${target.title} — ${status}`,
+        time: new Date().toISOString(),
+        handled: true,
+      }, ...prev.slice(0, 19)])
+    }
+  }, [actions])
 
-  const bg   = dark ? 'bg-[#0A0A0A] text-[#E8E8E8]' : 'bg-gray-50 text-gray-900'
-  const card = dark ? 'bg-[#161616] border-[#2a2a2a]' : 'bg-white border-gray-100 shadow-sm'
-  const muted = dark ? 'text-[#666]' : 'text-gray-400'
-  const axisFill = dark ? '#555' : '#aaa'
-  const gridStroke = dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'
+  const pending  = actions.filter(a => a.status === 'pendiente')
+  const resolved = actions.filter(a => a.status !== 'pendiente')
+  const tcVal    = tc?.usd_mxn || tc?.tipo_cambio || 0
+  const resumen  = dash?.resumen
+
+  const bg    = dark ? 'bg-[#070707] text-[#E8E8E8]' : 'bg-gray-50 text-gray-900'
+  const card  = dark ? 'bg-[#0f0f0f] border-[#1e1e1e]' : 'bg-white border-gray-100 shadow-sm'
+  const muted = dark ? 'text-[#555]' : 'text-gray-400'
 
   return (
     <div className={`min-h-screen ${bg} transition-colors duration-300`}>
-      <div className="max-w-5xl mx-auto px-4 py-5 space-y-5">
+      <div className="max-w-6xl mx-auto px-4 py-4 space-y-4">
 
         {/* ── Top bar ── */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-base font-bold flex items-center gap-2">
-              <Zap size={16} className="text-amber-500" />
-              Nodo Soberano
-            </h1>
-            <p className={`text-xs mt-0.5 ${muted}`}>{periodo} · {dash.tenant_id}</p>
-          </div>
           <div className="flex items-center gap-3">
-            {/* TC pill */}
-            {tcVal > 0 && (
-              <div className={`rounded-xl px-3 py-1.5 border text-right ${card}`}>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-amber-500 font-black text-sm tabular-nums">${tcVal.toFixed(2)}</span>
-                  <span className={`text-[10px] ${muted}`}>MXN</span>
-                </div>
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${card}`}>
+              <span className={`w-2 h-2 rounded-full animate-pulse ${pulse ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+              <span className="text-xs font-semibold">
+                {pulse ? 'Nueva acción detectada' : 'Sistema activo'}
+              </span>
+            </div>
+            {pending.length > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <Bell size={12} className="text-amber-500" />
+                <span className="text-xs font-bold text-amber-500">{pending.length} pendiente{pending.length > 1 ? 's' : ''}</span>
               </div>
             )}
-            {/* Dark/light toggle */}
-            <button
-              onClick={() => setDark(d => !d)}
+          </div>
+          <div className="flex items-center gap-2">
+            {tcVal > 0 && (
+              <div className={`px-3 py-1.5 rounded-xl border text-xs tabular-nums font-black text-amber-500 ${card}`}>
+                ${tcVal.toFixed(2)} <span className={`font-normal ${muted}`}>USD/MXN</span>
+              </div>
+            )}
+            <button onClick={() => setDark(d => !d)}
               className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${
                 dark ? 'bg-[#161616] border-[#333] text-[#888] hover:text-amber-400' : 'bg-white border-gray-200 text-gray-400 hover:text-amber-500'
-              }`}
-            >
+              }`}>
               {dark ? <Sun size={14} /> : <Moon size={14} />}
             </button>
           </div>
         </div>
 
-        {/* ── Health banner ── */}
-        <div className={`rounded-2xl px-4 py-3 border flex items-center gap-3 ${
-          saludOk   ? (dark ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-emerald-50 border-emerald-200') :
-          saludWarn ? (dark ? 'bg-amber-500/5 border-amber-500/20'   : 'bg-amber-50 border-amber-200') :
-                      (dark ? 'bg-red-500/5 border-red-500/20'       : 'bg-red-50 border-red-200')
-        }`}>
-          <span className={`w-2 h-2 rounded-full flex-shrink-0 animate-pulse ${
-            saludOk ? 'bg-emerald-400' : saludWarn ? 'bg-amber-400' : 'bg-red-400'
-          }`} />
-          <span className={`text-sm font-semibold flex-1 ${
-            saludOk ? 'text-emerald-500' : saludWarn ? 'text-amber-500' : 'text-red-400'
-          }`}>
-            {saludOk ? 'Sistema óptimo' : saludWarn ? 'Atención requerida' : 'Alerta crítica'}
-            {alertas.length > 0 && ` · ${alertas.length} alerta${alertas.length > 1 ? 's' : ''}`}
-          </span>
-          {saludOk && <CheckCircle size={15} className="text-emerald-400 flex-shrink-0" />}
-          {!saludOk && <AlertTriangle size={15} className="text-amber-400 flex-shrink-0" />}
-        </div>
-
-        {/* ── Hero números ── */}
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: 'Ingresos', value: mxn(resumen.ingresos_mes), sub: `↑ vs mes ant.`, trend: 'up' as const },
-            { label: 'Utilidad', value: mxn(resumen.utilidad_mes),
-              sub: `${kpis.margen_bruto_pct.toFixed(1)}% margen`,
-              trend: resumen.utilidad_mes >= 0 ? 'up' as const : 'down' as const },
-            { label: 'Por Cobrar', value: mxn(resumen.por_cobrar),
-              sub: `${resumen.facturas_mes} facturas`, trend: 'neutral' as const },
-          ].map(k => <KPI key={k.label} dark={dark} {...k} />)}
-        </div>
-
-        {/* ── Tabs ── */}
-        <div className={`flex gap-1 p-1 rounded-xl border ${dark ? 'bg-[#111] border-[#222]' : 'bg-gray-100 border-gray-200'}`}>
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                tab === t.id
-                  ? 'bg-amber-500 text-black shadow-sm'
-                  : dark ? 'text-[#666] hover:text-[#aaa]' : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              {t.icon}
-              <span className="hidden sm:inline">{t.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* ── Tab: Financiero ── */}
-        {tab === 'financiero' && (
-          <div className="space-y-4 animate-fade-up">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <KPI dark={dark} label="Ingresos"    value={mxn(resumen.ingresos_mes)} sub={tcVal > 0 ? `≈ USD ${Math.round(resumen.ingresos_mes/tcVal).toLocaleString()}` : undefined} trend="up" />
-              <KPI dark={dark} label="Egresos"     value={mxn(resumen.gastos_mes)}   sub={tcVal > 0 ? `≈ USD ${Math.round(resumen.gastos_mes/tcVal).toLocaleString()}` : undefined} trend="down" />
-              <KPI dark={dark} label="Utilidad"    value={mxn(resumen.utilidad_mes)} sub={`${kpis.margen_bruto_pct.toFixed(1)}% margen`} trend={resumen.utilidad_mes >= 0 ? 'up' : 'down'} />
-              <KPI dark={dark} label="Facturas"    value={String(resumen.facturas_mes)} sub={`${resumen.total_facturas} total`} trend="neutral" />
-            </div>
-            <div className={`rounded-2xl border p-4 ${card}`}>
-              <p className="text-sm font-semibold mb-1">Tendencia 6 meses</p>
-              <p className={`text-xs mb-4 ${muted}`}>Ingresos vs Egresos (MXN)</p>
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="gI" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#10b981" stopOpacity={dark ? 0.2 : 0.15} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#ef4444" stopOpacity={dark ? 0.15 : 0.1} />
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                  <XAxis dataKey="mes" tick={{ fontSize: 11, fill: axisFill }} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTip dark={dark} />} />
-                  <Area type="monotone" dataKey="Ingresos" stroke="#10b981" fill="url(#gI)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="Egresos"  stroke="#ef4444" fill="url(#gE)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        {/* ── Tab: Fiscal ── */}
-        {tab === 'fiscal' && cierre && (
-          <div className="space-y-4 animate-fade-up">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <KPI dark={dark} label="IVA Neto"    value={mxn(cierre.iva_neto)}      sub={`Cobrado: ${mxn(cierre.iva_cobrado)}`} trend={cierre.iva_neto > 0 ? 'down' : 'up'} />
-              <KPI dark={dark} label="ISR Estimado" value={mxn(cierre.isr_estimado)} sub="Art. 14 LISR" trend="neutral" />
-              <KPI dark={dark} label="EBITDA"       value={mxn(cierre.ebitda)}       sub={`${cierre.margen_neto_pct?.toFixed(1) ?? 0}% margen`} trend={cierre.ebitda >= 0 ? 'up' : 'down'} />
-              <KPI dark={dark} label="PTU Estimada" value={mxn(cierre.ptu)}          sub="10% utilidad fiscal" trend="neutral" />
-            </div>
-            <div className={`rounded-2xl border p-4 ${card}`}>
-              <p className="text-sm font-semibold mb-4">Composición fiscal del mes</p>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={[
-                  { name: 'IVA cobrado', v: cierre.iva_cobrado },
-                  { name: 'IVA pagado',  v: cierre.iva_pagado  },
-                  { name: 'IVA neto',    v: cierre.iva_neto    },
-                  { name: 'ISR',         v: cierre.isr_estimado },
-                  { name: 'PTU',         v: cierre.ptu          },
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: axisFill }} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 9, fill: axisFill }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTip dark={dark} />} />
-                  <Bar dataKey="v" name="Monto" fill="#D4AF37" radius={[4,4,0,0]} opacity={0.85} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-        {tab === 'fiscal' && !cierre && (
-          <div className={`rounded-2xl border p-8 text-center ${card}`}>
-            <BarChart2 size={32} className={`mx-auto mb-3 ${muted}`} />
-            <p className={`text-sm ${muted}`}>Sin datos de cierre fiscal este mes</p>
-          </div>
-        )}
-
-        {/* ── Tab: Flujo ── */}
-        {tab === 'flujo' && (
-          <div className="space-y-4 animate-fade-up">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <KPI dark={dark} label="Por Cobrar"      value={mxn(resumen.por_cobrar)} sub="Cuentas pendientes" trend="up" />
-              <KPI dark={dark} label="Por Pagar"       value={mxn(resumen.por_pagar)}  sub="Compromisos activos" trend={resumen.por_pagar > resumen.por_cobrar ? 'down' : 'neutral'} />
-              <KPI dark={dark} label="Ratio Cobro/Pago" value={kpis.ratio_cobro_pago > 0 ? `${kpis.ratio_cobro_pago.toFixed(2)}x` : '—'}
-                sub={kpis.ratio_cobro_pago >= 1 ? 'Favorable' : 'Atención'} trend={kpis.ratio_cobro_pago >= 1 ? 'up' : 'down'} />
-              <KPI dark={dark} label="Egresos mes"     value={mxn(resumen.gastos_mes)} sub={tcVal > 0 ? `≈ USD ${Math.round(resumen.gastos_mes/tcVal).toLocaleString()}` : undefined} trend="neutral" />
-            </div>
-            {/* Últimas transacciones */}
-            <div className={`rounded-2xl border overflow-hidden ${card}`}>
-              <div className={`px-4 py-3 border-b flex items-center justify-between ${dark ? 'border-[#2a2a2a]' : 'border-gray-100'}`}>
-                <p className="text-sm font-semibold">Transacciones recientes</p>
-                <Link href="/facturas" className="text-xs text-amber-500 hover:underline">Ver todas →</Link>
+        {/* ── KPI bar rápida ── */}
+        {resumen && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { l: 'Ingresos',    v: mxn(resumen.ingresos_mes), icon: <TrendingUp size={12} />,  color: 'text-emerald-400' },
+              { l: 'Utilidad',    v: mxn(resumen.utilidad_mes), icon: <DollarSign size={12} />,  color: resumen.utilidad_mes >= 0 ? 'text-emerald-400' : 'text-red-400' },
+              { l: 'Por Cobrar',  v: mxn(resumen.por_cobrar),   icon: <Clock size={12} />,        color: 'text-amber-400' },
+              { l: 'Facturas',    v: String(resumen.facturas_mes), icon: <FileText size={12} />, color: 'text-sky-400' },
+            ].map(k => (
+              <div key={k.l} className={`rounded-xl border px-3 py-2.5 flex items-center gap-2.5 ${card}`}>
+                <span className={k.color}>{k.icon}</span>
+                <div>
+                  <p className={`text-[10px] uppercase tracking-wide ${muted}`}>{k.l}</p>
+                  <p className="text-sm font-black tabular-nums">{k.v}</p>
+                </div>
               </div>
-              {facturas.length === 0 ? (
-                <p className={`text-sm p-4 ${muted}`}>Sin facturas registradas</p>
-              ) : (
-                <div className={`divide-y ${dark ? 'divide-[#1e1e1e]' : 'divide-gray-50'}`}>
-                  {facturas.slice(0, 6).map(f => {
-                    const ing = f.tipo === 'ingreso'
-                    return (
-                      <div key={f.id} className="px-4 py-3 flex items-center gap-3">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${ing ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
-                          {ing ? <ArrowUpRight size={12} className="text-emerald-500" /> : <ArrowDownRight size={12} className="text-red-500" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{ing ? f.emisor_nombre : f.receptor_nombre}</p>
-                          <p className={`text-xs ${muted}`}>{f.folio} · {(f.fecha_emision || f.fecha || '').slice(0,10)}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className={`text-sm font-bold ${ing ? 'text-emerald-500' : 'text-red-400'}`}>
-                            {ing ? '+' : '-'}{mxn(f.total)}
-                          </p>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                            f.estado === 'pagada' ? 'text-emerald-500 bg-emerald-500/10' :
-                            f.estado === 'cancelada' ? `${muted} bg-gray-500/10` :
-                            'text-amber-500 bg-amber-500/10'
-                          }`}>{f.estado}</span>
-                        </div>
+            ))}
+          </div>
+        )}
+        {!resumen && !loading && (
+          <div className={`rounded-xl border px-4 py-3 text-sm ${muted} ${card}`}>
+            Sin datos financieros · verificar conexión API
+          </div>
+        )}
+
+        {/* ── Main 2-col layout ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+
+          {/* ── LEFT: Cola de decisiones ── */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold flex items-center gap-2">
+                  <Sparkles size={14} className="text-amber-500" />
+                  Cola de decisiones
+                </h2>
+                <p className={`text-xs mt-0.5 ${muted}`}>
+                  Brain IA detectó y preparó estas acciones. Solo aprueba o rechaza.
+                </p>
+              </div>
+              {resolved.length > 0 && (
+                <span className={`text-[10px] px-2 py-1 rounded-full border ${muted} border-current`}>
+                  {resolved.length} resuelta{resolved.length > 1 ? 's' : ''} hoy
+                </span>
+              )}
+            </div>
+
+            {pending.length === 0 ? (
+              <div className={`rounded-2xl border p-10 text-center ${card}`}>
+                <CheckCheck size={32} className="mx-auto mb-3 text-emerald-500" />
+                <p className="text-sm font-semibold text-emerald-400">Todo al día</p>
+                <p className={`text-xs mt-1 ${muted}`}>Brain IA está monitoreando. Te avisaré cuando haya algo.</p>
+              </div>
+            ) : (
+              pending.map(action => (
+                <ActionCard key={action.id} action={action} dark={dark} onAction={handleAction} />
+              ))
+            )}
+
+            {/* Resolved (collapsed) */}
+            {resolved.length > 0 && (
+              <div className={`rounded-xl border px-4 py-3 ${card}`}>
+                <div className="flex items-center gap-2">
+                  <CheckCheck size={13} className="text-emerald-500" />
+                  <span className="text-xs font-semibold text-emerald-500">
+                    {resolved.length} acción{resolved.length > 1 ? 'es resueltas' : ' resuelta'} en esta sesión
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── RIGHT: Live feed + Voice ── */}
+          <div className="space-y-4">
+
+            {/* Voice command */}
+            <div className={`rounded-2xl border p-4 ${card}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <Brain size={14} className="text-amber-500" />
+                <span className="text-xs font-semibold">Consulta por voz</span>
+                {!supported && <span className={`text-[10px] ${muted}`}>(solo Chrome)</span>}
+              </div>
+
+              <button
+                onClick={toggleMic}
+                disabled={!supported}
+                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
+                  listening
+                    ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+                    : dark
+                      ? 'bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/20'
+                      : 'bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200'
+                }`}
+              >
+                {listening ? <MicOff size={16} /> : <Mic size={16} />}
+                {listening ? 'Escuchando...' : 'Hablar con Brain IA'}
+              </button>
+
+              {voice && (
+                <div className="mt-3 space-y-2">
+                  <div className={`rounded-xl px-3 py-2 text-xs ${dark ? 'bg-[#1a1a1a]' : 'bg-gray-50'}`}>
+                    <span className={muted}>Tú: </span>
+                    <span className="font-medium">{voice}</span>
+                  </div>
+                  {aiReply && (
+                    <div className={`rounded-xl px-3 py-2 text-xs border ${
+                      dark ? 'bg-[#D4AF37]/5 border-[#D4AF37]/15 text-[#D4AF37]/90' : 'bg-amber-50 border-amber-100 text-amber-700'
+                    }`}>
+                      <div className="flex items-start gap-1.5">
+                        <Volume2 size={11} className="mt-0.5 flex-shrink-0" />
+                        <span>{aiReply}</span>
                       </div>
-                    )
-                  })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        )}
 
-        {/* ── Tab: IA & Bots ── */}
-        {tab === 'ia' && (
-          <div className="space-y-3 animate-fade-up">
-            {[
-              { href: '/brain',    icon: <Brain size={20} />, color: 'text-amber-500 bg-amber-500/10',   title: 'Brain IA',      sub: 'RAG fiscal · DeepSeek local · 4 capas' },
-              { href: '/whatsapp', icon: <MessageCircle size={20} />, color: 'text-emerald-500 bg-emerald-500/10', title: 'WhatsApp', sub: 'Baileys · Estado · QR · Conversaciones' },
-              { href: '/telegram', icon: <Send size={20} />, color: 'text-sky-500 bg-sky-500/10',        title: 'Telegram Bot',  sub: '5 skills · Brain IA · Multi-tenant' },
-              { href: '/academy',  icon: <Zap size={20} />,  color: 'text-purple-500 bg-purple-500/10', title: 'Academy',       sub: 'Cursos · XP · Misiones · Gamificación' },
-              { href: '/admin',    icon: <Building2 size={20} />, color: 'text-blue-500 bg-blue-500/10', title: 'Admin',         sub: 'Multi-tenant · AI OS · Configuración' },
-            ].map(item => (
-              <Link key={item.href} href={item.href}
-                className={`flex items-center gap-4 rounded-2xl border p-4 transition-all group ${
-                  dark
-                    ? 'bg-[#161616] border-[#2a2a2a] hover:border-amber-500/30'
-                    : 'bg-white border-gray-100 hover:border-amber-200 shadow-sm'
-                }`}>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color}`}>
-                  {item.icon}
+            {/* Live feed */}
+            <div className={`rounded-2xl border overflow-hidden ${card}`}>
+              <div className={`px-4 py-3 border-b flex items-center justify-between ${dark ? 'border-[#1e1e1e]' : 'border-gray-100'}`}>
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs font-semibold">Actividad en vivo</span>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">{item.title}</p>
-                  <p className={`text-xs ${muted}`}>{item.sub}</p>
-                </div>
-                <ArrowUpRight size={14} className={`${muted} group-hover:text-amber-500 transition-colors`} />
-              </Link>
-            ))}
-
-            {/* N8N status */}
-            <div className={`rounded-2xl border p-4 ${dark ? 'bg-[#161616] border-[#2a2a2a]' : 'bg-white border-gray-100 shadow-sm'}`}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold">N8N Automatizaciones</p>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-semibold">ACTIVO</span>
+                <span className={`text-[10px] ${muted}`}>{events.length} eventos hoy</span>
               </div>
-              <p className={`text-xs ${muted} mb-3`}>Workflows de alerta matutina, vespertina y mapeo legal.</p>
-              <a href="/n8n" target="_blank" rel="noopener"
-                className="inline-flex items-center gap-1.5 text-xs text-amber-500 hover:underline font-medium">
-                Abrir N8N <ArrowUpRight size={11} />
-              </a>
+              <div className={`divide-y max-h-[400px] overflow-y-auto ${dark ? 'divide-[#131313]' : 'divide-gray-50'}`}>
+                {events.map(ev => {
+                  const sm = SOURCE_META[ev.type]
+                  return (
+                    <div key={ev.id} className={`flex items-start gap-3 px-4 py-3 transition-colors ${
+                      ev.handled
+                        ? dark ? 'opacity-40' : 'opacity-50'
+                        : dark ? 'hover:bg-[#141414]' : 'hover:bg-gray-50'
+                    }`}>
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${sm.bg}`}>
+                        <span className={`${sm.color} scale-90`}>{sm.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs leading-snug ${ev.handled ? '' : 'font-medium'}`}>{ev.msg}</p>
+                        <p className={`text-[10px] mt-0.5 ${muted}`}>{relTime(ev.time)}</p>
+                      </div>
+                      {!ev.handled && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0 mt-1.5" />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
 
-        {/* ── Alertas (siempre visible si hay) ── */}
-        {alertas.length > 0 && (
-          <div className="space-y-2">
-            {alertas.map((a, i) => (
-              <div key={i} className={`flex items-start gap-3 rounded-xl px-4 py-3 border ${
-                dark ? 'bg-amber-500/5 border-amber-500/20' : 'bg-amber-50 border-amber-200'
-              }`}>
-                <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
-                <p className={`text-sm ${dark ? 'text-amber-300' : 'text-amber-700'}`}>{a}</p>
+            {/* Quick actions */}
+            <div className={`rounded-2xl border p-4 ${card}`}>
+              <p className="text-xs font-semibold mb-3">Acciones rápidas</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: 'Nueva factura', href: '/facturas/nueva', color: 'text-amber-500' },
+                  { label: 'Consultar SAT', href: '/fiscal', color: 'text-red-400' },
+                  { label: 'Ver nómina',    href: '/nomina',  color: 'text-emerald-400' },
+                  { label: 'Brain IA',      href: '/brain',   color: 'text-purple-400' },
+                ].map(item => (
+                  <a key={item.href} href={item.href}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                      dark ? 'bg-[#161616] hover:bg-[#1e1e1e] border border-[#2a2a2a]' : 'bg-gray-50 hover:bg-gray-100 border border-gray-100'
+                    } ${item.color}`}
+                  >
+                    <ChevronRight size={10} />
+                    {item.label}
+                  </a>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
 
+          </div>
+        </div>
       </div>
     </div>
   )

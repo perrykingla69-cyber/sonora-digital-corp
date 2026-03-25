@@ -140,6 +140,7 @@ services:
         condition: service_healthy
     volumes:
       - n8n_data:/home/node/.n8n
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - mystic_net
     restart: unless-stopped
