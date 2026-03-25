@@ -56,20 +56,20 @@ function createTelegrafInstance(tenantId, token) {
   const bot = new Telegraf(token);
 
   bot.start(ctx => ctx.reply(
-    `🧠 *Mystic Asistente*\n\nTu contador fiscal 24/7.\n\n` +
-    `• Consulta IVA, ISR, CFDI\n• Genera MVE\n• Calcula nómina\n• Tipo de cambio\n\n` +
-    `Escribe tu consulta o usa /menu`,
+    `✨ *Hola, soy Mystic*\n\nTu asistente contable inteligente, disponible las 24 horas.\n\n` +
+    `Cuéntame lo que necesitas — facturas, impuestos, nómina, importaciones o cualquier duda fiscal.\n\n` +
+    `_Solo escríbeme como le escribirías a un contador de confianza._`,
     { parse_mode: 'Markdown' }
   ));
 
-  bot.command('menu', ctx => ctx.reply('⚡ *Acciones rápidas:*', {
+  bot.command('menu', ctx => ctx.reply('¿Qué necesitas hoy?', {
     parse_mode: 'Markdown',
     reply_markup: { inline_keyboard: [
-      [{ text: '📄 Generar MVE',      callback_data: 'action_mve' }],
-      [{ text: '🔍 Validar CFDI',     callback_data: 'action_cfdi' }],
-      [{ text: '📊 Estado fiscal',    callback_data: 'action_status' }],
-      [{ text: '💵 Tipo de cambio',   callback_data: 'action_tc' }],
-      [{ text: '❓ Ayuda',            callback_data: 'action_help' }],
+      [{ text: '📄 Necesito una factura',    callback_data: 'action_mve' }],
+      [{ text: '🔍 Verificar comprobante',   callback_data: 'action_cfdi' }],
+      [{ text: '📊 ¿Cómo voy con el SAT?',  callback_data: 'action_status' }],
+      [{ text: '💵 Precio del dólar hoy',   callback_data: 'action_tc' }],
+      [{ text: '💬 Tengo una pregunta',      callback_data: 'action_help' }],
     ]}
   }));
 
@@ -98,18 +98,18 @@ function createTelegrafInstance(tenantId, token) {
       }
     } catch (err) {
       console.error(`[${tenantId}] msg error:`, err.message);
-      await ctx.reply('Error procesando tu consulta. Intenta de nuevo.');
+      await ctx.reply('Algo salió mal al procesar tu consulta. Por favor intenta de nuevo en un momento.');
     }
   });
 
   bot.on('callback_query', async ctx => {
     const action = ctx.callbackQuery.data;
     const replies = {
-      action_mve:    '📄 Para MVE necesito:\n1. Valor mercancía\n2. País origen\n3. INCOTERM',
-      action_cfdi:   '🔍 Envíame el UUID del CFDI',
-      action_status: '📊 Consultando estado fiscal...',
-      action_tc:     '💵 Consultando tipo de cambio...',
-      action_help:   '💡 Pregúntame sobre IVA, ISR, IMSS, facturas, importaciones.',
+      action_mve:    '📄 Perfecto. Cuéntame:\n• ¿Qué mercancía o servicio vas a facturar?\n• ¿A qué país va destinado?\n• Valor aproximado en pesos o dólares',
+      action_cfdi:   '🔍 Compárteme el folio fiscal (UUID) del comprobante y lo verifico de inmediato.',
+      action_status: '📊 Un momento, estoy revisando tu situación con el SAT...',
+      action_tc:     '💵 Consultando el tipo de cambio oficial de hoy...',
+      action_help:   '💬 Pregúntame lo que necesites: impuestos, nómina, facturas, importaciones o cualquier duda contable. Estoy aquí para ayudarte.',
     };
     if (replies[action]) await ctx.reply(replies[action]);
     await ctx.answerCbQuery();
