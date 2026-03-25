@@ -32,7 +32,7 @@ function VideoPlayer({ url }: { url: string }) {
           src={`${embedUrl}?rel=0&modestbranding=1`}
           className="absolute inset-0 w-full h-full rounded-xl"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
-          allowFullScreen title="Clase Mystic Academy"
+          allowFullScreen title="Clase Hermes Academy"
         />
       </div>
     )
@@ -51,7 +51,7 @@ function VideoPlayer({ url }: { url: string }) {
   return (
     <div className="relative w-full" style={{paddingTop:'56.25%'}}>
       <iframe src={url} className="absolute inset-0 w-full h-full rounded-xl"
-              allowFullScreen title="Clase Mystic Academy"/>
+              allowFullScreen title="Clase Hermes Academy"/>
     </div>
   )
 }

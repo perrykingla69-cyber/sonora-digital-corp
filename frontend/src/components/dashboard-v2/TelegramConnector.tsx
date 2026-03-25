@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { MessageCircle, ExternalLink, Download, CheckCircle } from "lucide-react";
 
-const BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT || "MysticAsistenteBot";
+const BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT || "HermesAsistenteBot";
 
 const STEPS = [
   { icon: Download,      text: "Descarga Telegram (gratis)" },

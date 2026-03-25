@@ -1,4 +1,4 @@
-"""SQLAlchemy models — todos los modelos de la plataforma MYSTIC."""
+"""SQLAlchemy models — todos los modelos de la plataforma HERMES."""
 
 import uuid
 from datetime import datetime, timezone

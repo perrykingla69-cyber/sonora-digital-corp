@@ -16,7 +16,7 @@ export default function ChatPage() {
     {
       id: '0',
       role: 'assistant',
-      content: '¡Hola! Soy Mystic, tu asistente fiscal. ¿En qué te puedo ayudar hoy?',
+      content: '¡Hola! Soy Hermes, tu asistente fiscal. ¿En qué te puedo ayudar hoy?',
       timestamp: new Date(),
     },
   ])
@@ -181,7 +181,7 @@ export default function ChatPage() {
           M
         </div>
         <div>
-          <p className="text-sm font-semibold text-[#D4AF37] leading-none">Mystic AI</p>
+          <p className="text-sm font-semibold text-[#D4AF37] leading-none">Hermes AI</p>
           <p className="text-xs text-white/40 mt-0.5">Asistente Fiscal</p>
         </div>
         {isProcessing && (

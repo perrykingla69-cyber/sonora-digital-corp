@@ -1,5 +1,5 @@
 """
-memU Integration — MYSTIC AI OS
+memU Integration — HERMES AI OS
 Memoria proactiva 24/7 para Brain IA.
 Usa memu-py (v0.1.8) sobre Ollama local (DeepSeek-R1:1.5b).
 """
@@ -19,7 +19,7 @@ def get_memu_agent(tenant_id: str) -> Optional[MemoryAgent]:
             llm_base_url=OLLAMA_URL,
             llm_model=OLLAMA_MODEL,
             llm_api_key="ollama",    # dummy key para Ollama
-            scope=f"mystic:{tenant_id}",
+            scope=f"hermes:{tenant_id}",
         )
         return agent
     except Exception as e:

@@ -108,7 +108,7 @@ export default function BrainWidget() {
               <Brain size={18} />
               <div>
                 <p className="text-sm font-semibold">Brain IA</p>
-                <p className="text-xs opacity-70">Asistente Mystic</p>
+                <p className="text-xs opacity-70">Asistente Hermes</p>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white">

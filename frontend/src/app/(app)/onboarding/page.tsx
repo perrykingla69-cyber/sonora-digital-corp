@@ -79,7 +79,7 @@ const PASO_META = [
   { title: 'Régimen fiscal',   desc: 'Tu situación ante el SAT',                  icon: <Scale size={22} /> },
   { title: 'Equipo',           desc: '¿Cuántos colaboradores tienes?',             icon: <Users size={22} /> },
   { title: 'Módulos',          desc: 'Activa las herramientas que necesitas',       icon: <Puzzle size={22} /> },
-  { title: 'Confirmación',     desc: 'Revisa y activa Mystic',                    icon: <CheckCircle2 size={22} /> },
+  { title: 'Confirmación',     desc: 'Revisa y activa Hermes',                    icon: <CheckCircle2 size={22} /> },
 ]
 
 // ── Helpers visuales ──────────────────────────────────────────────────────────
@@ -502,7 +502,7 @@ export default function OnboardingPage() {
                   <ResumenRow label="Módulos activos" value={modulosLabel} />
                 </div>
                 <p className="text-sovereign-muted text-xs text-center leading-relaxed">
-                  Al confirmar, Mystic quedará configurado para tu empresa.
+                  Al confirmar, Hermes quedará configurado para tu empresa.
                   Podrás ajustar estas opciones en cualquier momento desde el panel.
                 </p>
               </div>
@@ -548,7 +548,7 @@ export default function OnboardingPage() {
                            disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-                Activar Mystic
+                Activar Hermes
               </button>
             ) : (
               <button
@@ -570,7 +570,7 @@ export default function OnboardingPage() {
 
         {/* Footer */}
         <p className="text-center text-sovereign-muted text-xs mt-6">
-          Mystic · Sonora Digital Corp · {new Date().getFullYear()}
+          Hermes · Sonora Digital Corp · {new Date().getFullYear()}
         </p>
       </div>
     </div>

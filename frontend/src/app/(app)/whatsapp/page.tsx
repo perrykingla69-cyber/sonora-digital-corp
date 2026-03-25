@@ -41,7 +41,7 @@ export default function WhatsAppPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">WhatsApp</h1>
-            <p className="text-sm text-gray-500">Estado de conexión · Mystic WA (Baileys)</p>
+            <p className="text-sm text-gray-500">Estado de conexión · Hermes WA (Baileys)</p>
           </div>
         </div>
         <button

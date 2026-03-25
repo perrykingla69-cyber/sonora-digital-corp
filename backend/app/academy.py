@@ -1,5 +1,5 @@
 """
-Mystic Academy — Router FastAPI completo
+Hermes Academy — Router FastAPI completo
 Cursos, módulos, clases, temas, gamificación, videos híbridos
 Inclusivo: lecturas, videos, ejercicios, badges, progreso adaptativo
 """
@@ -219,7 +219,7 @@ CURSOS_CATALOG = [
           {"titulo": "Cancelación de CFDI", "tipo": "hibrido",
            "contenido": "## Motivos de cancelación\n01 - Comprobante emitido con errores con relación\n02 - Sin relación\n03 - No se llevó a cabo la operación\n04 - Nominativa",
            "duracion_min": 12, "xp_reward": 40, "orden": 2},
-          {"titulo": "Ejercicio: emitir en Mystic", "tipo": "ejercicio",
+          {"titulo": "Ejercicio: emitir en Hermes", "tipo": "ejercicio",
            "contenido": "### Practica en el sistema\nVe a **Facturas → Nueva Factura** y emite una factura de prueba.",
            "duracion_min": 15, "xp_reward": 60, "orden": 3},
         ]
@@ -312,9 +312,9 @@ CURSOS_CATALOG = [
     ]
   },
   {
-    "slug": "mystic-plataforma",
-    "titulo": "Domina la Plataforma Mystic",
-    "descripcion": "Aprende a usar todas las funciones de Mystic: Brain IA, facturas, reportes y automatizaciones.",
+    "slug": "hermes-plataforma",
+    "titulo": "Domina la Plataforma Hermes",
+    "descripcion": "Aprende a usar todas las funciones de Hermes: Brain IA, facturas, reportes y automatizaciones.",
     "categoria": "tecnologia", "nivel_req": 1, "xp_total": 300,
     "duracion_min": 90, "icono": "🤖", "orden": 5,
     "modulos": [
@@ -338,15 +338,15 @@ CURSOS_CATALOG = [
         "orden": 2, "xp_reward": 100,
         "clases": [
           {"titulo": "¿Qué es N8N?", "tipo": "video",
-           "contenido": "# N8N — Automatización sin código\nConecta sistemas: WhatsApp → Mystic → SAT → Notificaciones.",
+           "contenido": "# N8N — Automatización sin código\nConecta sistemas: WhatsApp → Hermes → SAT → Notificaciones.",
            "duracion_min": 10, "xp_reward": 30, "orden": 1},
           {"titulo": "Workflows disponibles", "tipo": "lectura",
-           "contenido": "## Flows activos en Mystic\n- Alerta CFDI vencido → WhatsApp\n- Recordatorio declaración SAT → Telegram\n- Ingreso nuevo → Registro automático\n- Conciliación bancaria diaria",
+           "contenido": "## Flows activos en Hermes\n- Alerta CFDI vencido → WhatsApp\n- Recordatorio declaración SAT → Telegram\n- Ingreso nuevo → Registro automático\n- Conciliación bancaria diaria",
            "duracion_min": 10, "xp_reward": 30, "orden": 2},
           {"titulo": "Quiz plataforma", "tipo": "quiz",
            "contenido": json.dumps([
              {"pregunta": "¿Desde dónde consultas el Brain IA?", "opciones": ["/facturas","/brain","/dashboard","/admin"], "correcta": 1},
-             {"pregunta": "¿Qué herramienta automatiza workflows en Mystic?", "opciones": ["Python","N8N","Excel","Telegram"], "correcta": 1},
+             {"pregunta": "¿Qué herramienta automatiza workflows en Hermes?", "opciones": ["Python","N8N","Excel","Telegram"], "correcta": 1},
            ]), "duracion_min": 5, "xp_reward": 40, "orden": 3},
         ]
       },

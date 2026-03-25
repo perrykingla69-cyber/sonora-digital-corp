@@ -63,7 +63,7 @@ async def verificar_cfdi(uuid_cfdi: str):
 
 # ── Sandbox / Demo mode ──────────────────────────────────────────────
 SANDBOX_RFC = "XAXX010101000"
-SANDBOX_EMPRESA = "EMPRESA DEMO MYSTIC"
+SANDBOX_EMPRESA = "EMPRESA DEMO HERMES"
 
 @router.get("/sandbox/status")
 async def sandbox_status():

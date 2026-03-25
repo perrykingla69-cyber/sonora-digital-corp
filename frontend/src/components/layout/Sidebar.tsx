@@ -91,7 +91,7 @@ export default function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-white font-semibold">
             <Menu size={16} className="text-brand-500" />
-            <span>Mystic Mobile</span>
+            <span>Hermes Mobile</span>
           </div>
           <button onClick={logout} className="text-xs text-gray-300">Salir</button>
         </div>

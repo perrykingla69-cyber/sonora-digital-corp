@@ -240,5 +240,5 @@ IV. RAZONAMIENTO
         defensa += f"\nVII. DOCUMENTACIÓN REQUERIDA\n"
         for doc in analisis.documentacion_requerida:
             defensa += f"- {doc}\n"
-        defensa += f"\nFecha: {datetime.now().isoformat()}\nSistema: Mystic Fiscal AI v2.0"
+        defensa += f"\nFecha: {datetime.now().isoformat()}\nSistema: Hermes Fiscal AI v2.0"
         return defensa

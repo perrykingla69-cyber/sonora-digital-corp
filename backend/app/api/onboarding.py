@@ -1,5 +1,5 @@
 """
-onboarding.py — Wizard de Onboarding para MYSTIC
+onboarding.py — Wizard de Onboarding para HERMES
 
 Endpoints:
 POST /api/onboarding/start          — inicia sesión, retorna session_id
@@ -194,7 +194,7 @@ def onboarding_start():
     logger.info(f"Onboarding iniciado: session_id={sid}")
     return StartResponse(
         session_id=sid,
-        mensaje="Sesión de onboarding iniciada. Completa los 5 pasos para activar Mystic.",
+        mensaje="Sesión de onboarding iniciada. Completa los 5 pasos para activar Hermes.",
         paso_actual=PASOS_ORDEN[0],
         total_pasos=len(PASOS_ORDEN),
     )
@@ -340,5 +340,5 @@ def onboarding_complete(body: CompleteRequest):
         session_id=sid,
         completado=True,
         resumen=resumen,
-        mensaje=f"¡Bienvenido a Mystic! La configuración de {resumen['empresa']['nombre']} ha sido guardada.",
+        mensaje=f"¡Bienvenido a Hermes! La configuración de {resumen['empresa']['nombre']} ha sido guardada.",
     )

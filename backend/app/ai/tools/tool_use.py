@@ -1,5 +1,5 @@
 """
-Tool Use Integration para MYSTIC Brain
+Tool Use Integration para HERMES Brain
 Detecta intención de ejecutar acciones y usa herramientas LangChain-style
 """
 from __future__ import annotations
@@ -308,7 +308,7 @@ async def brain_ask_with_tools(
             prompt_parts.append(f"[{chunk.get('title', '')}]\n{chunk.get('content', '')[:300]}")
     
     # Prompt final para Ollama
-    system_prompt = """Eres un asistente contable experto de MYSTIC. 
+    system_prompt = """Eres un asistente contable experto de HERMES. 
 Responde de forma clara, concisa y profesional.
 Si hay resultados de herramientas ejecutadas, úsalos como fuente primaria de verdad.
 Si hay contexto documental, intégralo en tu respuesta.

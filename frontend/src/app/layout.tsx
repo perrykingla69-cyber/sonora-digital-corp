@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Mystic — Sonora Digital Corp',
+  title: 'Hermes — Sonora Digital Corp',
   description: 'AI OS Contable',
 }
 

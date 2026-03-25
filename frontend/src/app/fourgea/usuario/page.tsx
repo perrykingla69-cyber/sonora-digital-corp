@@ -106,7 +106,7 @@ export default function FourgeaLoginPage() {
         </form>
 
         <p className="text-center text-xs text-white/20 mt-6">
-          Powered by Mystic · Sonora Digital Corp © {new Date().getFullYear()}
+          Powered by Hermes · Sonora Digital Corp © {new Date().getFullYear()}
         </p>
       </div>
     </div>

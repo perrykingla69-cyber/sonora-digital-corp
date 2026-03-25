@@ -105,7 +105,7 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Suscripción — Mystic AI OS</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Suscripción — Hermes AI OS</h1>
         <p className="text-sm text-gray-500 mt-0.5">Elige el plan que mejor se adapte a tu empresa</p>
       </div>
 

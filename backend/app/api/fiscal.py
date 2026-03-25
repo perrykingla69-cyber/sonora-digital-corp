@@ -1,5 +1,5 @@
 """
-fiscal.py — Servicios Fiscales Avanzados para MYSTIC
+fiscal.py — Servicios Fiscales Avanzados para HERMES
 
 Endpoints disponibles:
 GET  /api/fiscal/diot/{ano}/{mes}          — Genera DIOT en formato texto plano SAT

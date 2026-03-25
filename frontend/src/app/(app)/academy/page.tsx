@@ -296,7 +296,7 @@ function ConcursosView() {
           <Swords size={20} className="text-[#D4AF37]"/> Concursos entre Contadores
         </h2>
         <p className="text-[#666] text-sm">
-          Compite con otros usuarios de Mystic Academy. El ganador recibe acceso al
+          Compite con otros usuarios de Hermes Academy. El ganador recibe acceso al
           <span className="text-[#D4AF37] font-semibold"> Paquete Master</span> por un mes.
           ¡Demuestra tu dominio fiscal!
         </p>
@@ -440,9 +440,9 @@ export default function AcademyPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-[#E8E8E8] flex items-center gap-2">
-            <GraduationCap size={22} className="text-[#D4AF37]"/> Mystic Academy
+            <GraduationCap size={22} className="text-[#D4AF37]"/> Hermes Academy
           </h1>
-          <p className="text-[#666] text-sm mt-0.5">Tu progreso como usuario Mystic</p>
+          <p className="text-[#666] text-sm mt-0.5">Tu progreso como usuario Hermes</p>
         </div>
         <div className="text-right">
           <p className="text-[#D4AF37] font-bold">{perfil.rango_emoji} {perfil.rango}</p>

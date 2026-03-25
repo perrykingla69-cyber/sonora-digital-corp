@@ -14,8 +14,8 @@ import {
   Trophy, BadgeCheck, Image as ImageIcon, Cpu,
 } from 'lucide-react'
 
-// ─── Logo SVG — Ojo Místico ────────────────────────────────────────────────
-function MysticEyeLogo({ size = 40 }: { size?: number }) {
+// ─── Logo SVG — Ojo Hermes ────────────────────────────────────────────────
+function HermesEyeLogo({ size = 40 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
       <defs>
@@ -202,7 +202,7 @@ const PLANS = [
     price: '$0',
     originalValue: '$2,400',
     valuePitch: 'Valor real del paquete: $2,400 MXN/mes',
-    cryptoNote: '🪙 $100 USD en crédito Mystic Token al registrarte',
+    cryptoNote: '🪙 $100 USD en crédito Hermes Token al registrarte',
     period: '/mes para siempre',
     highlight: false,
     borderColor: 'border-emerald-500/20',
@@ -252,9 +252,9 @@ const PLANS = [
       'CRM básico (100 contactos)',
       'Alertas SAT + IMSS automáticas',
       'Recordatorio de pago 3 días antes',
-      'Red Mystic: gana descuentos por aliados',
+      'Red Hermes: gana descuentos por aliados',
       'Soporte chat 24/7',
-      '🔒 Powered by Mystic IA',
+      '🔒 Powered by Hermes IA',
     ],
   },
   {
@@ -283,7 +283,7 @@ const PLANS = [
       '8 usuarios + permisos avanzados',
       'Brain IA completo + voz bidireccional',
       'Contenido ilimitado (4 plataformas)',
-      'Academia completa + certificación Mystic',
+      'Academia completa + certificación Hermes',
       'Clases en clips de 10-15 min + progreso',
       'CRM avanzado (500 contactos)',
       'Alertas configurables + push móvil',
@@ -292,7 +292,7 @@ const PLANS = [
       'Consultoría IA mensual (1 sesión)',
       'Recordatorio amable antes de tu día de pago',
       'Soporte prioritario + gestor asignado',
-      '🔒 Powered by Mystic IA (siempre presente)',
+      '🔒 Powered by Hermes IA (siempre presente)',
     ],
   },
   {
@@ -324,13 +324,13 @@ const PLANS = [
       'CRM empresarial ilimitado',
       'Pack para 10 clientes con descuento grupal',
       'Estrategia de red personalizada por IA',
-      'Kit merch: USB + kit ejecutivo Mystic',
+      'Kit merch: USB + kit ejecutivo Hermes',
       '4 sesiones consultoría / mes',
       'Trae 10 clientes → certificados GRATIS perpetuos',
-      'Publicidad cruzada en Red Mystic',
+      'Publicidad cruzada en Red Hermes',
       'SLA 99.9% uptime + onboarding dedicado',
       'A.C. donataria — deducción fiscal comprobable',
-      '🔒 Powered by Mystic IA — tu marca + nuestra tech',
+      '🔒 Powered by Hermes IA — tu marca + nuestra tech',
     ],
   },
 ]
@@ -376,7 +376,7 @@ const ACADEMY_MODULES = [
 const CONSULTING_SERVICES = [
   { icon: BarChart3, title: 'Estrategia Fiscal IA', desc: 'Análisis profundo de tu situación fiscal + hoja de ruta para minimizar carga tributaria legalmente. Incluye RESICO, ISR, IVA optimizados.', price: '$2,500 / sesión', tag: 'FISCAL' },
   { icon: Target, title: 'Arquitectura de Ingresos', desc: 'Diseñamos juntos tu modelo de negocio: precios, paquetes, canales de venta, funnel automático con IA. Te ayudamos a cobrar lo que mereces.', price: '$3,500 / sesión', tag: 'VENTAS' },
-  { icon: Globe, title: 'Expansión Digital', desc: 'Estrategia de contenido + presencia web + automatización completa. De 0 a 500 seguidores calificados en 90 días con el sistema Mystic.', price: '$4,000 / mes', tag: 'MARKETING' },
+  { icon: Globe, title: 'Expansión Digital', desc: 'Estrategia de contenido + presencia web + automatización completa. De 0 a 500 seguidores calificados en 90 días con el sistema Hermes.', price: '$4,000 / mes', tag: 'MARKETING' },
   { icon: Wallet, title: 'Onboarding Cripto Empresarial', desc: 'Te llevamos de la mano: wallet segura, primera transacción en BTC/USDC, integración en tu negocio, estrategia de reserva de valor.', price: '$1,500 / sesión', tag: 'CRIPTO' },
 ]
 
@@ -422,7 +422,7 @@ const SCORE_SEGMENTS = [
     bg: 'bg-violet-500/10 border-violet-500/20',
     bar: 'bg-violet-500',
     pct: 100,
-    desc: 'Embajador Mystic. Acceso total + mentoría 1v1.',
+    desc: 'Embajador Hermes. Acceso total + mentoría 1v1.',
     signal: ['500+ facturas/mes', '5+ referidos activos', 'Academia certificado'],
     offer: 'NFT Élite + mentoría semanal 1v1 + merch exclusivo',
   },
@@ -436,7 +436,7 @@ const NFT_TIERS = [
     color: 'text-slate-300',
     border: 'border-slate-500/30',
     bg: 'from-slate-800/30',
-    price: '50 $MYS',
+    price: '50 $HRM',
     perks: ['Acceso a sala privada Telegram', 'Badge verificado en perfil', 'Descuentos en merch básico'],
   },
   {
@@ -445,7 +445,7 @@ const NFT_TIERS = [
     color: 'text-[#D4AF37]',
     border: 'border-amber-500/40',
     bg: 'from-amber-900/20',
-    price: '250 $MYS',
+    price: '250 $HRM',
     perks: ['Acceso anticipado a features beta', 'Hack fiscal exclusivo / mes', 'Foto de perfil NFT certificada', 'Insignia oro en todo el ecosistema'],
   },
   {
@@ -454,7 +454,7 @@ const NFT_TIERS = [
     color: 'text-violet-400',
     border: 'border-violet-500/40',
     bg: 'from-violet-900/20',
-    price: '1,000 $MYS',
+    price: '1,000 $HRM',
     perks: ['Mentoría 1v1 mensual (4 sesiones)', 'Acceso vitalicio a un módulo', 'NFT coleccionable edición limitada', 'Voto en roadmap de features', 'Comisiones 20% para siempre'],
   },
 ]
@@ -493,7 +493,7 @@ const TESTIMONIALS = [
     avatarBg: 'bg-violet-700',
     score: 490,
     tier: 'Activo',
-    quote: 'No tenía contador y tenía miedo de los impuestos. Mystic me enseñó RESICO en un fin de semana y ahora declaro yo misma. La academia de Blockchain me abrió un mundo completamente nuevo.',
+    quote: 'No tenía contador y tenía miedo de los impuestos. Hermes me enseñó RESICO en un fin de semana y ahora declaro yo misma. La academia de Blockchain me abrió un mundo completamente nuevo.',
     result: '$8,500 MXN/mes ahorrado en contador',
     stars: 5,
   },
@@ -505,7 +505,7 @@ const TESTIMONIALS = [
     avatarBg: 'bg-emerald-700',
     score: 650,
     tier: 'Estratégico',
-    quote: 'Tenía a un contador cobrándome $15,000/mes por hacer lo mismo que Mystic hace automáticamente. Ahora ese dinero va a expandir mi negocio. La IA nunca se enferma, nunca llega tarde.',
+    quote: 'Tenía a un contador cobrándome $15,000/mes por hacer lo mismo que Hermes hace automáticamente. Ahora ese dinero va a expandir mi negocio. La IA nunca se enferma, nunca llega tarde.',
     result: '$180,000 MXN ahorrado al año',
     stars: 5,
   },
@@ -517,7 +517,7 @@ const TESTIMONIALS = [
     avatarBg: 'bg-amber-700',
     score: 890,
     tier: 'Élite',
-    quote: 'Tengo 12 clientes y con Mystic los atiendo sola. Antes necesitaba 2 asistentes. El Content Factory genera el contenido para mis clientes automáticamente. Mis clientes están felices y yo duermo 8 horas.',
+    quote: 'Tengo 12 clientes y con Hermes los atiendo sola. Antes necesitaba 2 asistentes. El Content Factory genera el contenido para mis clientes automáticamente. Mis clientes están felices y yo duermo 8 horas.',
     result: '$35,000 MXN/mes más sin contratar personal',
     stars: 5,
   },
@@ -538,7 +538,7 @@ const TESTIMONIALS = [
 const UNIFORMS = [
   {
     name: 'Ejecutivo Clásico',
-    desc: 'Traje oxford azul marino profundo, corbata dorada con triángulo Mystic bordado, camisa blanca perla. Solapa con pin del ojo místico.',
+    desc: 'Traje oxford azul marino profundo, corbata dorada con triángulo Hermes bordado, camisa blanca perla. Solapa con pin del ojo místico.',
     colors: ['#0d1b2a', '#D4AF37', '#F5F0E8'],
     context: 'Juntas directivas, cierres de alto ticket, eventos corporativos',
     icon: '👔',
@@ -552,7 +552,7 @@ const UNIFORMS = [
   },
   {
     name: 'Digital Force',
-    desc: 'Polo negro técnico con logo Mystic 3D en pecho, pantalón cargo gris carbón, tenis blancos. Para el equipo en campo y eventos tech.',
+    desc: 'Polo negro técnico con logo Hermes 3D en pecho, pantalón cargo gris carbón, tenis blancos. Para el equipo en campo y eventos tech.',
     colors: ['#1a1a1a', '#D4AF37', '#9ca3af'],
     context: 'Eventos tech, trabajo en campo, representación casual',
     icon: '👕',
@@ -582,7 +582,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 border-b border-[#D4AF37]/20 bg-[#F5F0E8]/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
-            <MysticEyeLogo size={42} />
+            <HermesEyeLogo size={42} />
             <div>
               <p className="text-[9px] font-bold uppercase tracking-[0.35em] text-[#8B7520]">Sonora Digital Corp</p>
               <p className="text-sm font-black text-[#1a1a1a] leading-none tracking-tight">HERMES CONSULTING</p>
@@ -635,7 +635,7 @@ export default function HomePage() {
           </h1>
 
           <p className="mx-auto max-w-2xl text-lg text-white/55 leading-relaxed mb-4">
-            Mientras tú procesas facturas a mano, tu competencia ya automatizó todo. Mystic Consulting es el sistema que convierte a cualquier PYME mexicana en una empresa de alto rendimiento — en menos de 30 días.
+            Mientras tú procesas facturas a mano, tu competencia ya automatizó todo. Hermes Consulting es el sistema que convierte a cualquier PYME mexicana en una empresa de alto rendimiento — en menos de 30 días.
           </p>
           <p className="text-sm text-[#D4AF37]/80 mb-12 font-semibold">
             Hermosillo, Sonora → para el mundo. Tecnología de clase mundial, precio mexicano.
@@ -774,7 +774,7 @@ export default function HomePage() {
               <span className="text-2xl font-black text-black">$M</span>
             </div>
             <div className="flex-1">
-              <p className="text-white font-black text-lg leading-tight">$100 USD en crédito Mystic Token — gratis al registrarte</p>
+              <p className="text-white font-black text-lg leading-tight">$100 USD en crédito Hermes Token — gratis al registrarte</p>
               <p className="text-white/50 text-xs mt-0.5">Sin tarjeta requerida. Úsalo en Brain IA, generación de contenido, módulos premium y más.</p>
               <div className="mt-2 flex items-center gap-2">
                 <div className="h-1.5 rounded-full bg-white/10 flex-1 overflow-hidden">
@@ -906,7 +906,7 @@ export default function HomePage() {
                 <span className="text-[#D4AF37]">Bitcoin nunca.</span>
               </h2>
               <p className="text-white/50 leading-relaxed mb-8">
-                Mystic acepta pagos en Bitcoin y USDC porque creemos en la soberanía financiera. No dependas de bancos, no pagues comisiones absurdas, no esperes 3 días hábiles. Paga desde tu wallet en segundos.
+                Hermes acepta pagos en Bitcoin y USDC porque creemos en la soberanía financiera. No dependas de bancos, no pagues comisiones absurdas, no esperes 3 días hábiles. Paga desde tu wallet en segundos.
               </p>
               <div className="space-y-4 mb-8">
                 {[
@@ -960,7 +960,7 @@ export default function HomePage() {
               </div>
               <div className="rounded-3xl border border-white/8 bg-white/2 p-6 text-center">
                 <p className="text-xs text-white/30 uppercase tracking-widest mb-2">Próximamente</p>
-                <p className="text-white font-bold">Staking de tokens Mystic</p>
+                <p className="text-white font-bold">Staking de tokens Hermes</p>
                 <p className="text-xs text-white/40 mt-1">Gana rendimientos por participar en la red</p>
               </div>
             </div>
@@ -1015,7 +1015,7 @@ export default function HomePage() {
       <section id="academia" className="py-24 bg-[#0d0d12]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-sm font-bold uppercase tracking-widest text-violet-400/70 mb-3">Escuela Mystic</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-violet-400/70 mb-3">Escuela Hermes</p>
             <h2 className="text-4xl sm:text-5xl font-black text-white mb-4">
               Aprende. Certifícate.<br />
               <span className="text-violet-400">Cobra más.</span>
@@ -1024,7 +1024,7 @@ export default function HomePage() {
               Cada módulo tiene objetivo práctico aplicable a tu negocio en la semana siguiente. No es teoría. Es dinero.
             </p>
             <div className="mt-4 inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-4 py-2 text-sm text-violet-300">
-              <Award className="w-4 h-4" /> Certificado Mystic · Currículum reconocido · Sell what you learn
+              <Award className="w-4 h-4" /> Certificado Hermes · Currículum reconocido · Sell what you learn
             </div>
           </div>
 
@@ -1091,7 +1091,7 @@ export default function HomePage() {
       <section id="consulting" className="py-24 bg-[#F5F0E8]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-sm font-bold uppercase tracking-widest text-[#8B7520] mb-3">Mystic Consulting</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-[#8B7520] mb-3">Hermes Consulting</p>
             <h2 className="text-4xl sm:text-5xl font-black text-[#1a1a1a] mb-4">
               No solo software.<br />
               <span className="text-[#8B7520]">Estrategia de élite.</span>
@@ -1134,7 +1134,7 @@ export default function HomePage() {
               <span className="text-[#D4AF37]">con un solo sistema.</span>
             </h2>
             <p className="text-white/40 max-w-xl mx-auto">
-              Un contador promedio tiene 17-18 clientes y cobra $1,350/mes c/u = ~$23,000/mes. Con Mystic, el mismo contador atiende más clientes, cobra más por cliente y ofrece servicios que antes no podía dar.
+              Un contador promedio tiene 17-18 clientes y cobra $1,350/mes c/u = ~$23,000/mes. Con Hermes, el mismo contador atiende más clientes, cobra más por cliente y ofrece servicios que antes no podía dar.
             </p>
           </div>
 
@@ -1160,19 +1160,19 @@ export default function HomePage() {
             {[
               { n: '01', title: 'Cartera de clientes escalada', desc: 'Automatizas contabilidad → atiendes 2-3x más clientes sin contratar más staff. Cada cliente extra = ingreso puro.', tag: 'CORE', color: 'text-[#D4AF37]' },
               { n: '02', title: 'Incremento de honorarios', desc: 'Entregas más valor (reportes IA, alertas SAT, CFDI automático) → justificas cobrar $2,500-$4,000/mes vs $1,200 anterior.', tag: 'PRECIO', color: 'text-[#D4AF37]' },
-              { n: '03', title: 'Vender el sistema a colegas', desc: 'Revendes licencias Mystic a otros contadores. Pack de 10 = $25,000 de margen mensual como operador de red.', tag: 'NETWORK', color: 'text-emerald-400' },
+              { n: '03', title: 'Vender el sistema a colegas', desc: 'Revendes licencias Hermes a otros contadores. Pack de 10 = $25,000 de margen mensual como operador de red.', tag: 'NETWORK', color: 'text-emerald-400' },
               { n: '04', title: 'White-label tu propia academia', desc: 'Con plan Poder, tu academia lleva tu nombre. Vendes cursos a $500-$2,000 cada uno con tu marca y nuestro contenido.', tag: 'ACADEMIA', color: 'text-sky-400' },
               { n: '05', title: 'Sistema Antimultas MVE como servicio', desc: 'Cobras $500-$1,500/mes por cliente importador para gestionar su MVE. 10 clientes = $10,000+ adicionales.', tag: 'MVE', color: 'text-red-400' },
               { n: '06', title: 'Consultoría fiscal de alto valor', desc: 'Con el arsenal de IA, das asesorías estratégicas $2,500-$5,000/sesión que antes no podías ofrecer.', tag: 'CONSULTING', color: 'text-[#D4AF37]' },
               { n: '07', title: 'Onboarding cripto empresarial', desc: 'Ayudas a clientes a adoptar BTC/USDC como reserva de valor. $1,500/sesión + comisión por volumen.', tag: 'CRIPTO', color: 'text-orange-400' },
-              { n: '08', title: 'Contenido educativo monetizado', desc: 'Mystic genera tu contenido. Tus redes crecen. Monetizas con afiliados, patrocinios y ventas directas.', tag: 'CONTENIDO', color: 'text-pink-400' },
-              { n: '09', title: 'Red de aliados multi-nivel', desc: 'Cada contador que refieres a Mystic te genera descuentos o comisiones. 10 aliados activos = plan gratis para siempre.', tag: 'ALIADOS', color: 'text-emerald-400' },
+              { n: '08', title: 'Contenido educativo monetizado', desc: 'Hermes genera tu contenido. Tus redes crecen. Monetizas con afiliados, patrocinios y ventas directas.', tag: 'CONTENIDO', color: 'text-pink-400' },
+              { n: '09', title: 'Red de aliados multi-nivel', desc: 'Cada contador que refieres a Hermes te genera descuentos o comisiones. 10 aliados activos = plan gratis para siempre.', tag: 'ALIADOS', color: 'text-emerald-400' },
               { n: '10', title: 'Pack para despachos', desc: '10 licencias con descuento grupal. Equipa a todo tu despacho y cobra a cada socio $800 más de lo que pagas.', tag: 'EMPRESA', color: 'text-violet-400' },
               { n: '11', title: 'Clon digital — tu escuela', desc: 'Tu imagen, voz IA, cursos firmados por ti. Vendes acceso mensual a tu comunidad de aprendizaje.', tag: 'IDENTIDAD', color: 'text-[#D4AF37]' },
               { n: '12', title: 'Leads calificados como activo', desc: 'El sistema genera leads diarios. Cierras 1-2 nuevos clientes/mes. A $1,700/mes cada uno = $3,400 extra recurrente desde el primer mes.', tag: 'VENTAS', color: 'text-sky-400' },
               { n: '13', title: 'Asesoría RESICO especializada', desc: 'El régimen más popular de México. Automatizas declaraciones y cobras $800/mes por cliente RESICO.', tag: 'FISCAL', color: 'text-[#D4AF37]' },
               { n: '14', title: 'Servicios de nómina + IMSS', desc: 'Brain IA calcula dispersión automática. Cobras $500-$1,000/mes por nómina de empresa.', tag: 'NÓMINA', color: 'text-emerald-400' },
-              { n: '15', title: 'Merch y activos físicos Mystic', desc: 'En temporadas exclusivas abres ventana de venta. Tu marca en productos físicos = ingresos pasivos.', tag: 'MERCH', color: 'text-pink-400' },
+              { n: '15', title: 'Merch y activos físicos Hermes', desc: 'En temporadas exclusivas abres ventana de venta. Tu marca en productos físicos = ingresos pasivos.', tag: 'MERCH', color: 'text-pink-400' },
               { n: '16', title: 'Clases en vivo por suscripción', desc: 'Impartes masterclasses semanales de 15min. 100 alumnos × $299/mes = $29,900 mensual recurrente.', tag: 'EDUCACIÓN', color: 'text-sky-400' },
               { n: '17', title: 'Partner de gobierno y despachos', desc: 'Con A.C. Sonora Digital Foundation tramitas contratos educativos con municipios y estados.', tag: 'GOB', color: 'text-violet-400' },
               { n: '18', title: 'Add-on de leads para clientes', desc: 'Vendes el servicio de 100 leads/día a tus clientes contadores como servicio adicional $500/semana.', tag: 'ADD-ON', color: 'text-orange-400' },
@@ -1214,9 +1214,9 @@ export default function HomePage() {
               <thead className="bg-white/3">
                 <tr>
                   <th className="text-left text-xs text-white/40 py-4 px-5 font-medium">Característica</th>
-                  {['Factura.com', 'CONTPAQi', 'Mystic'].map(n => (
-                    <th key={n} className={`text-center py-4 px-4 text-sm font-bold ${n === 'Mystic' ? 'text-[#D4AF37]' : 'text-white/30'}`}>
-                      {n === 'Mystic' && <Crown className="w-4 h-4 inline mr-1" />}{n}
+                  {['Factura.com', 'CONTPAQi', 'Hermes'].map(n => (
+                    <th key={n} className={`text-center py-4 px-4 text-sm font-bold ${n === 'Hermes' ? 'text-[#D4AF37]' : 'text-white/30'}`}>
+                      {n === 'Hermes' && <Crown className="w-4 h-4 inline mr-1" />}{n}
                     </th>
                   ))}
                 </tr>
@@ -1228,7 +1228,7 @@ export default function HomePage() {
                   ['Academia certificada', '✗', '✗', '✓ Blockchain · IA · NFT'],
                   ['Voz bidireccional 24/7', '✗', '✗', '✓'],
                   ['Pagos en Bitcoin/USDC', '✗', '✗', '✓ + descuento 5%'],
-                  ['Consultoría personalizada', '✗', '✗', '✓ Mystic Consulting'],
+                  ['Consultoría personalizada', '✗', '✗', '✓ Hermes Consulting'],
                   ['Red de aliados (ingresos extra)', '✗', '✗', '✓ comisiones recurrentes'],
                   ['IA local soberana (sin nube)', '✗', '✗', '✓ Ollama + Qdrant'],
                 ].map(([feat, ...vals]) => (
@@ -1259,7 +1259,7 @@ export default function HomePage() {
                   <span className="text-[#8B7520]">segundo ingreso.</span>
                 </h2>
                 <p className="text-[#666] leading-relaxed mb-6">
-                  Cada persona que conectas a Mystic genera ingresos para ti. Mes tras mes. Sin límite. Los mejores aliados con 10 clientes activos ya pagan su propio plan y generan ingreso extra neto.
+                  Cada persona que conectas a Hermes genera ingresos para ti. Mes tras mes. Sin límite. Los mejores aliados con 10 clientes activos ya pagan su propio plan y generan ingreso extra neto.
                 </p>
                 <div className="space-y-3">
                   {[
@@ -1325,7 +1325,7 @@ export default function HomePage() {
             ))}
           </div>
           <p className="text-center mt-8 text-xs text-white/25">
-            Producción bajo pedido · Incluye bordado del logo Mystic · Mínimo 2 piezas por línea
+            Producción bajo pedido · Incluye bordado del logo Hermes · Mínimo 2 piezas por línea
           </p>
         </div>
       </section>
@@ -1334,7 +1334,7 @@ export default function HomePage() {
       <section className="py-24 bg-[#F5F0E8]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-10">
-            <p className="text-sm font-bold uppercase tracking-widest text-[#8B7520] mb-3">Tienda Mystic</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-[#8B7520] mb-3">Tienda Hermes</p>
             <h2 className="text-4xl font-black text-[#1a1a1a]">
               Porta la identidad.<br />
               <span className="text-[#8B7520]">Cierra negocios con estilo.</span>
@@ -1346,12 +1346,12 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Merch propio Mystic */}
+          {/* Merch propio Hermes */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
             {[
-              { name: 'USB Mystic 32GB', desc: 'Agente digital en el bolsillo. Precargada con herramientas Mystic + biblioteca fiscal.', emoji: '💾', price: '$299' },
+              { name: 'USB Hermes 32GB', desc: 'Agente digital en el bolsillo. Precargada con herramientas Hermes + biblioteca fiscal.', emoji: '💾', price: '$299' },
               { name: 'Kit Ejecutivo', desc: 'Pluma cromada + cuaderno de piel + stickers. Para cerrar tratos de alto valor.', emoji: '🖊️', price: '$249' },
-              { name: 'Hoodie Mystic', desc: 'Colección limitada fundadores. 100% algodón premium con logo ojo místico bordado.', emoji: '👕', price: '$699' },
+              { name: 'Hoodie Hermes', desc: 'Colección limitada fundadores. 100% algodón premium con logo ojo místico bordado.', emoji: '👕', price: '$699' },
               { name: 'Pack Fundador', desc: 'USB + kit + hoodie + certificado fundador + acceso especial. Solo 100 unidades.', emoji: '👑', price: '$1,199' },
             ].map(({ name, desc, emoji, price }) => (
               <TiltCard key={name}>
@@ -1370,7 +1370,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Tu propia línea de merch con Mystic */}
+          {/* Tu propia línea de merch con Hermes */}
           <div className="rounded-3xl bg-gradient-to-br from-[#1a1200] to-[#0a0a0f] border border-[#D4AF37]/20 p-8">
             <div className="grid lg:grid-cols-2 gap-10 items-center">
               <div>
@@ -1380,13 +1380,13 @@ export default function HomePage() {
                   <span className="text-[#D4AF37]">bajo tu marca. Nosotros la gestionamos.</span>
                 </h3>
                 <p className="text-white/50 text-sm leading-relaxed mb-6">
-                  Manda tu diseño o elige uno de nuestra colección por temporada. Mystic se encarga de producción, empaque y logística. Tú cobras, nosotros operamos.
+                  Manda tu diseño o elige uno de nuestra colección por temporada. Hermes se encarga de producción, empaque y logística. Tú cobras, nosotros operamos.
                 </p>
                 <div className="space-y-3">
                   {[
                     { label: 'Tu ingreso por venta', val: '60%', color: 'text-emerald-400' },
-                    { label: 'Mystic (logística + operación)', val: '40%', color: 'text-[#D4AF37]' },
-                    { label: 'Producción', val: 'Cargo de Mystic', color: 'text-white/40' },
+                    { label: 'Hermes (logística + operación)', val: '40%', color: 'text-[#D4AF37]' },
+                    { label: 'Producción', val: 'Cargo de Hermes', color: 'text-white/40' },
                     { label: 'Disponibilidad', val: 'Solo en ventanas limitadas', color: 'text-amber-400' },
                   ].map(r => (
                     <div key={r.label} className="flex justify-between items-center border-b border-white/5 pb-2">
@@ -1429,16 +1429,16 @@ export default function HomePage() {
               <span className="text-[#8B7520]">Construye red, no solo clientes.</span>
             </h2>
             <p className="text-[#666] mt-3 max-w-lg mx-auto text-sm">
-              Mystic se asocia con empresas que quieren ofrecer tecnología de clase mundial a sus redes. Pagamos con software, licencias y visibilidad.
+              Hermes se asocia con empresas que quieren ofrecer tecnología de clase mundial a sus redes. Pagamos con software, licencias y visibilidad.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { emoji: '🏢', title: 'Despachos y Oficinas', desc: 'A cambio de espacio de trabajo o sala de eventos, tus clientes obtienen licencias Mystic con tu branding.', tag: 'SWAP' },
+              { emoji: '🏢', title: 'Despachos y Oficinas', desc: 'A cambio de espacio de trabajo o sala de eventos, tus clientes obtienen licencias Hermes con tu branding.', tag: 'SWAP' },
               { emoji: '🚗', title: 'Autos · Inmuebles', desc: 'Intercambiamos software y desarrollo digital por bienes. Si tienes activos que ofrecer, conversemos.', tag: 'BARTER' },
               { emoji: '🏛️', title: 'A.C.s y Fundaciones', desc: 'Alianzas con organizaciones para beneficios fiscales mutuos. Tu A.C. deduce, nosotros aportamos tecnología.', tag: 'A.C.' },
               { emoji: '🛒', title: 'Proveedores de Mayoreo', desc: 'Buscamos proveedores para merch de calidad: ropa, gadgets, papelería. Volumen garantizado por nuestra red.', tag: 'PROVEEDOR' },
-              { emoji: '📦', title: 'Reventa de Productos', desc: 'Si fabricas o importas productos de calidad, los integramos en la tienda Mystic para tu distribución digital.', tag: 'DISTRIBUCIÓN' },
+              { emoji: '📦', title: 'Reventa de Productos', desc: 'Si fabricas o importas productos de calidad, los integramos en la tienda Hermes para tu distribución digital.', tag: 'DISTRIBUCIÓN' },
               { emoji: '🤝', title: 'Proyectos de Gobierno', desc: 'Digitalización de procesos fiscales para municipios y estados. Sonora Digital Foundation como puente.', tag: 'GOB' },
             ].map(a => (
               <div key={a.title} className="rounded-2xl border border-[#D4AF37]/20 bg-white p-6 hover:border-[#D4AF37]/50 transition-colors">
@@ -1476,7 +1476,7 @@ export default function HomePage() {
                 <span className="text-white/60 text-3xl font-bold">No te corran. No pagues de más.</span>
               </h2>
               <p className="text-white/50 leading-relaxed mb-8">
-                Las multas por pedimentos fuera de plazo, errores en Manifestación de Valor o datos incorrectos pueden superar los <strong className="text-white">$300,000 MXN por evento</strong>. Mystic monitorea tus obligaciones aduanales 24/7 y te avisa antes de que venzan — por Telegram, voz y push notification.
+                Las multas por pedimentos fuera de plazo, errores en Manifestación de Valor o datos incorrectos pueden superar los <strong className="text-white">$300,000 MXN por evento</strong>. Hermes monitorea tus obligaciones aduanales 24/7 y te avisa antes de que venzan — por Telegram, voz y push notification.
               </p>
               <div className="space-y-4 mb-10">
                 {[
@@ -1537,7 +1537,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <p className="text-sm font-bold uppercase tracking-widest text-[#8B7520] mb-3">Sistema de Score</p>
             <h2 className="text-4xl font-black text-[#1a1a1a] mb-4">
-              Cuanto más usas Mystic,<br />
+              Cuanto más usas Hermes,<br />
               <span className="text-[#8B7520]">más te recompensamos.</span>
             </h2>
             <p className="text-[#666] max-w-xl mx-auto">
@@ -1579,17 +1579,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── TOKEN $MYS + NFTs ────────────────────────────────────────────── */}
+      {/* ── TOKEN $HRM + NFTs ────────────────────────────────────────────── */}
       <section className="py-24 bg-[#0d0d12]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-sm font-bold uppercase tracking-widest text-[#D4AF37]/70 mb-3">Ecosistema $MYS</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-[#D4AF37]/70 mb-3">Ecosistema $HRM</p>
             <h2 className="text-4xl font-black text-white mb-4">
               No solo pagas. <span className="text-[#D4AF37]">Ganas.</span><br />
               <span className="text-white/50 text-2xl font-bold">Token de utilidad + NFTs de acceso</span>
             </h2>
             <p className="text-white/40 max-w-xl mx-auto">
-              Cada factura emitida, curso completado y referido activo te genera tokens $MYS. Úsalos para acceder a contenido exclusivo, merch, mentorías y NFTs con beneficios reales.
+              Cada factura emitida, curso completado y referido activo te genera tokens $HRM. Úsalos para acceder a contenido exclusivo, merch, mentorías y NFTs con beneficios reales.
             </p>
           </div>
 
@@ -1597,16 +1597,16 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             <div className="rounded-3xl border border-[#D4AF37]/20 bg-[#D4AF37]/3 p-8">
               <p className="text-[#D4AF37] font-black text-lg mb-5 flex items-center gap-2">
-                <Zap className="w-5 h-5" /> Cómo ganar $MYS
+                <Zap className="w-5 h-5" /> Cómo ganar $HRM
               </p>
               <div className="space-y-3">
                 {[
-                  { a: 'Pagar suscripción mensual', v: '+100 $MYS' },
-                  { a: 'Emitir factura CFDI 4.0', v: '+2 $MYS c/u' },
-                  { a: 'Completar módulo academia', v: '+25 $MYS' },
-                  { a: 'Referir un cliente activo', v: '+200 $MYS' },
-                  { a: 'Pagar en BTC/USDC', v: '+50 $MYS bonus' },
-                  { a: 'Reseña verificada', v: '+30 $MYS' },
+                  { a: 'Pagar suscripción mensual', v: '+100 $HRM' },
+                  { a: 'Emitir factura CFDI 4.0', v: '+2 $HRM c/u' },
+                  { a: 'Completar módulo academia', v: '+25 $HRM' },
+                  { a: 'Referir un cliente activo', v: '+200 $HRM' },
+                  { a: 'Pagar en BTC/USDC', v: '+50 $HRM bonus' },
+                  { a: 'Reseña verificada', v: '+30 $HRM' },
                 ].map(({ a, v }) => (
                   <div key={a} className="flex items-center justify-between py-2.5 border-b border-white/5">
                     <span className="text-white/60 text-sm">{a}</span>
@@ -1617,16 +1617,16 @@ export default function HomePage() {
             </div>
             <div className="rounded-3xl border border-violet-500/20 bg-violet-500/3 p-8">
               <p className="text-violet-400 font-black text-lg mb-5 flex items-center gap-2">
-                <Hexagon className="w-5 h-5" /> Qué puedes hacer con $MYS
+                <Hexagon className="w-5 h-5" /> Qué puedes hacer con $HRM
               </p>
               <div className="space-y-3">
                 {[
-                  { a: 'NFT Acceso (badge perfil)', v: '50 $MYS' },
-                  { a: 'Hack fiscal exclusivo', v: '80 $MYS' },
-                  { a: 'Módulo academia premium', v: '150 $MYS' },
-                  { a: 'Kit merch Mystic', v: '300 $MYS' },
-                  { a: 'NFT Estratega + beneficios', v: '250 $MYS' },
-                  { a: 'Mentoría 1v1 mensual (4 sesiones)', v: '1,000 $MYS' },
+                  { a: 'NFT Acceso (badge perfil)', v: '50 $HRM' },
+                  { a: 'Hack fiscal exclusivo', v: '80 $HRM' },
+                  { a: 'Módulo academia premium', v: '150 $HRM' },
+                  { a: 'Kit merch Hermes', v: '300 $HRM' },
+                  { a: 'NFT Estratega + beneficios', v: '250 $HRM' },
+                  { a: 'Mentoría 1v1 mensual (4 sesiones)', v: '1,000 $HRM' },
                 ].map(({ a, v }) => (
                   <div key={a} className="flex items-center justify-between py-2.5 border-b border-white/5">
                     <span className="text-white/60 text-sm">{a}</span>
@@ -1660,7 +1660,7 @@ export default function HomePage() {
               </TiltCard>
             ))}
           </div>
-          <p className="text-center mt-6 text-xs text-white/25">$MYS token en red Polygon · Próximo lanzamiento Q2 2026 · Whitelist abierta</p>
+          <p className="text-center mt-6 text-xs text-white/25">$HRM token en red Polygon · Próximo lanzamiento Q2 2026 · Whitelist abierta</p>
         </div>
       </section>
 
@@ -1719,7 +1719,7 @@ export default function HomePage() {
       <section className="relative py-32 overflow-hidden bg-[#020208]">
         <div className="absolute inset-0 bg-gradient-to-t from-[#D4AF37]/6 to-transparent" />
         <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <MysticEyeLogo size={64} />
+          <HermesEyeLogo size={64} />
           <h2 className="mt-8 text-4xl sm:text-6xl font-black text-white mb-6 leading-[1.05]">
             El que no se digitaliza,<br />
             <span className="bg-gradient-to-r from-[#D4AF37] via-[#f0c842] to-[#D4AF37] bg-clip-text text-transparent">
@@ -1757,7 +1757,7 @@ export default function HomePage() {
           <div className="grid sm:grid-cols-4 gap-8 mb-10">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <MysticEyeLogo size={32} />
+                <HermesEyeLogo size={32} />
                 <div>
                   <p className="font-black text-[#1a1a1a] text-sm">HERMES</p>
                   <p className="text-[10px] text-[#8B7520] uppercase tracking-widest">Consulting</p>
@@ -1778,7 +1778,7 @@ export default function HomePage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-[#888] mb-4">Empresa</p>
               <ul className="space-y-2 text-sm text-[#666]">
-                {['Sobre Mystic Consulting', 'Red de Aliados', 'Merch', 'A.C. Impacto Social', 'Blog'].map(l => (
+                {['Sobre Hermes Consulting', 'Red de Aliados', 'Merch', 'A.C. Impacto Social', 'Blog'].map(l => (
                   <li key={l}><a href="#" className="hover:text-[#8B7520] transition-colors">{l}</a></li>
                 ))}
               </ul>
@@ -1802,7 +1802,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-[#D4AF37]/15 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#aaa]">
-            <p>© 2026 Sonora Digital Corp · Mystic Consulting · Hermosillo, Sonora, México</p>
+            <p>© 2026 Sonora Digital Corp · Hermes Consulting · Hermosillo, Sonora, México</p>
             <p>LFPDPPP · Aviso de privacidad · Términos · Datos en México</p>
           </div>
         </div>

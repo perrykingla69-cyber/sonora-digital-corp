@@ -1,5 +1,5 @@
 """
-Mystic Brain — Queen-Worker Swarm
+Hermes Brain — Queen-Worker Swarm
 Queen coordina 3 agentes especializados en paralelo para preguntas complejas.
 
 Arquitectura:

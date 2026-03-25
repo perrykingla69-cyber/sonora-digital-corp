@@ -1,5 +1,5 @@
 """
-LangChain-style Tools para MYSTIC
+LangChain-style Tools para HERMES
 Herramientas ejecutables por el Brain/Orchestrator con schema formal
 """
 from __future__ import annotations

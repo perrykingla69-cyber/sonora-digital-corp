@@ -38,7 +38,7 @@ export default function TelegramPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Telegram Bot</h1>
-          <p className="text-sm text-gray-500">Mystic Bot · Acceso a todas las funciones desde Telegram</p>
+          <p className="text-sm text-gray-500">Hermes Bot · Acceso a todas las funciones desde Telegram</p>
         </div>
       </div>
 
