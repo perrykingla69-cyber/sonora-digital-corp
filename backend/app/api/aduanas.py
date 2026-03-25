@@ -1,5 +1,5 @@
 """
-aduanas.py — Servicios Aduaneros para MYSTIC
+aduanas.py — Servicios Aduaneros para HERMES
 
 Endpoints disponibles:
 GET  /api/aduanas/clasificar?descripcion=...  — Sugiere fracción arancelaria SAT por palabras clave
@@ -407,7 +407,7 @@ def _buscar_fraccion(descripcion: str) -> dict:
             "iva_pct": datos["iva_pct"],
             "confianza": confianza,
             "palabras_encontradas": mejor_coincidencias,
-            "nota": "Clasificación sugerida por MYSTIC — confirmar con agente aduanal certificado (AA).",
+            "nota": "Clasificación sugerida por HERMES — confirmar con agente aduanal certificado (AA).",
         }
 
     return FRACCION_GENERICA
@@ -480,7 +480,7 @@ def calcular_pedimento(datos: PedimentoRequest):
         fuente_igi = "manual"
     elif datos.fraccion_arancelaria in FRACCIONES_ARANCELARIAS:
         igi_pct = FRACCIONES_ARANCELARIAS[datos.fraccion_arancelaria]["igi_pct"]
-        fuente_igi = "catalogo_mystic"
+        fuente_igi = "catalogo_hermes"
     else:
         igi_pct = 5.0
         fuente_igi = "default_5pct"

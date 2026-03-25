@@ -9,9 +9,9 @@ scrape_configs:
       - targets: ['sonora-api:8000']
     metrics_path: '/metrics'
 
-  - job_name: 'mystic-brain'
+  - job_name: 'hermes-brain'
     static_configs:
-      - targets: ['mystic-brain:8100']
+      - targets: ['hermes-brain:8100']
     metrics_path: '/metrics'
 
   - job_name: 'postgres'

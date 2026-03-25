@@ -19,7 +19,7 @@ services:
     build:
       context: ../scripts/ai-content-factory
       dockerfile: Dockerfile
-    container_name: mystic_content_factory
+    container_name: hermes_content_factory
     environment:
       - OLLAMA_URL=http://ollama:11434
       - API_BASE_URL=http://api:8000
@@ -28,11 +28,11 @@ services:
       - api
       - ollama
     networks:
-      - mystic_net
+      - hermes_net
     restart: unless-stopped
     profiles:
       - content
 
 networks:
-  mystic_net:
+  hermes_net:
     driver: bridge

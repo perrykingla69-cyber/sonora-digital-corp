@@ -1,5 +1,5 @@
 """
-MYSTIC - API Contable
+HERMES - API Contable
 Fourgea Mexico SA de CV / Triple R Oil Mexico SA de CV
 Multi-tenant | 147 calculos fiscales | SAT compliant
 """
@@ -43,7 +43,7 @@ from security import (create_token, get_current_user, hash_password,
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Mystic - API Contable",
+    title="Hermes - API Contable",
     description="Sistema contable multi-tenant para importadores/exportadores. Fourgea & Triple R.",
     version="2.0.0",
     docs_url="/docs",
@@ -215,9 +215,9 @@ async def forgot_password(body: dict, db: Session = Depends(get_db)):
     if wa_num:
         try:
             import urllib.request as _ur, json as _j
-            payload = _j.dumps({"to": wa_num, "message": f"🔐 Mystic — Contraseña temporal: *{temp_pass}*\nCámbiala después de ingresar."}).encode()
+            payload = _j.dumps({"to": wa_num, "message": f"🔐 Hermes — Contraseña temporal: *{temp_pass}*\nCámbiala después de ingresar."}).encode()
             req = _ur.Request("http://localhost:3001/send", data=payload,
-                              headers={"Content-Type": "application/json", "x-api-key": "MysticWA2026!"})
+                              headers={"Content-Type": "application/json", "x-api-key": "HermesWA2026!"})
             _ur.urlopen(req, timeout=5)
             wa_sent = True
         except Exception:
@@ -2106,7 +2106,7 @@ _CONTEXT_COLLECTION = {
 }
 
 _BRAIN_SYSTEM = (
-    "Eres Mystic, el asistente fiscal y contable de Sonora Digital Corp. "
+    "Eres Hermes, el asistente fiscal y contable de Sonora Digital Corp. "
     "Respondes preguntas sobre contabilidad, fiscalidad mexicana e importaciones. "
     "REGLA CRÍTICA: usa SOLO los datos de la BASE DE CONOCIMIENTO proporcionada. "
     "Si la respuesta está en el contexto, cítala con precisión (cifras, artículos, fechas). "
@@ -2228,7 +2228,7 @@ _RAG_LIMIT = 2           # máximo 2 chunks por consulta
 
 # Sistema compacto para minimizar tokens de entrada
 _BRAIN_SYSTEM_SHORT = (
-    "Eres Mystic, asistente fiscal mexicano. "
+    "Eres Hermes, asistente fiscal mexicano. "
     "Usa SOLO los datos del contexto dado. "
     "Si no está en el contexto, di: 'No tengo información verificada.' "
     "Sé conciso. No inventes cifras ni artículos."
@@ -2427,7 +2427,7 @@ def _session_history_text(db: Session, session_id: str | None) -> str:
     recent = sess.messages[-5:]
     lines = []
     for m in recent:
-        prefix = "Usuario" if m.get("role") == "user" else "Mystic"
+        prefix = "Usuario" if m.get("role") == "user" else "Hermes"
         lines.append(f"{prefix}: {m['content'][:200]}")
     return "\n".join(lines)
 
@@ -2914,12 +2914,12 @@ class _WAWebhook(BaseModel):
         return super().model_validate(obj, *args, **kwargs)
 
 
-_WA_API_KEY = os.getenv("WA_API_KEY", "MysticWA2026!")
+_WA_API_KEY = os.getenv("WA_API_KEY", "HermesWA2026!")
 _WA_URL = os.getenv("WA_URL", "http://whatsapp:3001")
 
 
 async def _wa_send(to: str, message: str) -> bool:
-    """Envía mensaje WhatsApp vía mystic-wa."""
+    """Envía mensaje WhatsApp vía hermes-wa."""
     import httpx
     try:
         async with httpx.AsyncClient(timeout=15) as http:
@@ -2933,7 +2933,7 @@ async def _wa_send(to: str, message: str) -> bool:
         return False
 
 
-# Números autorizados a usar Mystic por WhatsApp (whitelist)
+# Números autorizados a usar Hermes por WhatsApp (whitelist)
 # Vacío = todos los contactos responden (modo demo)
 # Agregar números sin +52, ej: "6622681111", "6623538272"
 _WA_WHITELIST: set[str] = set(
@@ -2945,7 +2945,7 @@ _WA_IGNORE_GROUPS = True
 
 # Respuesta cuando el brain devuelve texto vacío (DeepSeek sin respuesta visible)
 _WA_FALLBACK = (
-    "Hola, soy Mystic 🤖 Tu asistente fiscal. "
+    "Hola, soy Hermes 🤖 Tu asistente fiscal. "
     "Recibí tu pregunta pero necesito más contexto o no encontré información verificada al respecto. "
     "¿Puedes ser más específico?"
 )
@@ -2954,7 +2954,7 @@ _WA_FALLBACK = (
 @app.post("/api/wa/webhook", tags=["WhatsApp"])
 async def wa_webhook(body: dict, db: Session = Depends(get_db)):
     """
-    Recibe mensajes de WhatsApp desde mystic-wa y responde con el Brain.
+    Recibe mensajes de WhatsApp desde hermes-wa y responde con el Brain.
     Solo responde a números en WA_WHITELIST. Ignora grupos.
     """
     from_number = body.get("from", "")
@@ -3327,7 +3327,7 @@ async def mp_create_preference(
     import httpx
     payload = {
         "items": [{
-            "title": f"Mystic AI — Plan {precio['label']}",
+            "title": f"Hermes AI — Plan {precio['label']}",
             "quantity": 1,
             "unit_price": precio["mxn"],
             "currency_id": "MXN",
@@ -3693,7 +3693,7 @@ async def admin_seed_dof(
             capture_output=True,
             text=True,
             timeout=300,
-            env={**os.environ, "QDRANT_URL": "http://mystic_qdrant:6333", "OLLAMA_URL": "http://mystic-ollama:11434"}
+            env={**os.environ, "QDRANT_URL": "http://hermes_qdrant:6333", "OLLAMA_URL": "http://hermes-ollama:11434"}
         )
         lines = (result.stdout + result.stderr).splitlines()
         indexed = sum(1 for l in lines if "OK" in l or "indexado" in l.lower())

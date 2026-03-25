@@ -3,10 +3,10 @@ version: '3.9'
 services:
 
   # ========== INFRAESTRUCTURA COMPARTIDA ==========
-  
+
   postgres:
     image: postgres:16-alpine
-    container_name: mystic_postgres_master
+    container_name: hermes_postgres_master
     environment:
       POSTGRES_USER: mystic
       POSTGRES_PASSWORD: ${DB_PASSWORD:-mystic_secure_2026}
@@ -16,7 +16,7 @@ services:
       - ./database/init-schemas.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ./database/multi-tenant.sql:/docker-entrypoint-initdb.d/02-multi-tenant.sql
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mystic"]
@@ -26,11 +26,11 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: mystic_redis_master
+    container_name: hermes_redis_master
     volumes:
       - redis_data:/data
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -40,11 +40,11 @@ services:
 
   ollama:
     image: ollama/ollama:latest
-    container_name: mystic_ollama
+    container_name: hermes_ollama
     volumes:
       - ollama_data:/root/.ollama
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
     environment:
       OLLAMA_HOST: 0.0.0.0:11434
@@ -67,18 +67,18 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
     labels:
       prometheus-job: sonora-api
 
-  # ========== MYSTIC BRAIN (IA + RAG) ==========
+  # ========== HERMES BRAIN (IA + RAG) ==========
 
-  mystic-brain:
+  hermes-brain:
     build:
       context: ./mystic-core
       dockerfile: Dockerfile
-    container_name: mystic_brain
+    container_name: hermes_brain
     environment:
       DATABASE_URL: postgresql://mystic:${DB_PASSWORD:-mystic_secure_2026}@postgres:5432/mystic_unified
       OLLAMA_URL: http://ollama:11434
@@ -92,18 +92,18 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
     labels:
-      prometheus-job: mystic-brain
+      prometheus-job: hermes-brain
 
-  # ========== MYSTIC PLATFORM (ORQUESTACIÓN + n8n) ==========
+  # ========== HERMES PLATFORM (ORQUESTACIÓN + n8n) ==========
 
-  mystic-platform:
+  hermes-platform:
     build:
       context: ./mystic-platform
       dockerfile: Dockerfile
-    container_name: mystic_platform
+    container_name: hermes_platform
     environment:
       DATABASE_URL: postgresql://mystic:${DB_PASSWORD:-mystic_secure_2026}@postgres:5432/mystic_unified
       REDIS_URL: redis://redis:6379
@@ -113,16 +113,16 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
     labels:
-      prometheus-job: mystic-platform
+      prometheus-job: hermes-platform
 
   # ========== n8n (AUTOMATIZACIÓN) ==========
 
   n8n:
     image: n8nio/n8n:latest
-    container_name: mystic_n8n
+    container_name: hermes_n8n
     environment:
       DB_TYPE: postgres
       DB_POSTGRESDB_DATABASE: mystic_unified
@@ -139,7 +139,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - mystic_network
+      - hermes_network
     volumes:
       - n8n_data:/home/node/.n8n
     restart: unless-stopped
@@ -148,7 +148,7 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: mystic_nginx_master
+    container_name: hermes_nginx_master
     ports:
       - "80:80"
       - "443:443"
@@ -158,18 +158,18 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
     depends_on:
       - sonora-api
-      - mystic-brain
-      - mystic-platform
+      - hermes-brain
+      - hermes-platform
       - n8n
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
 
   # ========== MONITOREO: PROMETHEUS ==========
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: mystic_prometheus
+    container_name: hermes_prometheus
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -178,14 +178,14 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=30d'
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
 
   # ========== MONITOREO: GRAFANA ==========
 
   grafana:
     image: grafana/grafana:latest
-    container_name: mystic_grafana
+    container_name: hermes_grafana
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: false
@@ -193,27 +193,27 @@ services:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
 
   # ========== LOGGING: LOKI ==========
 
   loki:
     image: grafana/loki:latest
-    container_name: mystic_loki
+    container_name: hermes_loki
     volumes:
       - ./monitoring/loki-config.yml:/etc/loki/local-config.yml
       - loki_data:/loki
     command: -config.file=/etc/loki/local-config.yml
     networks:
-      - mystic_network
+      - hermes_network
     restart: unless-stopped
 
   # ========== BACKUP AUTOMÁTICO ==========
 
   backup:
     image: postgres:16-alpine
-    container_name: mystic_backup
+    container_name: hermes_backup
     environment:
       PGPASSWORD: ${DB_PASSWORD:-mystic_secure_2026}
     volumes:
@@ -222,7 +222,7 @@ services:
     depends_on:
       - postgres
     networks:
-      - mystic_network
+      - hermes_network
     entrypoint: /bin/sh -c "while true; do /backup.sh; sleep 86400; done"
     restart: unless-stopped
 
@@ -236,7 +236,7 @@ volumes:
   n8n_data:
 
 networks:
-  mystic_network:
+  hermes_network:
     driver: bridge
     ipam:
       config:

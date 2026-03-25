@@ -1,5 +1,5 @@
 # docker-compose.openclaw.yml — Agente OpenClaw persistente en VPS
-# Integra OpenClaw como agente IA autónomo conectado al ecosistema MYSTIC
+# Integra OpenClaw como agente IA autónomo conectado al ecosistema HERMES
 #
 # Uso:
 #   docker compose \
@@ -22,7 +22,7 @@ services:
   openclaw-agent:
     # Imagen base Node 20 Alpine; OpenClaw se instala vía npm al inicio
     image: node:20-alpine
-    container_name: mystic_openclaw
+    container_name: hermes_openclaw
 
     # El entrypoint ejecuta el script de arranque que instala dependencias,
     # levanta engram y pone a escuchar al agente.
@@ -61,7 +61,7 @@ services:
       # Ya incluido en el volumen del workspace anterior (/workspace/infra/openclaw/)
 
     networks:
-      - mystic_net
+      - hermes_net
 
     restart: unless-stopped
 
@@ -74,13 +74,13 @@ services:
       start_period: 60s
 
     labels:
-      # Identificación del servicio dentro del stack MYSTIC
+      # Identificación del servicio dentro del stack HERMES
       com.sonoradigital.service: "openclaw-agent"
-      com.sonoradigital.stack: "mystic"
+      com.sonoradigital.stack: "hermes"
       com.sonoradigital.role: "ai-agent"
       com.sonoradigital.version: "1.0.0"
       # Descripción legible para herramientas de monitoreo
-      com.sonoradigital.description: "Agente OpenClaw persistente — integración Telegram + MYSTIC AI OS"
+      com.sonoradigital.description: "Agente OpenClaw persistente — integración Telegram + HERMES AI OS"
 
     # Sin puertos expuestos al exterior; toda comunicación es interna
     # o vía Telegram (saliente desde el contenedor).
@@ -89,7 +89,7 @@ services:
     #     - "127.0.0.1:4000:4000"
 
     depends_on:
-      # Espera a que la API MYSTIC esté sana antes de arrancar el agente
+      # Espera a que la API HERMES esté sana antes de arrancar el agente
       api:
         condition: service_healthy
 
@@ -106,5 +106,5 @@ volumes:
 # (declarada como external para reutilizar la red ya creada por vps.yml)
 # ---------------------------------------------------------------------------
 networks:
-  mystic_net:
+  hermes_net:
     external: true
