@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
 
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
-          <span className="text-white font-bold text-2xl tracking-tight">Mystic</span>
+          <span className="text-white font-bold text-2xl tracking-tight">Hermes</span>
         </div>
 
         <div className="bg-gray-800 rounded-2xl p-8 space-y-5 border border-gray-700">

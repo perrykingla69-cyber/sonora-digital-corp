@@ -117,7 +117,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="flex items-center gap-2 px-5 py-5 border-b border-gray-800">
           <Zap className="text-brand-500" size={22} />
-          <span className="text-white font-bold text-lg tracking-tight">Mystic</span>
+          <span className="text-white font-bold text-lg tracking-tight">Hermes</span>
         </div>
 
         {/* Nav principal */}

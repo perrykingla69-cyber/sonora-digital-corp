@@ -105,7 +105,7 @@ export default function ResicoPage() {
       const form = new FormData()
       form.append('archivo', file)
       try {
-        const token = localStorage.getItem('mystic_token')
+        const token = localStorage.getItem('hermes_token')
         const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/facturas/xml`, {
           method: 'POST',
           headers: token ? { Authorization: `Bearer ${token}` } : {},

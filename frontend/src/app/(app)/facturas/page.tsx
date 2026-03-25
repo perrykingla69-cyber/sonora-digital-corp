@@ -45,7 +45,7 @@ export default function FacturasPage() {
     try {
       const text = await file.text()
       const BASE = process.env.NEXT_PUBLIC_API_URL || ''
-      const token = localStorage.getItem('mystic_token')
+      const token = localStorage.getItem('hermes_token')
       const res = await fetch(`${BASE}/facturas/xml`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/xml', Authorization: `Bearer ${token}` },

@@ -43,7 +43,7 @@ export default function LoginPage() {
             <Zap size={20} className="text-sovereign-bg" />
           </div>
           <div>
-            <span className="text-sovereign-text font-bold text-2xl tracking-tight">Mystic</span>
+            <span className="text-sovereign-text font-bold text-2xl tracking-tight">Hermes</span>
             <span className="block text-xs text-sovereign-muted tracking-widest uppercase">Sovereign System</span>
           </div>
         </div>

@@ -1,5 +1,5 @@
 /**
- * analytics.ts — Telemetría de uso MYSTIC
+ * analytics.ts — Telemetría de uso HERMES
  * Recolecta datos de comportamiento con consentimiento (LFPDPPP)
  */
 
@@ -26,7 +26,7 @@ interface AnalyticsEvent {
 
 function hasConsent(): boolean {
   try {
-    const c = localStorage.getItem('mystic_consent_v1')
+    const c = localStorage.getItem('hermes_consent_v1')
     if (!c) return false
     return JSON.parse(c)?.analytics === true
   } catch { return false }
@@ -49,7 +49,7 @@ function getSessionMeta() {
 export async function track(event: AnalyticsEvent) {
   if (!hasConsent()) return
   try {
-    const token = localStorage.getItem('mystic_token')
+    const token = localStorage.getItem('hermes_token')
     await fetch(`${API}/api/analytics/event`, {
       method: 'POST',
       headers: {

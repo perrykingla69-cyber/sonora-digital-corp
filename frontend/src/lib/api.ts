@@ -2,7 +2,7 @@ const BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sonoradigitalcorp.com/a
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('mystic_token')
+  return localStorage.getItem('hermes_token')
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -11,7 +11,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   if (token) headers['Authorization'] = `Bearer ${token}`
   const res = await fetch(`${BASE}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined })
   if (res.status === 401) {
-    if (typeof window !== 'undefined') { localStorage.removeItem('mystic_token'); window.location.href = '/login' }
+    if (typeof window !== 'undefined') { localStorage.removeItem('hermes_token'); window.location.href = '/login' }
     throw new Error('No autorizado')
   }
   if (!res.ok) {

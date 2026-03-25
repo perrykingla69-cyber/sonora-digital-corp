@@ -93,7 +93,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Zap className="text-brand-500" size={28} />
-          <span className="text-white font-bold text-2xl tracking-tight">Mystic</span>
+          <span className="text-white font-bold text-2xl tracking-tight">Hermes</span>
         </div>
         <div className="bg-gray-800 rounded-2xl p-8">
           <Suspense fallback={<p className="text-gray-400 text-sm text-center">Cargando...</p>}>
