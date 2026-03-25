@@ -10,7 +10,6 @@ import {
 import { logout, getUser } from '@/lib/auth'
 import clsx from 'clsx'
 
-// Navegación por rol
 const NAV_CONTADOR = [
   { href: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/facturas',   icon: FileText,         label: 'Facturas' },
@@ -52,7 +51,6 @@ const NAV_CANALES = [
   { href: '/academy',    icon: GraduationCap,     label: 'Academy' },
 ]
 
-// Canales solo para ceo/admin
 const NAV_SISTEMA = [
   { href: '/admin',      icon: ShieldCheck,       label: 'Admin' },
   { href: '/billing',    icon: CreditCard,        label: 'Suscripción' },

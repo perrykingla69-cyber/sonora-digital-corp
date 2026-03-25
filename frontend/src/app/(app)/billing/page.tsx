@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import { Card } from '@/components/ui/Card'
+import AuthGuard from '@/components/layout/AuthGuard'
 import { Check, Zap, Star, Crown, Sparkles, ExternalLink, AlertCircle } from 'lucide-react'
 
 interface Plan {
@@ -103,7 +104,8 @@ export default function BillingPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <AuthGuard allowedRoles={['admin', 'ceo']}>
+      <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Suscripción — Mystic AI OS</h1>
         <p className="text-sm text-gray-500 mt-0.5">Elige el plan que mejor se adapte a tu empresa</p>
@@ -196,6 +198,7 @@ export default function BillingPage() {
           </li>
         </ul>
       </Card>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }
