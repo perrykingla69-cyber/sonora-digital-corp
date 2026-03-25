@@ -57,6 +57,7 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
       OLLAMA_TIMEOUT: ${OLLAMA_TIMEOUT:-90}
       BRAIN_CACHE_TTL: ${BRAIN_CACHE_TTL:-3600}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ENVIRONMENT: production
     depends_on:
       postgres:
@@ -88,21 +89,18 @@ services:
       - mystic_net
     restart: unless-stopped
 
-  bot:
-    build:
-      context: ../bot
-      dockerfile: Dockerfile
-    container_name: mystic_bot
-    environment:
-      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
-      API_URL: http://api:8000
-      ALLOWED_USERS: ${TELEGRAM_ALLOWED_USERS:-}
-    depends_on:
-      api:
-        condition: service_healthy
-    networks:
-      - mystic_net
-    restart: unless-stopped
+  # bot (Python legacy) — DESACTIVADO: conflicto con telegram-bot Node.js v2
+  # bot:
+  #   build:
+  #     context: ../bot
+  #     dockerfile: Dockerfile
+  #   container_name: mystic_bot
+  #   environment:
+  #     TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+  #     API_URL: http://api:8000
+  #   networks:
+  #     - mystic_net
+  #   restart: "no"
 
   ollama:
     image: ollama/ollama:latest
@@ -206,6 +204,7 @@ services:
       PORT: 3003
       API_BASE: http://api:8000
       DEFAULT_BOT_TOKEN: ${TELEGRAM_TOKEN}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     depends_on:
       api:
         condition: service_healthy

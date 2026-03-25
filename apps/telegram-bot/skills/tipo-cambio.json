@@ -1,0 +1,9 @@
+{
+  "name": "tipo-cambio",
+  "version": "1.0.0",
+  "description": "Tipo de cambio USD/MXN en tiempo real (DOF).",
+  "triggers": ["tipo de cambio", "dolar", "usd", "mxn", "tc", "peso"],
+  "endpoint": "http://api:8000/tipo-cambio/hoy",
+  "method": "GET",
+  "response_template": "💵 Tipo de cambio hoy: ${{tc}} MXN/USD (DOF {{fecha}})"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "nomina-calc",
+  "version": "1.0.0",
+  "description": "Calcular nomina: IMSS, INFONAVIT, ISR tabla SAT 2026, subsidio empleo.",
+  "triggers": ["nomina", "empleado", "imss", "infonavit", "isr nomina", "salario neto"],
+  "endpoint": "http://api:8000/nomina/calculos",
+  "method": "GET",
+  "response_template": "👥 Nomina: {{total_empleados}} empleados activos. UMA=$108.57 | SMG=$278.80"
+}

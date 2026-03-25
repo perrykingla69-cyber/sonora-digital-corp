@@ -1,0 +1,13 @@
+{
+  "name": "mve-validator",
+  "version": "1.0.0",
+  "description": "Validar Manifestacion de Valor Export (MVE) — RGCE 2025. Obligatorio desde 1 abril 2026.",
+  "triggers": ["mve", "aduana", "exportacion", "pedimento", "valor export", "rgce"],
+  "endpoint": "http://api:8000/mve",
+  "method": "GET",
+  "response_template": "📦 MVEs recientes: {{count}} total. Usa /mve para ver detalle.",
+  "actions": [
+    { "label": "📋 Ver MVEs", "callback": "action_mve_list" },
+    { "label": "✅ Validar MVE", "callback": "action_mve_validate" }
+  ]
+}
