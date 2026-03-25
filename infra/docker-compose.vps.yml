@@ -77,11 +77,11 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     container_name: mystic_frontend
     ports:
       - "127.0.0.1:3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://sonoradigitalcorp.com/api}
     depends_on:
       api:
         condition: service_healthy
