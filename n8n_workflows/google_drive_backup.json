@@ -1,0 +1,175 @@
+{
+  "name": "MYSTIC Google Drive Backup — Diario",
+  "_readme": {
+    "description": "Backup diario a Google Drive: dump PostgreSQL + archivos de configuración clave. Envía confirmación por Telegram al CEO.",
+    "schedule": "Todos los días a las 02:00 AM hora Hermosillo",
+    "google_drive_setup": [
+      "1. En N8N: Credentials → New → Google Drive OAuth2",
+      "2. Authorizar con sonoradigitalcorp@gmail.com",
+      "3. Crear carpeta 'MYSTIC-Backups' en Drive y copiar el folder ID desde la URL",
+      "4. Pegar el folder ID en GOOGLE_DRIVE_BACKUP_FOLDER_ID env var"
+    ],
+    "env_required": [
+      "TELEGRAM_CEO_CHAT_ID",
+      "TELEGRAM_BOT_TOKEN",
+      "GOOGLE_DRIVE_BACKUP_FOLDER_ID — ID de la carpeta en Drive",
+      "DB_PASSWORD — password de PostgreSQL (default: mystic_secure_2026)"
+    ],
+    "credentials": [
+      "googleDriveOAuth2Api — Google Drive OAuth2 con sonoradigitalcorp@gmail.com"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Schedule 2AM diario",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [100, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{
+            "field": "cronExpression",
+            "expression": "0 2 * * *"
+          }]
+        },
+        "timezone": "America/Hermosillo"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Notificar inicio backup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [320, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CEO_CHAT_ID }}" },
+            { "name": "text", "value": "=⏳ MYSTIC Backup iniciado — {{ new Date().toLocaleString('es-MX',{timeZone:'America/Hermosillo'}) }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3",
+      "name": "DB Dump via API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [560, 200],
+      "parameters": {
+        "method": "GET",
+        "url": "http://api:8000/admin/backup/db",
+        "responseFormat": "file",
+        "options": { "response": { "response": { "responseFormat": "file" } } }
+      }
+    },
+    {
+      "id": "4",
+      "name": "Config Files via API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [560, 400],
+      "parameters": {
+        "method": "GET",
+        "url": "http://api:8000/admin/backup/config",
+        "responseFormat": "file"
+      }
+    },
+    {
+      "id": "5",
+      "name": "Preparar metadata backup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 300],
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst dateStr = now.toISOString().split('T')[0];\nconst timeStr = now.toLocaleString('es-MX', {timeZone:'America/Hermosillo'});\n\nreturn [{ json: {\n  dateStr,\n  timeStr,\n  dbFileName: `mystic-db-${dateStr}.sql`,\n  configFileName: `mystic-config-${dateStr}.json`,\n  folderId: $env.GOOGLE_DRIVE_BACKUP_FOLDER_ID || 'root',\n  timestamp: now.toISOString()\n}}];"
+      }
+    },
+    {
+      "id": "6",
+      "name": "Upload DB a Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1040, 200],
+      "credentials": { "googleDriveOAuth2Api": { "id": "google-drive-cred", "name": "Google Drive sonoradigitalcorp" } },
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $('Preparar metadata backup').first().json.dbFileName }}",
+        "driveId": { "mode": "list", "value": "My Drive" },
+        "folderId": { "mode": "id", "value": "={{ $('Preparar metadata backup').first().json.folderId }}" },
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "options": { "simplifyOutput": true }
+      }
+    },
+    {
+      "id": "7",
+      "name": "Upload Config a Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1040, 400],
+      "credentials": { "googleDriveOAuth2Api": { "id": "google-drive-cred", "name": "Google Drive sonoradigitalcorp" } },
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $('Preparar metadata backup').first().json.configFileName }}",
+        "driveId": { "mode": "list", "value": "My Drive" },
+        "folderId": { "mode": "id", "value": "={{ $('Preparar metadata backup').first().json.folderId }}" },
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "options": { "simplifyOutput": true }
+      }
+    },
+    {
+      "id": "8",
+      "name": "Confirmar backup Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1280, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CEO_CHAT_ID }}" },
+            { "name": "parse_mode", "value": "Markdown" },
+            {
+              "name": "text",
+              "value": "=✅ *MYSTIC Backup completado*\n\n📦 `{{ $('Preparar metadata backup').first().json.dbFileName }}`\n⚙️ `{{ $('Preparar metadata backup').first().json.configFileName }}`\n\n📁 Google Drive: sonoradigitalcorp@gmail.com\n⏱️ {{ $('Preparar metadata backup').first().json.timeStr }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "9",
+      "name": "Enviar copia a perrykingla.69",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1520, 300],
+      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail sonoradigitalcorp" } },
+      "parameters": {
+        "sendTo": "perrykingla.69@gmail.com",
+        "subject": "=MYSTIC Backup — {{ $('Preparar metadata backup').first().json.dateStr }}",
+        "message": "=<h2>MYSTIC AI OS — Backup Diario</h2><p>Fecha: {{ $('Preparar metadata backup').first().json.timeStr }}</p><p>Archivos subidos a Google Drive (sonoradigitalcorp@gmail.com):</p><ul><li>{{ $('Preparar metadata backup').first().json.dbFileName }}</li><li>{{ $('Preparar metadata backup').first().json.configFileName }}</li></ul><p>Carpeta: MYSTIC-Backups</p>",
+        "options": { "appendAttribution": false }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule 2AM diario": { "main": [[{ "node": "Notificar inicio backup", "type": "main", "index": 0 }]] },
+    "Notificar inicio backup": { "main": [[{ "node": "DB Dump via API", "type": "main", "index": 0 }, { "node": "Config Files via API", "type": "main", "index": 0 }]] },
+    "DB Dump via API": { "main": [[{ "node": "Preparar metadata backup", "type": "main", "index": 0 }]] },
+    "Config Files via API": { "main": [[{ "node": "Preparar metadata backup", "type": "main", "index": 0 }]] },
+    "Preparar metadata backup": { "main": [[{ "node": "Upload DB a Google Drive", "type": "main", "index": 0 }, { "node": "Upload Config a Google Drive", "type": "main", "index": 0 }]] },
+    "Upload DB a Google Drive": { "main": [[{ "node": "Confirmar backup Telegram", "type": "main", "index": 0 }]] },
+    "Upload Config a Google Drive": { "main": [[{ "node": "Confirmar backup Telegram", "type": "main", "index": 0 }]] },
+    "Confirmar backup Telegram": { "main": [[{ "node": "Enviar copia a perrykingla.69", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": [{ "name": "backup" }, { "name": "google-drive" }, { "name": "mystic" }]
+}
