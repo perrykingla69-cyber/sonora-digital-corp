@@ -4,26 +4,31 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50:  '#f0f4ff',
-          100: '#e0e9ff',
-          500: '#4f6ef7',
-          600: '#3b5bf5',
-          700: '#2a47e8',
-          900: '#1a2db8',
-        },
-        // SOVEREIGN — Negro/Dorado palette
+        // MYSTIC PEARL — Blanco perla + atardecer + verde bosque + dorado
         sovereign: {
-          bg:       '#0A0A0A',
-          surface:  '#111111',
-          card:     '#161616',
-          border:   '#222222',
-          gold:     '#D4AF37',
-          'gold-dim': '#8B7520',
-          'gold-glow': 'rgba(212,175,55,0.15)',
-          text:     '#E8E8E8',
-          muted:    '#666666',
-          user:     '#1A1600',
+          // Fondos
+          bg:        '#F8F6F1',          // blanco perla cálido
+          surface:   '#FFFFFF',
+          card:      'rgba(255,255,255,0.82)',
+          border:    'rgba(200,168,75,0.18)',
+          // Acentos
+          gold:      '#C8A84B',          // dorado cálido
+          'gold-dim':'#A8893A',
+          'gold-glow':'rgba(200,168,75,0.20)',
+          // Verde bosque
+          green:     '#2D6A4F',
+          'green-light': '#52B788',
+          'green-pale':  '#D8F3DC',
+          // Texto
+          text:      '#1C1C1E',          // casi negro suave
+          muted:     '#6B7280',
+          subtle:    '#9CA3AF',
+          // Atardecer (acentos sutiles)
+          sunset:    'rgba(251,146,60,0.07)',   // naranja atardecer muy sutil
+          'sunset-deep': 'rgba(239,68,68,0.05)', // rojo atardecer
+          dusk:      'rgba(167,139,250,0.06)',   // violeta crepúsculo
+          // Legado (mantener compatibilidad)
+          user:      '#FFF9EC',
         },
       },
       fontFamily: {

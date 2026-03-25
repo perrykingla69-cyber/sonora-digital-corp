@@ -3709,6 +3709,83 @@ async def admin_seed_dof(
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
+# ── Analytics / Telemetría ────────────────────────────────────────────
+class AnalyticsEvent(BaseModel):
+    event: str
+    module: Optional[str] = None
+    detail: Optional[str] = None
+    duration_sec: Optional[int] = None
+    error_msg: Optional[str] = None
+    url: Optional[str] = None
+    screen: Optional[str] = None
+    device: Optional[str] = None
+    browser: Optional[str] = None
+    tz: Optional[str] = None
+    lang: Optional[str] = None
+    ts: Optional[int] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+class ConsentEvent(BaseModel):
+    accepted: bool
+    ts: int
+
+@app.post("/api/analytics/event", tags=["Analytics"])
+async def analytics_event(evt: AnalyticsEvent, request: Request, db: Session = Depends(get_db)):
+    """Registra evento de telemetría de uso (requiere consentimiento del usuario)."""
+    try:
+        ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+        ip_anon = ".".join(ip.split(".")[:3]) + ".0" if "." in ip else ip  # anonimizar último octeto
+        db.execute(text("""
+            INSERT INTO access_logs (tenant_id, usuario_id, ip, accion, timestamp)
+            VALUES (:tid, :uid, :ip, :accion, NOW())
+        """), {
+            "tid": None,
+            "uid": None,
+            "ip": ip_anon,
+            "accion": f"analytics:{evt.event}|module:{evt.module or '-'}|device:{evt.device or '-'}|{evt.detail or ''}",
+        })
+        db.commit()
+    except Exception:
+        pass
+    return {"ok": True}
+
+@app.post("/api/analytics/consent", tags=["Analytics"])
+async def analytics_consent(evt: ConsentEvent, request: Request):
+    """Registra consentimiento del usuario."""
+    return {"ok": True, "accepted": evt.accepted}
+
+@app.get("/api/analytics/dashboard", tags=["Analytics"])
+async def analytics_dashboard(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """Dashboard de analytics para el CEO — qué usan, cuánto, desde dónde."""
+    if current_user.rol not in ("ceo", "admin"):
+        raise HTTPException(status_code=403, detail="Solo CEO o admin")
+    rows = db.execute(text("""
+        SELECT accion, ip, DATE(timestamp) as dia, COUNT(*) as cnt
+        FROM access_logs
+        WHERE timestamp >= NOW() - INTERVAL '30 days'
+          AND accion LIKE 'analytics:%'
+        GROUP BY accion, ip, DATE(timestamp)
+        ORDER BY cnt DESC
+        LIMIT 200
+    """)).fetchall()
+    # Resumen por módulo
+    module_counts: Dict[str, int] = {}
+    device_counts: Dict[str, int] = {}
+    for row in rows:
+        accion = row.accion or ""
+        parts = {k: v for k, v in (p.split(":", 1) for p in accion.split("|") if ":" in p)}
+        mod = parts.get("module", "unknown")
+        dev = parts.get("device", "unknown")
+        module_counts[mod] = module_counts.get(mod, 0) + row.cnt
+        device_counts[dev] = device_counts.get(dev, 0) + row.cnt
+    return {
+        "period_days": 30,
+        "total_events": sum(r.cnt for r in rows),
+        "top_modules": sorted(module_counts.items(), key=lambda x: -x[1])[:10],
+        "devices": device_counts,
+        "raw_sample": [{"accion": r.accion, "dia": str(r.dia), "cnt": r.cnt} for r in rows[:20]],
+    }
+
 # ── Academy router ────────────────────────────────────────────────────
 try:
     from app.academy import router as academy_router
