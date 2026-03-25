@@ -58,7 +58,7 @@ export default function TelegramPage() {
               {loading ? 'Verificando...' : status?.api === 'ok' ? 'Bot Activo' : 'Bot Offline'}
             </p>
             <p className="text-sm text-gray-400">
-              {status?.api === 'ok' ? 'API conectada · DB y Redis OK' : 'Verificar que mystic_bot esté corriendo'}
+              {status?.api === 'ok' ? 'API conectada · DB y Redis OK' : 'Verificar que hermes_bot esté corriendo'}
             </p>
           </div>
           <a

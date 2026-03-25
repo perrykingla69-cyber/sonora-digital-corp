@@ -315,7 +315,7 @@ export default function OnboardingPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 text-sovereign-gold font-display font-bold text-2xl tracking-tight mb-1">
             <Zap size={24} className="text-sovereign-gold" />
-            MYSTIC
+            HERMES
           </div>
           <p className="text-sovereign-muted text-sm">Configuración inicial · {step + 1} de {totalSteps}</p>
         </div>

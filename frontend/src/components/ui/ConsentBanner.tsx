@@ -8,12 +8,12 @@ export default function ConsentBanner() {
   const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
-    const consent = localStorage.getItem('mystic_consent_v1')
+    const consent = localStorage.getItem('hermes_consent_v1')
     if (!consent) setVisible(true)
   }, [])
 
   const accept = () => {
-    localStorage.setItem('mystic_consent_v1', JSON.stringify({
+    localStorage.setItem('hermes_consent_v1', JSON.stringify({
       accepted: true,
       date: new Date().toISOString(),
       analytics: true,
@@ -29,7 +29,7 @@ export default function ConsentBanner() {
   }
 
   const decline = () => {
-    localStorage.setItem('mystic_consent_v1', JSON.stringify({
+    localStorage.setItem('hermes_consent_v1', JSON.stringify({
       accepted: false,
       date: new Date().toISOString(),
       analytics: false,

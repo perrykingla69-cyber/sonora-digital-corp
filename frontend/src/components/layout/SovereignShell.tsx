@@ -115,7 +115,7 @@ export default function SovereignShell({ children }: { children: React.ReactNode
     setMsgs([{
       id: mkId(),
       role: 'ai',
-      text: `Bienvenido, ${nombre}.\n\nSoy MYSTIC — tu sistema soberano de inteligencia contable. Puedes escribirme cualquier pregunta fiscal, o usar comandos como /facturas, /cierre, /nomina para acceder a los módulos.\n\nEl sistema está operando con ${user?.tenant_id || 'tu empresa'}.`,
+      text: `Bienvenido, ${nombre}.\n\nSoy HERMES — tu sistema soberano de inteligencia contable. Puedes escribirme cualquier pregunta fiscal, o usar comandos como /facturas, /cierre, /nomina para acceder a los módulos.\n\nEl sistema está operando con ${user?.tenant_id || 'tu empresa'}.`,
       timestamp: new Date(),
     }])
   }, []) // eslint-disable-line
@@ -248,7 +248,7 @@ export default function SovereignShell({ children }: { children: React.ReactNode
             >
               <Zap size={14} className="text-sovereign-bg" />
             </button>
-            <span className="text-sovereign-gold font-semibold text-sm tracking-widest uppercase">Mystic</span>
+            <span className="text-sovereign-gold font-semibold text-sm tracking-widest uppercase">Hermes</span>
             <span className="hidden md:inline text-sovereign-border">·</span>
             <span className="hidden md:inline text-sovereign-muted text-xs">{user?.tenant_id || 'Sistema Soberano'}</span>
           </div>
@@ -313,7 +313,7 @@ export default function SovereignShell({ children }: { children: React.ReactNode
                   <Sparkles size={14} className="text-sovereign-bg" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-sovereign-text">Mystic Brain IA</p>
+                  <p className="text-sm font-semibold text-sovereign-text">Hermes Brain IA</p>
                   <p className="text-xs text-sovereign-muted">DeepSeek R1 · RAG contable</p>
                 </div>
               </div>

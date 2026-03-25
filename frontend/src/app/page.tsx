@@ -344,7 +344,7 @@ const ACADEMY_MODULES = [
     bg: 'from-cyan-900/10',
     modules: [
       { title: 'Fundamentos de IA para negocios', competencia: 'Identificar oportunidades de automatización', herramienta: 'ChatGPT, Claude, Ollama', objetivo: 'Ahorra 20h/mes en tareas repetitivas' },
-      { title: 'Prompts de alto valor para contadores', competencia: 'Crear prompts que generan documentos fiscales', herramienta: 'Claude API, Mystic Brain', objetivo: 'Generar reportes en 2 minutos' },
+      { title: 'Prompts de alto valor para contadores', competencia: 'Crear prompts que generan documentos fiscales', herramienta: 'Claude API, Hermes Brain', objetivo: 'Generar reportes en 2 minutos' },
       { title: 'Agentes IA personalizados', competencia: 'Construir y desplegar agentes autónomos', herramienta: 'OpenClaw, MCP Servers', objetivo: 'Tu asistente digital 24/7' },
     ],
   },
@@ -585,7 +585,7 @@ export default function HomePage() {
             <MysticEyeLogo size={42} />
             <div>
               <p className="text-[9px] font-bold uppercase tracking-[0.35em] text-[#8B7520]">Sonora Digital Corp</p>
-              <p className="text-sm font-black text-[#1a1a1a] leading-none tracking-tight">MYSTIC CONSULTING</p>
+              <p className="text-sm font-black text-[#1a1a1a] leading-none tracking-tight">HERMES CONSULTING</p>
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-7 text-sm text-[#555] font-medium">
@@ -987,7 +987,7 @@ export default function HomePage() {
                 <div className="w-3 h-3 rounded-full bg-red-500" />
                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
                 <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="ml-2 text-xs text-white/25 font-mono">mystic-content-factory · ciclo automático cada 6h</span>
+                <span className="ml-2 text-xs text-white/25 font-mono">hermes-content-factory · ciclo automático cada 6h</span>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 {[
@@ -1087,7 +1087,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── MYSTIC CONSULTING ────────────────────────────────────────────── */}
+      {/* ── HERMES CONSULTING ────────────────────────────────────────────── */}
       <section id="consulting" className="py-24 bg-[#F5F0E8]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -1759,7 +1759,7 @@ export default function HomePage() {
               <div className="flex items-center gap-3 mb-4">
                 <MysticEyeLogo size={32} />
                 <div>
-                  <p className="font-black text-[#1a1a1a] text-sm">MYSTIC</p>
+                  <p className="font-black text-[#1a1a1a] text-sm">HERMES</p>
                   <p className="text-[10px] text-[#8B7520] uppercase tracking-widest">Consulting</p>
                 </div>
               </div>
