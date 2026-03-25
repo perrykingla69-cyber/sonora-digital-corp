@@ -1,0 +1,34 @@
+{
+  "curso_id": "facturacion-cfdi-40",
+  "curso_nombre": "Facturación CFDI 4.0 sin errores",
+  "capitulo": 1,
+  "titulo": "Anatomía de una factura electrónica",
+  "duracion_video_min": 3,
+  "xp": 100,
+  "objetivos": [
+    "Identificar todos los campos obligatorios de un CFDI 4.0 según el Anexo 20 del SAT",
+    "Entender la diferencia entre CFDI de Ingreso, Egreso, Traslado, Nómina y Pago",
+    "Conocer el rol del Proveedor Autorizado de Certificación (PAC) en el proceso de timbrado",
+    "Comprender qué es el UUID, el sello digital y el certificado del SAT",
+    "Identificar los errores más comunes al emitir facturas y cómo evitarlos"
+  ],
+  "contenido_pdf": "/academy/curso2_cap1_contenido.md",
+  "guion_video": "/academy/curso2_cap1_guion.md",
+  "tarea": {
+    "titulo": "Disecciona una factura real",
+    "instrucciones": "Consigue una factura electrónica (CFDI) que hayas recibido o emitido recientemente (puede ser de cualquier proveedor, de gasolina, de servicios, etc.). Descarga el archivo XML desde el portal del SAT o pídela a tu proveedor. Abre el XML en un editor de texto (Notepad, VS Code, etc.) y localiza los siguientes elementos: 1) UUID del timbre fiscal digital. 2) RFC del emisor y del receptor. 3) Uso del CFDI declarado por el receptor. 4) Forma de pago y método de pago. 5) Clave del producto/servicio (campo ClaveProdServ). 6) Fecha de emisión y fecha de certificación del PAC. Copia cada dato encontrado en una tabla y escribe con tus propias palabras qué significa cada campo. Si no tienes acceso a un XML, usa el verificador de CFDI del SAT (https://verificacfdi.facturaelectronica.sat.gob.mx/) con el folio fiscal de cualquier recibo.",
+    "criterios": [
+      "Presenta los 6 campos solicitados correctamente identificados",
+      "Explica con sus propias palabras qué es el UUID y por qué es único",
+      "Identifica correctamente el tipo de CFDI (Ingreso, Egreso, etc.)",
+      "Explica la diferencia entre Forma de Pago y Método de Pago",
+      "Señala si encontró algún dato incorrecto o inusual en la factura analizada"
+    ]
+  },
+  "recursos_externos": [
+    "SAT - Validador de CFDI: https://verificacfdi.facturaelectronica.sat.gob.mx/",
+    "SAT - Anexo 20 versión 4.0: https://www.sat.gob.mx/consultas/92764/comprobantes-fiscales-digitales-por-internet",
+    "SAT - Lista de PACs autorizados: https://www.sat.gob.mx/tramites/16712/conoce-a-los-proveedores-autorizados-de-certificacion-(pac)",
+    "SAT - Catálogo de usos del CFDI: https://www.sat.gob.mx/cs/Satellite/SAT/07_Declaraciones_y_pagos/SAT_Factura_Electronica"
+  ]
+}

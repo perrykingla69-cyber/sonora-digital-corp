@@ -1,0 +1,136 @@
+{
+  "_readme": {
+    "nombre": "Agenda Diaria 5:35 AM — Luis Daniel",
+    "descripcion": "Se ejecuta a las 5:35 AM hora Hermosillo, 5 minutos después de la alarma cuántica. Genera una agenda estructurada con bloques de tiempo, tarea principal del día, 3 metas específicas y recordatorio de valores. Envía por Telegram con emojis y Markdown.",
+    "version": "1.0.0",
+    "autor": "Marco / Sonora Digital Corp",
+    "instalacion": [
+      "1. En N8N ir a Workflows > Import from JSON",
+      "2. Pegar el contenido de este archivo",
+      "3. Configurar las variables de entorno en Settings > Variables:",
+      "   - TELEGRAM_BOT_TOKEN : Token del bot de Telegram",
+      "   - TELEGRAM_CEO_CHAT_ID : Chat ID de Luis Daniel",
+      "4. Asegurarse que el workflow alarm_530_quantum.json también esté activo",
+      "5. Activar el workflow con el toggle ON"
+    ],
+    "variables_requeridas": {
+      "TELEGRAM_BOT_TOKEN": "Token del bot Telegram — obtenido en @BotFather",
+      "TELEGRAM_CEO_CHAT_ID": "Chat ID numérico de Luis Daniel en Telegram"
+    },
+    "tags": ["agenda", "luis-daniel", "personal"],
+    "timezone": "America/Hermosillo",
+    "cron": "35 5 * * *"
+  },
+  "name": "Agenda Diaria 5:35 AM — Luis Daniel",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "35 5 * * *"
+            }
+          ]
+        },
+        "timezone": "America/Hermosillo"
+      },
+      "id": "node-schedule-agenda",
+      "name": "Schedule Trigger 5:35 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// AGENDA DIARIA 5:35 AM — LUIS DANIEL / MYSTIC AI OS\n// Marco / Sonora Digital Corp\n// ============================================================\n\nconst now = new Date();\n\n// --- Fecha ---\nconst opcionesFecha = {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric',\n  timeZone: 'America/Hermosillo'\n};\nconst fechaTexto = now.toLocaleDateString('es-MX', opcionesFecha);\nconst diaSemana = now.toLocaleDateString('es-MX', { weekday: 'long', timeZone: 'America/Hermosillo' }).toLowerCase();\nconst diaNum = now.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado\n\n// --- Bloques de tiempo fijos ---\nconst bloques = [\n  { hora: '6:00 - 8:00 AM',  emoji: '🏃', nombre: 'Cuerpo y Mente',        actividad: 'Ejercicio físico (45 min) + Meditación (15 min) + Ducha fría + Desayuno nutritivo' },\n  { hora: '8:00 - 10:00 AM', emoji: '💻', nombre: 'Deep Work MYSTIC I',     actividad: 'Desarrollo concentrado — sin interrupciones, modo avión activado. 2 horas de máxima productividad.' },\n  { hora: '10:00 - 12:00 PM',emoji: '📞', nombre: 'Ventas y Clientes',      actividad: 'Llamadas a prospectos, demos de MYSTIC, seguimiento CRM, cierre de tratos.' },\n  { hora: '12:00 - 1:00 PM', emoji: '🥗', nombre: 'Almuerzo + Recarga',     actividad: 'Come lejos de la pantalla. Camina 10 min. Respira. Tu cerebro necesita este reset.' },\n  { hora: '1:00 - 3:00 PM',  emoji: '⚙️', nombre: 'Deep Work MYSTIC II',   actividad: 'Sprint de desarrollo o arquitectura. Implementar lo planificado en la mañana.' },\n  { hora: '3:00 - 5:00 PM',  emoji: '📊', nombre: 'Admin y Finanzas',       actividad: 'Facturas, cuentas por cobrar, revisión de gastos, correos operativos, tareas administrativas.' },\n  { hora: '5:00 - 7:00 PM',  emoji: '📚', nombre: 'Academia y Crecimiento', actividad: 'Curso, lectura técnica, video educativo o práctica de nueva habilidad. Invierte en tu futuro.' },\n  { hora: '7:00 - 9:00 PM',  emoji: '❤️', nombre: 'Familia y Descanso',    actividad: 'Tiempo de calidad con familia. Sin trabajo. Presencia total. Recarga emocional.' }\n];\n\n// --- Tarea principal + 3 metas por día de semana ---\nconst planSemana = {\n  lunes: {\n    emoji: '📋',\n    tarea_principal: 'PLANIFICACIÓN SEMANAL MYSTIC',\n    descripcion: 'Define el sprint de la semana. Revisa backlog, prioriza features, asigna tareas. La claridad del lunes define el éxito del viernes.',\n    metas: [\n      '✅ Actualizar el tablero de tareas con prioridades de la semana',\n      '✅ Revisar métricas de la semana anterior (usuarios, conversiones, uptime)',\n      '✅ Hacer 3 llamadas a prospectos o clientes activos'\n    ],\n    consejo: 'El lunes bien planificado vale 3 días de trabajo reactivo.'\n  },\n  martes: {\n    emoji: '⚙️',\n    tarea_principal: 'SPRINT DE DESARROLLO',\n    descripcion: 'Día de código puro. Features del roadmap, corrección de bugs críticos, mejoras de arquitectura. Minimaliza reuniones.',\n    metas: [\n      '✅ Completar al menos 1 feature o fix crítico en MYSTIC',\n      '✅ Hacer commit y deploy a staging si procede',\n      '✅ Documentar lo construido en el task board'\n    ],\n    consejo: 'El código que no se deploya no existe. Construye, prueba, lanza.'\n  },\n  miércoles: {\n    emoji: '🤝',\n    tarea_principal: 'DÍA DE VENTAS Y DEMOS',\n    descripcion: 'El miércoles es el centro de la semana laboral. Máxima energía para cerrar tratos, hacer demos y expandir la red de MYSTIC.',\n    metas: [\n      '✅ Realizar al menos 1 demo de MYSTIC a un prospecto calificado',\n      '✅ Seguimiento a todos los leads en pipeline (responder mensajes, emails)',\n      '✅ Agregar 2 nuevos prospectos al CRM'\n    ],\n    consejo: 'Cada NO es datos. Cada SÍ es crecimiento. El miércoles no termina sin haber vendido.'\n  },\n  jueves: {\n    emoji: '🔁',\n    tarea_principal: 'OPERACIONES Y RETENCIÓN',\n    descripcion: 'Cuida lo que ya tienes. Clientes activos, soporte, calidad de servicio. Un cliente feliz vale 10 nuevos prospectos.',\n    metas: [\n      '✅ Revisar y resolver todos los tickets de soporte abiertos',\n      '✅ Check-in con al menos 1 cliente activo (llamada o mensaje)',\n      '✅ Revisar uptime y performance de MYSTIC en producción'\n    ],\n    consejo: 'La retención es el nuevo crecimiento. Un cliente que renueva es una victoria.'\n  },\n  viernes: {\n    emoji: '🚀',\n    tarea_principal: 'DEPLOY, REVIEW Y CIERRE',\n    descripcion: 'Día de resultados. Lanza lo construido, revisa las métricas de la semana, documenta aprendizajes y prepara el lunes siguiente.',\n    metas: [\n      '✅ Deploy de todo lo que está listo a producción',\n      '✅ Revisar KPIs de la semana y registrarlos',\n      '✅ Escribir 3 aprendizajes clave de la semana en el diario'\n    ],\n    consejo: 'El viernes bien cerrado es el lunes bien empezado. No arrastres deuda a la semana siguiente.'\n  },\n  sábado: {\n    emoji: '🧠',\n    tarea_principal: 'APRENDIZAJE PROFUNDO Y EXPLORACIÓN',\n    descripcion: 'El sábado es para construir el siguiente nivel de ti mismo. Lee, estudia, experimenta sin presión de resultados inmediatos.',\n    metas: [\n      '✅ Completar al menos 1 hora de curso o lectura técnica relevante',\n      '✅ Explorar 1 tecnología nueva o herramienta que pueda mejorar MYSTIC',\n      '✅ Escribir en el diario: ¿qué aprendiste esta semana que cambió tu visión?'\n    ],\n    consejo: 'El CEO que deja de aprender empieza a obsoletarse. El sábado es tu ventaja competitiva intelectual.'\n  },\n  domingo: {\n    emoji: '❤️',\n    tarea_principal: 'FAMILIA, RECARGA Y VISIÓN',\n    descripcion: 'El domingo no es para trabajar, es para recargar. Un CEO descansado toma mejores decisiones el lunes.',\n    metas: [\n      '✅ Desconéctate del trabajo por completo (sin Slack, sin código)',\n      '✅ Tiempo de calidad con familia — actividad especial juntos',\n      '✅ 15 minutos de reflexión: ¿estoy alineado con mi visión de vida?'\n    ],\n    consejo: 'La productividad sostenible requiere recuperación profunda. El descanso es parte de la estrategia.'\n  }\n};\n\nconst planHoy = planSemana[diaSemana] || planSemana['lunes'];\n\n// --- Valores y visión (rotativos) ---\nconst valores = [\n  '🌟 *Visión*: Ser la plataforma contable #1 para PYMEs mexicanas en 3 años.',\n  '💪 *Misión*: Automatizar la contabilidad para que los empresarios se enfoquen en crecer.',\n  '🔥 *Valor 1*: Excelencia — MYSTIC hace en segundos lo que tarda horas manualmente.',\n  '🤝 *Valor 2*: Confianza — Los datos financieros de nuestros clientes son sagrados.',\n  '🚀 *Valor 3*: Velocidad — El mercado no espera. Nosotros tampoco.',\n  '🧠 *Valor 4*: Inteligencia — Usamos IA donde agrega valor real, no como gimmick.',\n  '❤️ *Valor 5*: Familia — El éxito sin familia no es éxito.'\n];\nconst diaDelAno = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);\nconst valorHoy = valores[diaDelAno % valores.length];\n\n// --- Numero de semana del año ---\nconst primerDiaAno = new Date(now.getFullYear(), 0, 1);\nconst numSemana = Math.ceil(((now - primerDiaAno) / 86400000 + primerDiaAno.getDay() + 1) / 7);\n\n// --- Construir agenda en Markdown ---\nconst agenda = `📅 *AGENDA DEL DÍA — LUIS DANIEL*\n━━━━━━━━━━━━━━━━━━━━━━\n🗓 *${fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1)}*\n📊 Semana ${numSemana} del año\n\n━━━━━━━━━━━━━━━━━━━━━━\n${planHoy.emoji} *TAREA PRINCIPAL: ${planHoy.tarea_principal}*\n━━━━━━━━━━━━━━━━━━━━━━\n${planHoy.descripcion}\n\n*Tus 3 metas de hoy:*\n${planHoy.metas.join('\\n')}\n\n💡 _${planHoy.consejo}_\n\n━━━━━━━━━━━━━━━━━━━━━━\n⏰ *TU AGENDA HOY*\n━━━━━━━━━━━━━━━━━━━━━━\n${bloques.map(b => `${b.emoji} *${b.hora}*\\n   ${b.nombre}\\n   _${b.actividad}_`).join('\\n\\n')}\n\n━━━━━━━━━━━━━━━━━━━━━━\n${valorHoy}\n━━━━━━━━━━━━━━━━━━━━━━\n_MYSTIC AI OS — Construyendo el futuro hoy_\n🚀 *¡Que sea un día extraordinario!*`;\n\nreturn [{\n  json: {\n    agenda,\n    tarea_principal: planHoy.tarea_principal,\n    dia_semana: diaSemana,\n    semana: numSemana,\n    fecha: fechaTexto\n  }\n}];\n"
+      },
+      "id": "node-code-agenda",
+      "name": "Generar Agenda del Día",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CEO_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.agenda }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            },
+            {
+              "name": "disable_web_page_preview",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "node-telegram-agenda",
+      "name": "Enviar Agenda Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger 5:35 AM": {
+      "main": [
+        [
+          {
+            "node": "Generar Agenda del Día",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Agenda del Día": {
+      "main": [
+        [
+          {
+            "node": "Enviar Agenda Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "tags": [
+    { "name": "agenda" },
+    { "name": "luis-daniel" },
+    { "name": "personal" }
+  ],
+  "pinData": {}
+}

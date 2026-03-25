@@ -1,0 +1,60 @@
+{
+  "academia": "MYSTIC Academy",
+  "descripcion": "Cursos de contabilidad, fiscal y comercio exterior para PYMEs mexicanas",
+  "version": "1.0.0",
+  "cursos": [
+    {
+      "curso_id": "contabilidad-basica",
+      "curso_nombre": "Contabilidad Básica para Empresarios",
+      "descripcion": "Aprende los fundamentos de la contabilidad aplicada a tu negocio: registros, estados financieros, obligaciones SAT y toma de decisiones con base en números reales.",
+      "nivel": "principiante",
+      "total_capitulos": 8,
+      "xp_total": 800,
+      "duracion_estimada_horas": 6,
+      "capitulos_disponibles": [1],
+      "cap1_json": "/data/academy/curso1_cap1.json",
+      "tags": ["contabilidad", "finanzas", "SAT", "estados financieros", "PYMEs"],
+      "imagen": "/academy/img/contabilidad-basica.png"
+    },
+    {
+      "curso_id": "facturacion-cfdi-40",
+      "curso_nombre": "Facturación CFDI 4.0 sin errores",
+      "descripcion": "Domina la facturación electrónica en México: CFDI 4.0, complementos, cancelaciones, relaciones, y cómo evitar los errores más costosos con el SAT.",
+      "nivel": "intermedio",
+      "total_capitulos": 7,
+      "xp_total": 700,
+      "duracion_estimada_horas": 5,
+      "capitulos_disponibles": [1],
+      "cap1_json": "/data/academy/curso2_cap1.json",
+      "tags": ["CFDI", "facturación", "SAT", "PAC", "XML", "timbrado"],
+      "imagen": "/academy/img/facturacion-cfdi.png"
+    },
+    {
+      "curso_id": "nomina-imss",
+      "curso_nombre": "Nómina y IMSS paso a paso",
+      "descripcion": "Calcula nóminas correctamente, entiende las cuotas del IMSS, gestiona altas y bajas de empleados, y cumple con las obligaciones del CFDI de nómina.",
+      "nivel": "intermedio",
+      "total_capitulos": 8,
+      "xp_total": 800,
+      "duracion_estimada_horas": 7,
+      "capitulos_disponibles": [1],
+      "cap1_json": "/data/academy/curso3_cap1.json",
+      "tags": ["nómina", "IMSS", "LFT", "CFDI nómina", "empleados", "cuotas patronales"],
+      "imagen": "/academy/img/nomina-imss.png"
+    },
+    {
+      "curso_id": "importaciones-comercio-exterior",
+      "curso_nombre": "Importaciones y Comercio Exterior",
+      "descripcion": "Aprende a importar correctamente en México: pedimentos, fracciones arancelarias, agentes aduanales, regímenes aduaneros e impuestos al comercio exterior.",
+      "nivel": "avanzado",
+      "total_capitulos": 9,
+      "xp_total": 900,
+      "duracion_estimada_horas": 8,
+      "capitulos_disponibles": [1],
+      "cap1_json": "/data/academy/curso4_cap1.json",
+      "tags": ["importación", "exportación", "aduanas", "pedimento", "comercio exterior", "ANAM"],
+      "imagen": "/academy/img/importaciones.png"
+    }
+  ],
+  "ultima_actualizacion": "2026-03-24"
+}

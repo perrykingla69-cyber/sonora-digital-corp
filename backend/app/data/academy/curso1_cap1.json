@@ -1,0 +1,34 @@
+{
+  "curso_id": "contabilidad-basica",
+  "curso_nombre": "Contabilidad Básica para Empresarios",
+  "capitulo": 1,
+  "titulo": "¿Qué es la contabilidad y por qué importa?",
+  "duracion_video_min": 3,
+  "xp": 100,
+  "objetivos": [
+    "Entender qué es la contabilidad y cuál es su propósito real en una empresa",
+    "Distinguir entre contabilidad financiera y contabilidad fiscal en México",
+    "Identificar las obligaciones contables básicas que establece el SAT para personas morales y físicas con actividad empresarial",
+    "Reconocer la diferencia entre un gasto y una inversión desde el punto de vista contable",
+    "Comprender por qué una empresa puede tener utilidades y aun así quedarse sin efectivo"
+  ],
+  "contenido_pdf": "/academy/curso1_cap1_contenido.md",
+  "guion_video": "/academy/curso1_cap1_guion.md",
+  "tarea": {
+    "titulo": "Mi primer diagnóstico contable",
+    "instrucciones": "Toma tu empresa o negocio actual (o uno ficticio si aún no tienes) y responde las siguientes preguntas por escrito: 1) ¿Actualmente llevas algún registro de tus ingresos y gastos? Describe cómo lo haces. 2) ¿Sabes cuánto dinero ganó tu empresa el mes pasado, después de todos los costos y gastos? 3) ¿Tienes separadas las cuentas bancarias personales de las del negocio? 4) ¿Tienes un contador o llevas tú mismo la contabilidad? 5) Lista al menos 5 gastos recurrentes de tu negocio. Con base en tus respuestas, identifica cuáles son tus 3 principales áreas de mejora contable y escribe qué harías diferente después de leer este capítulo.",
+    "criterios": [
+      "Responde las 5 preguntas con honestidad y detalle suficiente",
+      "Identifica correctamente al menos 3 áreas de mejora reales en tu operación",
+      "Propone acciones concretas y realizables (no solo intenciones)",
+      "Usa al menos 2 términos contables aprendidos en este capítulo",
+      "Entrega mínimo 300 palabras en total"
+    ]
+  },
+  "recursos_externos": [
+    "SAT - Obligaciones fiscales para personas morales: https://www.sat.gob.mx/personas_morales",
+    "SAT - Régimen de Actividad Empresarial y Profesional: https://www.sat.gob.mx/personas/regimen-de-actividades-empresariales-y-profesionales",
+    "NIF A-1 Marco Conceptual - CINIF: https://www.cinif.org.mx",
+    "SAT - Catálogo de cuentas para contabilidad electrónica: https://www.sat.gob.mx/cs/Satellite/SAT/07_Declaraciones_y_pagos/SAT_Contabilidad_en_el_Sistema_Financiero"
+  ]
+}

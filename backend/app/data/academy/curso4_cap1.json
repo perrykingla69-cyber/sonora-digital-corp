@@ -1,0 +1,34 @@
+{
+  "curso_id": "importaciones-comercio-exterior",
+  "curso_nombre": "Importaciones y Comercio Exterior",
+  "capitulo": 1,
+  "titulo": "¿Qué es un pedimento y cómo leerlo?",
+  "duracion_video_min": 3,
+  "xp": 100,
+  "objetivos": [
+    "Entender qué es un pedimento aduanal y cuál es su función legal en México",
+    "Identificar las secciones principales de un pedimento: encabezado, partidas, liquidación y observaciones",
+    "Reconocer los tipos de pedimento más comunes: importación definitiva (A1), exportación definitiva (A1), importación temporal (IT)",
+    "Comprender qué es la fracción arancelaria y cómo se usa la Tarifa IGIE (Ley de los Impuestos Generales de Importación y Exportación)",
+    "Identificar los impuestos al comercio exterior: IGI (arancel), IVA, DTA, PRE y cuotas compensatorias"
+  ],
+  "contenido_pdf": "/academy/curso4_cap1_contenido.md",
+  "guion_video": "/academy/curso4_cap1_guion.md",
+  "tarea": {
+    "titulo": "Lee tu primer pedimento",
+    "instrucciones": "Si tu empresa ha importado mercancía, solicita a tu agente aduanal o al área de compras una copia de cualquier pedimento reciente (puede estar en PDF o impreso). Si no tienes acceso a uno real, el SAT pone a disposición pedimentos de muestra en su portal de comercio exterior. Con el pedimento en mano, localiza y anota: 1) El número de pedimento (formato: año-aduana-patente-número). 2) El tipo de operación (clave de la operación). 3) La aduana de entrada o salida. 4) Al menos una fracción arancelaria de las partidas declaradas. 5) El valor en aduana declarado (en dólares USD y en pesos MXN). 6) El monto total de impuestos pagados (IGI + IVA + DTA). 7) El nombre del agente aduanal y su patente. Presenta los datos en una tabla y escribe un párrafo explicando con tus palabras para qué sirve el pedimento en el proceso de importación.",
+    "criterios": [
+      "Identifica correctamente el número de pedimento y su estructura",
+      "Localiza al menos una fracción arancelaria y la describe",
+      "Distingue entre el valor en aduana y el precio de compra al proveedor",
+      "Explica correctamente para qué sirve el DTA (Derecho de Trámite Aduanero)",
+      "El párrafo final tiene al menos 80 palabras y usa terminología correcta"
+    ]
+  },
+  "recursos_externos": [
+    "SAT - Consulta de pedimentos: https://www.ventanillaunica.gob.mx/",
+    "Tarifa IGIE - SHCP: https://www.gob.mx/shcp/documentos/tarifa-de-la-ley-de-los-impuestos-generales-de-importacion-y-de-exportacion",
+    "Agencia Nacional de Aduanas de México (ANAM): https://www.anam.gob.mx/",
+    "SAT - Comercio Exterior: https://www.sat.gob.mx/tramites/operacion-aduanera"
+  ]
+}
