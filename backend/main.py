@@ -233,7 +233,7 @@ async def trial(body: dict, db: Session = Depends(get_db)):
     db.add(usuario)
     db.flush()
 
-    _audit(db, "trial_signup", usuario, notas=f"freemium hasta 2026-03-31")
+    _audit(db, "trial_signup", usuario, datos={"plan_hasta": "2026-03-31", "freemium": True})
     db.commit()
     db.refresh(usuario)
 
