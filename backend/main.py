@@ -192,6 +192,63 @@ async def me(current_user: Usuario = Depends(get_current_user)):
     return current_user
 
 
+@app.post("/auth/trial", tags=["Auth"])
+async def trial(body: dict, db: Session = Depends(get_db)):
+    """Acceso freemium instantáneo — crea tenant+usuario en un paso y devuelve token."""
+    import secrets, string, hashlib
+    email = (body.get("email") or "").strip().lower()
+    nombre = (body.get("nombre") or email.split("@")[0].title())
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Email inválido")
+
+    # Si ya existe → login directo con su contraseña (si la mandaron) o retorna hint
+    existing = db.query(Usuario).filter(Usuario.email == email).first()
+    if existing:
+        # Si manda su pass existente la usamos, si no devolvemos token igual
+        raw_pass = body.get("password", "")
+        if raw_pass and verify_password(raw_pass, existing.password_hash):
+            token = create_token(str(existing.id), extra={"tenant": str(existing.tenant_id), "rol": existing.rol})
+            return {"access_token": token, "token_type": "bearer", "usuario_id": str(existing.id),
+                    "nuevo": False, "plan": "basico", "plan_hasta": "2026-03-31"}
+        raise HTTPException(status_code=409, detail="Email ya registrado. Usa tu contraseña o recupera acceso.")
+
+    # Crear tenant freemium
+    short = hashlib.md5(email.encode()).hexdigest()[:8].upper()
+    rfc_trial = f"FREE{short}"
+    tenant = Tenant(nombre=f"Trial {nombre}", rfc=rfc_trial, plan="basico")
+    db.add(tenant)
+    db.flush()
+
+    # Contraseña temporal legible
+    chars = string.ascii_letters + string.digits
+    password_temp = "".join(secrets.choice(chars) for _ in range(10))
+
+    usuario = Usuario(
+        tenant_id=str(tenant.id),
+        email=email,
+        password_hash=hash_password(password_temp),
+        nombre=nombre,
+        rol="contador",
+    )
+    db.add(usuario)
+    db.flush()
+
+    _audit(db, "trial_signup", usuario, notas=f"freemium hasta 2026-03-31")
+    db.commit()
+    db.refresh(usuario)
+
+    token = create_token(str(usuario.id), extra={"tenant": str(tenant.id), "rol": "contador"})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "usuario_id": str(usuario.id),
+        "password_temp": password_temp,
+        "nuevo": True,
+        "plan": "basico",
+        "plan_hasta": "2026-03-31",
+    }
+
+
 @app.post("/auth/forgot-password", tags=["Auth"])
 async def forgot_password(body: dict, db: Session = Depends(get_db)):
     email = body.get("email", "").strip().lower()
