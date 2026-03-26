@@ -106,7 +106,7 @@ function AccesoInstantaneo() {
       if (data.password_temp) localStorage.setItem('hermes_pass_hint', data.password_temp)
       setEstado('ok')
       setMsg(data.nuevo ? '¡Listo! Entrando al panel...' : 'Bienvenido de vuelta. Redirigiendo...')
-      setTimeout(() => { window.location.href = '/panel' }, 1200)
+      setTimeout(() => { window.location.href = '/dashboard' }, 1200)
     } catch (err: any) {
       setMsg(err.message || 'Error de conexión')
       setEstado('error')
