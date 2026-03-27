@@ -7,13 +7,8 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-
-// Logger estructurado (wrapper sobre console con prefijo y nivel)
-const log = {
-  info:  (...a) => console.log('[INFO]', ...a),
-  warn:  (...a) => console.warn('[WARN]', ...a),
-  error: (...a) => console.error('[ERROR]', ...a),
-};
+const { startAlertScheduler } = require('./sat-alerts');
+const log = require('./logger');
 
 const API_BASE = process.env.API_BASE || 'http://api:8000';
 const DEFAULT_BOT_TOKEN = process.env.DEFAULT_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
@@ -69,7 +64,7 @@ async function invokeSkill(skill, message, tenantId) {
       .replace(/"\{\{tenant_id\}\}"/g, JSON.stringify(tenantId))
   );
   const res = await axios.post(url, payload, { timeout: 20000 });
-  return res.data[skill.response_field || 'answer'] || 'Procesado.';
+  return res.data?.[skill.response_field || 'answer'] || 'Procesado.';
 }
 
 loadSkills();
@@ -80,23 +75,66 @@ const botInstances = new Map(); // tenantId → Telegraf instance
 function createTelegrafInstance(tenantId, token) {
   const bot = new Telegraf(token);
 
-  bot.start(ctx => ctx.reply(
-    `✨ *Hola, soy HERMES*\n\nTu asistente contable inteligente, disponible las 24 horas.\n\n` +
-    `Cuéntame lo que necesitas — facturas, impuestos, nómina, importaciones o cualquier duda fiscal.\n\n` +
-    `_Solo escríbeme como le escribirías a un contador de confianza._`,
-    { parse_mode: 'Markdown' }
-  ));
+  bot.start(async ctx => {
+    try {
+      await ctx.reply(
+        `✨ *Hola, soy HERMES*\n\nTu asistente contable inteligente, disponible las 24 horas.\n\n` +
+        `Cuéntame lo que necesitas — facturas, impuestos, nómina, importaciones o cualquier duda fiscal.\n\n` +
+        `_Solo escríbeme como le escribirías a un contador de confianza._`,
+        { parse_mode: 'Markdown' }
+      );
+    } catch (err) {
+      log.error('[bot.start] error:', { err: err.message });
+    }
+  });
 
-  bot.command('menu', ctx => ctx.reply('¿Qué necesitas hoy?', {
-    parse_mode: 'Markdown',
-    reply_markup: { inline_keyboard: [
-      [{ text: '📄 Necesito una factura',    callback_data: 'action_mve' }],
-      [{ text: '🔍 Verificar comprobante',   callback_data: 'action_cfdi' }],
-      [{ text: '📊 ¿Cómo voy con el SAT?',  callback_data: 'action_status' }],
-      [{ text: '💵 Precio del dólar hoy',   callback_data: 'action_tc' }],
-      [{ text: '💬 Tengo una pregunta',      callback_data: 'action_help' }],
-    ]}
-  }));
+  bot.command('menu', async ctx => {
+    try {
+      await ctx.reply('¿Qué necesitas hoy?', {
+        parse_mode: 'Markdown',
+        reply_markup: { inline_keyboard: [
+          [{ text: '📄 Necesito una factura',    callback_data: 'action_mve' }],
+          [{ text: '🔍 Verificar comprobante',   callback_data: 'action_cfdi' }],
+          [{ text: '📊 ¿Cómo voy con el SAT?',  callback_data: 'action_status' }],
+          [{ text: '💵 Precio del dólar hoy',   callback_data: 'action_tc' }],
+          [{ text: '💬 Tengo una pregunta',      callback_data: 'action_help' }],
+        ]}
+      });
+    } catch (err) {
+      log.error('[bot.command/menu] error:', { err: err.message });
+    }
+  });
+
+  bot.command('alertas', async (ctx) => {
+    try {
+      const { getTodayAlerts, getMonthAlerts } = require('./sat-alerts');
+      const alerts = getMonthAlerts ? getMonthAlerts() : [];
+      if (!alerts || alerts.length === 0) {
+        return ctx.reply('✅ Sin alertas fiscales pendientes este mes.');
+      }
+      const text = alerts.map(a => `📅 *${a.date}* — ${a.description}`).join('\n');
+      await ctx.reply(`*Alertas SAT este mes:*\n\n${text}`, { parse_mode: 'Markdown' });
+    } catch (e) {
+      log.error('[bot.command/alertas] error:', { err: e.message });
+      await ctx.reply('No pude cargar las alertas. Intenta más tarde.');
+    }
+  });
+
+  bot.command('estado', async (ctx) => {
+    try {
+      const res = await axios.get(`${API_BASE}/status`, { timeout: 5000 });
+      const s = res.data;
+      const lines = [
+        `*Estado HERMES* — ${new Date().toLocaleString('es-MX')}`,
+        `API: ${s.status === 'ok' ? '✅' : '⚠️'} ${s.status}`,
+        s.qdrant ? `Qdrant: ${s.qdrant.status === 'ok' ? '✅' : '⚠️'}` : '',
+      ].filter(Boolean);
+      await ctx.reply(lines.join('\n'), { parse_mode: 'Markdown' });
+    } catch (e) {
+      log.error('[bot.command/estado] error:', { err: e.message });
+      await ctx.reply('⚠️ No se pudo conectar con la API.');
+    }
+  });
 
   bot.on('text', async ctx => {
     await ctx.sendChatAction('typing');
@@ -122,22 +160,27 @@ function createTelegrafInstance(tenantId, token) {
         await ctx.reply(text, { parse_mode: 'Markdown' });
       }
     } catch (err) {
-      log.error(`[${tenantId}] msg error:`, err.message);
+      log.error(`[${tenantId}] msg error:`, { err: err.message });
       await ctx.reply('Algo salió mal al procesar tu consulta. Por favor intenta de nuevo en un momento.');
     }
   });
 
   bot.on('callback_query', async ctx => {
-    const action = ctx.callbackQuery.data;
-    const replies = {
-      action_mve:    '📄 Perfecto. Cuéntame:\n• ¿Qué mercancía o servicio vas a facturar?\n• ¿A qué país va destinado?\n• Valor aproximado en pesos o dólares',
-      action_cfdi:   '🔍 Compárteme el folio fiscal (UUID) del comprobante y lo verifico de inmediato.',
-      action_status: '📊 Un momento, estoy revisando tu situación con el SAT...',
-      action_tc:     '💵 Consultando el tipo de cambio oficial de hoy...',
-      action_help:   '💬 Pregúntame lo que necesites: impuestos, nómina, facturas, importaciones o cualquier duda contable. Estoy aquí para ayudarte.',
-    };
-    if (replies[action]) await ctx.reply(replies[action]);
-    await ctx.answerCbQuery();
+    try {
+      const action = ctx.callbackQuery.data;
+      const replies = {
+        action_mve:    '📄 Perfecto. Cuéntame:\n• ¿Qué mercancía o servicio vas a facturar?\n• ¿A qué país va destinado?\n• Valor aproximado en pesos o dólares',
+        action_cfdi:   '🔍 Compárteme el folio fiscal (UUID) del comprobante y lo verifico de inmediato.',
+        action_status: '📊 Un momento, estoy revisando tu situación con el SAT...',
+        action_tc:     '💵 Consultando el tipo de cambio oficial de hoy...',
+        action_help:   '💬 Pregúntame lo que necesites: impuestos, nómina, facturas, importaciones o cualquier duda contable. Estoy aquí para ayudarte.',
+      };
+      if (replies[action]) await ctx.reply(replies[action]);
+      await ctx.answerCbQuery();
+    } catch (err) {
+      log.error('[bot.on/callback_query] error:', { err: err.message });
+      try { await ctx.answerCbQuery(); } catch {}
+    }
   });
 
   return bot;
@@ -169,9 +212,11 @@ async function launchBot(tenantId, token, attempt = 1) {
   botInstances.set(tenantId, bot);
   _activeBot = bot;
 
-  bot.launch().then(() => {
+  try {
+    await bot.launch();
     log.info(`[${tenantId}] Bot conectado a Telegram ✅`);
-  }).catch(async err => {
+    startAlertScheduler(bot, process.env.HERMES_ALERT_CHANNEL_ID || null);
+  } catch (err) {
     const is409 = err.response?.error_code === 409;
     const isNet = err.code === 'ETIMEDOUT' || err.code === 'ECONNREFUSED' || err.type === 'system';
     if (is409 || isNet) {
@@ -180,9 +225,9 @@ async function launchBot(tenantId, token, attempt = 1) {
       log.warn(`[${tenantId}] ${is409 ? '409 Conflict' : 'Red timeout'} → retry en ${wait/1000}s (intento ${attempt}/${MAX_RETRIES})`);
       setTimeout(() => launchBot(tenantId, token, attempt + 1), wait);
     } else {
-      log.error(`[${tenantId}] Error fatal:`, err.message);
+      log.error(`[${tenantId}] Error fatal:`, { err: err.message });
     }
-  });
+  }
 }
 
 // ── REST API ───────────────────────────────────────────────────────────────────

@@ -20,8 +20,10 @@ Uso: python3 seed_knowledge.py
 """
 
 import os, sys
+import logging
 import psycopg2
 from psycopg2.extras import execute_values
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
 DB_URL = os.environ.get(
     "DATABASE_URL",
@@ -1563,12 +1565,12 @@ def seed():
     count = cur.execute("SELECT COUNT(*) FROM knowledge_base")
     cur.execute("SELECT COUNT(*) FROM knowledge_base")
     count = cur.fetchone()[0]
-    print(f"✅ {count} entradas cargadas en knowledge_base")
+    logging.info(f"✅ {count} entradas cargadas en knowledge_base")
 
     # Resumen por topic
     cur.execute("SELECT topic, COUNT(*) FROM knowledge_base GROUP BY topic ORDER BY topic")
     for row in cur.fetchall():
-        print(f"   {row[0]}: {row[1]} entradas")
+        logging.info(f"   {row[0]}: {row[1]} entradas")
 
     cur.close()
     conn.close()

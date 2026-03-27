@@ -8,12 +8,7 @@
  *   const { sendSATAlert, getSATAlertMessage, scheduleMonthlyAlerts } = require('./sat-alerts');
  */
 
-// Logger estructurado
-const log = {
-  info:  (...a) => console.log('[INFO]', ...a),
-  warn:  (...a) => console.warn('[WARN]', ...a),
-  error: (...a) => console.error('[ERROR]', ...a),
-};
+const log = require('./logger');
 
 // ── Mensajes preformateados por tipo ─────────────────────────────────────────
 
@@ -282,10 +277,48 @@ function scheduleMonthlyAlerts(bot, channelId) {
   }
 }
 
+// ── Función pública: alertas del mes actual ───────────────────────────────────
+
+/**
+ * Retorna todas las alertas del mes actual como array de objetos {date, description}.
+ * @returns {{ date: string, description: string }[]}
+ */
+function getMonthAlerts() {
+  const ahora = new Date();
+  const mes = ahora.toLocaleString('es-MX', { month: 'long', timeZone: 'America/Mexico_City' });
+  const año = ahora.getFullYear();
+  return [
+    { date: `1 de ${mes} ${año}`,  description: 'Inicio de cierre contable del mes anterior.' },
+    { date: `10 de ${mes} ${año}`, description: 'Recordatorio CFDIs — 7 días antes del vencimiento del día 17.' },
+    { date: `14 de ${mes} ${año}`, description: 'Recordatorio DIOT — 3 días para presentar.' },
+    { date: `16 de ${mes} ${año}`, description: 'Pre-alerta Día 17 — Mañana vence declaración provisional.' },
+    { date: `17 de ${mes} ${año}`, description: 'Vencimiento declaración ISR/IVA provisional + DIOT.' },
+    { date: `20 de ${mes} ${año}`, description: 'Recordatorio MVE para importadores.' },
+    { date: `25 de ${mes} ${año}`, description: 'Recordatorio cierre del mes en curso (quedan 6 días).' },
+  ];
+}
+
+// ── Alias para compatibilidad con server.js ───────────────────────────────────
+
+/**
+ * Alias de scheduleMonthlyAlerts. Inicia el scheduler de alertas SAT.
+ * @param {import('telegraf').Telegraf} bot
+ * @param {string|number|null} channelId
+ */
+function startAlertScheduler(bot, channelId) {
+  if (!channelId) {
+    log.warn('[SAT Alerts] HERMES_ALERT_CHANNEL_ID no definido — scheduler desactivado.');
+    return;
+  }
+  scheduleMonthlyAlerts(bot, channelId);
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 module.exports = {
   getSATAlertMessage,
   sendSATAlert,
   scheduleMonthlyAlerts,
+  getMonthAlerts,
+  startAlertScheduler,
 };

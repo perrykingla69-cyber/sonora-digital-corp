@@ -258,7 +258,7 @@ async def seed_qa(dry_run: bool = False) -> int:
         text_to_embed = f"Pregunta: {pregunta}\nRespuesta: {respuesta}"
 
         if dry_run:
-            print(f"  [{i+1:02d}] {pregunta[:60]}...")
+            logger.info(f"  [{i+1:02d}] {pregunta[:60]}...")
             ok += 1
             continue
 
@@ -274,7 +274,7 @@ async def seed_qa(dry_run: bool = False) -> int:
             }
             upsert_sync(doc_id, vector, payload)
             ok += 1
-            print(f"  [{i+1:02d}/{len(QA_FISCAL)}] OK")
+            logger.info(f"  [{i+1:02d}/{len(QA_FISCAL)}] OK")
         except Exception as e:
             logger.error(f"Error Q&A {i}: {e}")
 
@@ -361,7 +361,7 @@ async def main():
                     except Exception as e:
                         logger.error(f"  Error DOF {item['titulo'][:40]}: {e}")
                 else:
-                    print(f"  [DRY] DOF: {item['titulo'][:70]}")
+                    logger.info(f"  [DRY] DOF: {item['titulo'][:70]}")
                     dof_ok += 1
 
         total_ok += dof_ok

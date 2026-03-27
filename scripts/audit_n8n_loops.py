@@ -16,11 +16,14 @@ Uso:
 """
 import argparse
 import json
+import logging
 import re
 import sys
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -33,7 +36,7 @@ def load_workflows(directory: Path) -> list[tuple[Path, dict]]:
             data = json.loads(path.read_text(encoding="utf-8"))
             workflows.append((path, data))
         except Exception as e:
-            print(f"  [WARN] No se pudo leer {path.name}: {e}", file=sys.stderr)
+            logging.warning(f"No se pudo leer {path.name}: {e}")
     return workflows
 
 
@@ -289,12 +292,12 @@ def main():
 
     workflows_dir = Path(args.dir)
     if not workflows_dir.is_dir():
-        print(f"ERROR: directorio no encontrado: {workflows_dir}", file=sys.stderr)
+        logging.error(f"directorio no encontrado: {workflows_dir}")
         sys.exit(1)
 
     workflows = load_workflows(workflows_dir)
     if not workflows:
-        print(f"No se encontraron JSONs en {workflows_dir}", file=sys.stderr)
+        logging.error(f"No se encontraron JSONs en {workflows_dir}")
         sys.exit(0)
 
     results = []

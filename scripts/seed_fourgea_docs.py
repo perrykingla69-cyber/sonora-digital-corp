@@ -10,7 +10,9 @@ Incluye:
 """
 
 import os, sys, json, time
+import logging
 import urllib.request
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
 API_URL  = os.getenv("API_URL", "http://localhost:8000")
 QDRANT   = os.getenv("QDRANT_URL", "http://localhost:6333")
@@ -164,10 +166,10 @@ def upsert(doc_id: int, vector: list, payload: dict):
 
 
 def main():
-    print("=== Seed fourgea_docs — Qdrant ===\n")
+    logging.info("=== Seed fourgea_docs — Qdrant ===")
     total = 0
     for i, doc in enumerate(DOCS):
-        print(f"  [{i+1}/{len(DOCS)}] {doc['title']}...", end=" ", flush=True)
+        logging.info(f"  [{i+1}/{len(DOCS)}] {doc['title']}...")
         try:
             full_text = f"{doc['title']}\n\n{doc['text']}"
             vec = embed(full_text)
@@ -182,13 +184,13 @@ def main():
                     "fuente": "fourgea_interno",
                 }
             )
-            print("OK")
+            logging.info(f"  [{i+1}/{len(DOCS)}] OK")
             total += 1
         except Exception as e:
-            print(f"ERROR: {e}")
+            logging.error(f"ERROR: {e}")
         time.sleep(1)
 
-    print(f"\n✅ {total}/{len(DOCS)} documentos indexados en fourgea_docs")
+    logging.info(f"✅ {total}/{len(DOCS)} documentos indexados en fourgea_docs")
 
 
 if __name__ == "__main__":

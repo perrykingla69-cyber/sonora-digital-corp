@@ -3,7 +3,9 @@ Migración MVE v2 — Agrega columnas nuevas a tabla mves
 Ejecutar en VPS: python scripts/migrate_mve_v2.py
 """
 import os, sys
+import logging
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
 from database import engine
 from sqlalchemy import text
@@ -57,7 +59,7 @@ def migrar():
             "SELECT column_name FROM information_schema.columns WHERE table_name='mves'"
         ))
         existentes = {row[0] for row in result}
-        print(f"Columnas actuales: {len(existentes)}")
+        logging.info(f"Columnas actuales: {len(existentes)}")
 
         agregadas = 0
         for col, tipo, default in COLUMNAS:
@@ -65,13 +67,13 @@ def migrar():
                 default_clause = f"DEFAULT {default}" if default != "NULL" else ""
                 sql = f"ALTER TABLE mves ADD COLUMN IF NOT EXISTS {col} {tipo} {default_clause}"
                 conn.execute(text(sql))
-                print(f"  ✓ Agregada: {col} {tipo}")
+                logging.info(f"  ✓ Agregada: {col} {tipo}")
                 agregadas += 1
             else:
-                print(f"  · Ya existe: {col}")
+                logging.info(f"  · Ya existe: {col}")
 
         conn.commit()
-        print(f"\nMigración completa. {agregadas} columna(s) agregada(s).")
+        logging.info(f"\nMigración completa. {agregadas} columna(s) agregada(s).")
 
 if __name__ == "__main__":
     migrar()

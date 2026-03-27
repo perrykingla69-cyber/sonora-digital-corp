@@ -9,8 +9,10 @@ Uso:
 
 import argparse
 import json
+import logging
 import uuid
 import urllib.request
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
 # ─────────────────────────────────────────────────────────────────────────────
 # BASE DE CONOCIMIENTO LEGAL — MVE / COMERCIO EXTERIOR
@@ -504,8 +506,8 @@ def main():
     parser.add_argument("--batch-size", type=int, default=5)
     args = parser.parse_args()
 
-    print(f"Indexando {len(DOCS)} documentos legales en Qdrant...")
-    print(f"URL: {args.url}")
+    logging.info(f"Indexando {len(DOCS)} documentos legales en Qdrant...")
+    logging.info(f"URL: {args.url}")
 
     BATCH = args.batch_size
     ok = 0
@@ -514,11 +516,11 @@ def main():
         try:
             r = post_batch(args.url, args.token, batch)
             ok += r.get("indexed", len(batch))
-            print(f"  [{i+len(batch)}/{len(DOCS)}] ✓ {r}")
+            logging.info(f"  [{i+len(batch)}/{len(DOCS)}] ✓ {r}")
         except Exception as e:
-            print(f"  [{i+len(batch)}/{len(DOCS)}] ERROR: {e}")
+            logging.error(f"  [{i+len(batch)}/{len(DOCS)}] ERROR: {e}")
 
-    print(f"\nTotal indexados: {ok}/{len(DOCS)}")
+    logging.info(f"Total indexados: {ok}/{len(DOCS)}")
 
 
 if __name__ == "__main__":
