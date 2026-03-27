@@ -1,0 +1,13 @@
+{
+  "name": "conciliacion-bancaria",
+  "priority": 7,
+  "triggers": [
+    "conciliacion bancaria",
+    "conciliar banco",
+    "diferencia en libros",
+    "estado de cuenta vs contabilidad",
+    "cuadrar banco"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario necesita ayuda con conciliación bancaria. Explica el proceso paso a paso: revisar estado de cuenta vs libro mayor, identificar partidas en tránsito (depósitos en tránsito y cheques en circulación), cargos/abonos bancarios no registrados. Da consejos prácticos para PyMEs mexicanas. Mensaje: {{message}}"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "sat-buzon-info",
+  "priority": 6,
+  "triggers": [
+    "buzon tributario",
+    "buzon sat",
+    "notificacion sat",
+    "mensaje del sat",
+    "sat me escribio"
+  ],
+  "method": "STATIC",
+  "response_text": "📬 *Buzón Tributario SAT*\n\nEs el canal oficial donde el SAT te notifica:\n• Cartas invitación\n• Requerimientos\n• Resoluciones\n• Créditos fiscales\n\n⚠️ Si recibes una notificación en tu buzón tienes *20 días hábiles* para responder o se considera aceptada.\n\n🚨 *Ignóralo y el SAT puede embargarte.* Escríbeme el contenido de la notificación y te digo qué hacer."
+}

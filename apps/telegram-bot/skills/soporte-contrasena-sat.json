@@ -1,0 +1,13 @@
+{
+  "name": "soporte-contrasena-sat",
+  "priority": 6,
+  "triggers": [
+    "olvide mi contrasena sat",
+    "recuperar contrasena sat",
+    "clave sat",
+    "password sat",
+    "no recuerdo contraseña"
+  ],
+  "method": "STATIC",
+  "response_text": "🔑 *Recuperar Contraseña del SAT*\n\n*Opción 1 — Con e.firma vigente:*\nsat.gob.mx → Iniciar sesión → ¿Olvidaste tu contraseña? → Con e.firma\n\n*Opción 2 — Sin e.firma:*\nDebes ir físicamente a un módulo SAT con:\n• INE o pasaporte vigente\n• CURP\n• Correo electrónico activo\n• Para personas morales: Representante legal + poder notarial\n\n⚠️ Si tu e.firma también está vencida, necesitas ir al módulo de todas formas.\n\n🗺️ Módulos SAT: sat.gob.mx → Directorio de Módulos de Atención"
+}

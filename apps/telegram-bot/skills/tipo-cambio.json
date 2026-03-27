@@ -1,9 +1,15 @@
 {
   "name": "tipo-cambio",
-  "version": "1.0.0",
-  "description": "Tipo de cambio USD/MXN en tiempo real (DOF).",
-  "triggers": ["tipo de cambio", "dolar", "usd", "mxn", "tc", "peso"],
-  "endpoint": "http://api:8000/tipo-cambio/hoy",
+  "priority": 9,
+  "triggers": [
+    "tipo de cambio",
+    "dolar hoy",
+    "cuanto esta el dolar",
+    "precio del dolar",
+    "usd mxn",
+    "dolar peso"
+  ],
   "method": "GET",
-  "response_template": "💵 Tipo de cambio hoy: ${{tc}} MXN/USD (DOF {{fecha}})"
+  "endpoint": "http://api:8000/api/tipo-cambio",
+  "response_template": "💵 Tipo de cambio: ${{valor}} MXN/USD (Fuente: Banxico, {{fecha}})"
 }

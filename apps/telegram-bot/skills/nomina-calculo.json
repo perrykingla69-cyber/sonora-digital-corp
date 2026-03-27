@@ -1,0 +1,19 @@
+{
+  "name": "nomina-calculo",
+  "priority": 9,
+  "triggers": [
+    "calcular nomina",
+    "nomina empleado",
+    "cuanto pago a mi empleado",
+    "sueldo neto",
+    "sueldo bruto",
+    "calculo de salario"
+  ],
+  "method": "POST",
+  "endpoint": "http://api:8000/api/nomina/calcular",
+  "payload": {
+    "pregunta": "{{message}}",
+    "tenant_id": "{{tenant_id}}"
+  },
+  "response_field": "resultado"
+}

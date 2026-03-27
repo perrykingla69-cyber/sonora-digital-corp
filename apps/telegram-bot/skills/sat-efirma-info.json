@@ -1,0 +1,13 @@
+{
+  "name": "sat-efirma-info",
+  "priority": 7,
+  "triggers": [
+    "e.firma",
+    "fiel",
+    "firma electronica",
+    "certificado sat",
+    "llave privada sat"
+  ],
+  "method": "STATIC",
+  "response_text": "🔐 *e.firma (antes FIEL)*\n\nEs tu firma electrónica avanzada — equivale a tu firma autógrafa ante el SAT. Sin ella no puedes:\n• Presentar declaraciones anuales\n• Cancelar CFDIs\n• Hacer trámites en el buzón tributario\n• Registrarte en el IMSS como patrón\n\n⚠️ *Vigencia: 4 años.* Si venció, ve a un módulo SAT con INE y CURP para renovarla.\n\n💡 _HERMES gestiona tu cumplimiento fiscal automáticamente._"
+}

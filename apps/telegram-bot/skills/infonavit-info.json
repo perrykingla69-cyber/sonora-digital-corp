@@ -1,0 +1,13 @@
+{
+  "name": "infonavit-info",
+  "priority": 7,
+  "triggers": [
+    "infonavit",
+    "credito infonavit",
+    "descuento infonavit",
+    "aportacion infonavit",
+    "5 por ciento infonavit"
+  ],
+  "method": "STATIC",
+  "response_text": "🏠 *INFONAVIT — Obligaciones del Patrón*\n\n*Aportación:* 5% del SBC del empleado (paga 100% el patrón)\n*Pago:* Bimestral — junto con las cuotas IMSS del bimestre\n\n*Si el empleado tiene crédito:*\nTambién descontarás el pago del crédito de su nómina y lo enterarás al INFONAVIT junto con la aportación.\n\n*¿Dónde se entera?* Portal IMSS (SUA) → mismo proceso que las cuotas IMSS\n\n⚠️ *No enterar el INFONAVIT genera multas y puede afectar el historial crediticio del empleado.*\n\n💡 _HERMES integra IMSS + INFONAVIT en un solo proceso de dispersión._"
+}

@@ -42,6 +42,19 @@ function matchSkill(message) {
 }
 
 async function invokeSkill(skill, message, tenantId) {
+  // STATIC — respuesta fija sin llamada API (cero costo de IA)
+  if (skill.method === 'STATIC') {
+    return skill.response_text || 'Consulta el portal del SAT para más información.';
+  }
+  // BRAIN — reenvía al Brain IA con contexto específico del skill
+  if (skill.method === 'BRAIN') {
+    const question = (skill.question_template || '{{message}}')
+      .replace('{{message}}', message);
+    const res = await axios.post(`${API_BASE}/api/brain/ask`, {
+      question, tenant_id: tenantId, channel: 'telegram'
+    }, { timeout: 25000 });
+    return res.data?.answer || res.data?.respuesta || 'No pude procesar tu consulta.';
+  }
   const url = skill.endpoint.replace('http://api:8000', API_BASE);
   if (skill.method === 'GET') {
     const res = await axios.get(url, { timeout: 15000 });

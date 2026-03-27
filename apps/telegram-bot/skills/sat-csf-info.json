@@ -1,0 +1,12 @@
+{
+  "name": "sat-csf-info",
+  "priority": 6,
+  "triggers": [
+    "constancia de situacion fiscal",
+    "csf",
+    "constancia fiscal",
+    "comprobante fiscal sat"
+  ],
+  "method": "STATIC",
+  "response_text": "📄 *Constancia de Situación Fiscal (CSF)*\n\nDocumento que certifica tu situación ante el SAT. La necesitan:\n• Tu empleador para darte de alta en nómina\n• Bancos para apertura de cuentas\n• Clientes que te quieren agregar como proveedor\n• Trámites de gobierno\n\n🔗 La descargas gratis en sat.gob.mx → Inicio → Genera tu CSF (sin clave pero con RFC + fecha de nacimiento/constitución).\n\n💡 _HERMES la genera automáticamente para tus clientes._"
+}

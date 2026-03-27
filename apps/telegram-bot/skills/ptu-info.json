@@ -1,0 +1,13 @@
+{
+  "name": "ptu-info",
+  "priority": 6,
+  "triggers": [
+    "ptu",
+    "participacion de utilidades",
+    "reparto de utilidades",
+    "30 de mayo utilidades",
+    "calculo de ptu"
+  ],
+  "method": "STATIC",
+  "response_text": "💰 *PTU — Participación de los Trabajadores en las Utilidades*\n\n*¿Cuándo se paga?*\n• Personas morales: 60 días después de presentar declaración anual (≈ finales de mayo)\n• Personas físicas: 60 días después del 30 de abril (≈ finales de junio)\n\n*¿Cómo se calcula?*\n1. Utilidad fiscal declarada × 10%\n2. 50% se divide por partes iguales entre empleados (días trabajados)\n3. 50% se divide proporcional al salario percibido\n\n*Excepción:* RESICO exento de PTU (hasta que la ley cambie)\n\n💡 _HERMES calcula el PTU de cada empleado automáticamente._"
+}

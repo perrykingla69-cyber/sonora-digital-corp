@@ -1,0 +1,14 @@
+{
+  "name": "n8n-reporte-facturas",
+  "priority": 8,
+  "triggers": [
+    "reporte de facturas",
+    "cuantas facturas",
+    "resumen facturas",
+    "mis facturas del mes",
+    "facturas emitidas"
+  ],
+  "method": "GET",
+  "endpoint": "http://api:8000/api/facturas/resumen",
+  "response_template": "📊 Facturas del mes: {{total}} | Monto: ${{monto}} MXN | Pendientes de cobro: {{pendientes}}"
+}

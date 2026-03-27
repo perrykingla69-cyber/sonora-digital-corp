@@ -1,0 +1,15 @@
+{
+  "name": "imss-info",
+  "priority": 8,
+  "triggers": [
+    "imss",
+    "seguro social",
+    "cuotas imss",
+    "alta en imss",
+    "dar de alta empleado",
+    "imss patron",
+    "afiliacion imss"
+  ],
+  "method": "STATIC",
+  "response_text": "🏥 *IMSS — Cuotas y Obligaciones del Patrón*\n\n*¿Cuándo dar de alta a un empleado?* El *primer día de trabajo* (no el día del pago)\n\n*Cuotas aproximadas (% del SBC):*\n| Concepto | Patrón | Empleado |\n|---------|--------|----------|\n| Enf. y maternidad | ~8% | ~3% |\n| Invalidez y vida | ~1.75% | ~0.625% |\n| Retiro + Cesantía + Vejez | ~3.15% | ~1.125% |\n| Guarderías | 1% | — |\n\n*SBC = Salario Base de Cotización* (incluye salario + partes variables)\n\n*Pago:* Los primeros 17 días del mes siguiente\n\n💡 _HERMES calcula y dispersa el IMSS automáticamente._"
+}

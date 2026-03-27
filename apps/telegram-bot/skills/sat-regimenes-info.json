@@ -1,0 +1,13 @@
+{
+  "name": "sat-regimenes-info",
+  "priority": 7,
+  "triggers": [
+    "regimen fiscal",
+    "que regimen soy",
+    "cambio de regimen",
+    "resico o general",
+    "regimenes del sat"
+  ],
+  "method": "STATIC",
+  "response_text": "📊 *Regímenes Fiscales en México*\n\n| Régimen | Para quién | ISR |\n|---------|-----------|-----|\n| RESICO | Ingresos hasta $3.5M/año | 1-2.5% |\n| Sueldos y salarios | Empleados | Retención patronal |\n| Actividad empresarial | Profesionistas, comerciantes | Tabla progresiva |\n| Arrendamiento | Rentas | 35% o simplificado |\n| Personas morales | Empresas SA, SRL | 30% ISR |\n| RIF (extinto) | Solo quienes ya estaban | Variable |\n\n💬 Cuéntame tu actividad y te digo cuál régimen te conviene más."
+}

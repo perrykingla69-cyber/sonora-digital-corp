@@ -1,0 +1,13 @@
+{
+  "name": "sbc-info",
+  "priority": 6,
+  "triggers": [
+    "sbc",
+    "salario base de cotizacion",
+    "como calculo el sbc",
+    "percepciones variables imss",
+    "integracion salarial"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario pregunta sobre el SBC (Salario Base de Cotización) para IMSS. Explica qué componentes integran el SBC, cuáles se excluyen (como vales de despensa hasta 40% UMA, horas extra limitadas, herramientas de trabajo), y cómo calcularlo correctamente. Mensaje: {{message}}"
+}

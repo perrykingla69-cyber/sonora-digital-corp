@@ -1,0 +1,14 @@
+{
+  "name": "isr-info",
+  "priority": 7,
+  "triggers": [
+    "isr",
+    "impuesto sobre la renta",
+    "cuanto pago de isr",
+    "calculo de isr",
+    "tasa de isr",
+    "isr personas fisicas"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario pregunta sobre ISR. Explica el Impuesto Sobre la Renta para personas físicas en México: tasas, tabla mensual, cómo se calcula la provisión mensual, diferencia entre tasa efectiva y marginal. Sé claro y práctico. Mensaje: {{message}}"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "cfdi-tipos-info",
+  "priority": 7,
+  "triggers": [
+    "tipos de cfdi",
+    "cfdi de ingreso",
+    "cfdi de egreso",
+    "cfdi de traslado",
+    "complemento de pago",
+    "factura de nomina"
+  ],
+  "method": "STATIC",
+  "response_text": "🧾 *Tipos de CFDI en México*\n\n• *Ingreso:* Ventas, honorarios, rentas — la factura clásica\n• *Egreso (nota de crédito):* Devoluciones, descuentos, cancelaciones parciales\n• *Traslado:* Movimiento de mercancías (con carta porte obligatoria desde 2022)\n• *Nómina:* Pagos a empleados timbrados ante el SAT\n• *Pago:* Cuando cobras en parcialidades — relaciona la factura original\n\n⚠️ *Usar el tipo incorrecto = CFDI no válido para deducciones.*\n\n💡 _HERMES genera el tipo correcto automáticamente._"
+}

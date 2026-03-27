@@ -1,0 +1,13 @@
+{
+  "name": "udi-info",
+  "priority": 5,
+  "triggers": [
+    "udi",
+    "unidades de inversion",
+    "valor de la udi",
+    "udi hoy",
+    "calculo en udis"
+  ],
+  "method": "STATIC",
+  "response_text": "📐 *UDI — Unidades de Inversión*\n\nLa UDI es una unidad de valor que se actualiza diariamente con la inflación (INPC). La fija el Banco de México.\n\n*¿Para qué sirve?*\n• Créditos hipotecarios en UDIs\n• Cálculo de multas fiscales actualizadas\n• Instrumentos de ahorro a largo plazo\n\n*Valor actual:* Consulta en banxico.org.mx → Publicaciones → Índice Nacional de Precios\n\n*Relación con multas SAT:* Las multas se expresan en veces la UMA (Unidad de Medida y Actualización), no en UDIs."
+}

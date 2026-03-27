@@ -1,0 +1,12 @@
+{
+  "name": "sat-rfc-info",
+  "priority": 7,
+  "triggers": [
+    "qué es el rfc",
+    "para qué sirve el rfc",
+    "rfc significa",
+    "necesito rfc"
+  ],
+  "method": "STATIC",
+  "response_text": "📋 *RFC — Registro Federal de Contribuyentes*\n\nEs tu identificador único ante el SAT. Lo necesitas para:\n• Emitir y recibir facturas (CFDIs)\n• Declarar impuestos\n• Abrir cuentas bancarias empresariales\n• Contratar empleados con IMSS\n\n🔗 Lo tramitas gratis en el portal del SAT (sat.gob.mx) o en cualquier módulo con tu CURP.\n\n💡 _HERMES te ayuda a mantener tus obligaciones al día — sonoradigitalcorp.com_"
+}

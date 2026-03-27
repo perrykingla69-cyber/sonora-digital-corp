@@ -1,0 +1,13 @@
+{
+  "name": "sat-auditoria-info",
+  "priority": 7,
+  "triggers": [
+    "auditoria sat",
+    "revision sat",
+    "visita domiciliaria",
+    "revision de gabinete",
+    "me van a auditar"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario tiene dudas sobre una auditoría del SAT. Explica tipos de auditorías (gabinete vs domiciliaria), derechos del contribuyente, plazos y cómo prepararse. Sé específico y tranquilizador. Mensaje: {{message}}"
+}

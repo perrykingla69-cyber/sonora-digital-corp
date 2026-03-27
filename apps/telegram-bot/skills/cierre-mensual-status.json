@@ -1,0 +1,14 @@
+{
+  "name": "cierre-mensual-status",
+  "priority": 9,
+  "triggers": [
+    "cierre mensual",
+    "como va mi cierre",
+    "estatus del cierre",
+    "cierre contable",
+    "cerrar mes"
+  ],
+  "method": "GET",
+  "endpoint": "http://api:8000/api/cierre/status",
+  "response_template": "Estado del cierre: {{estado}} — {{mensaje}}"
+}

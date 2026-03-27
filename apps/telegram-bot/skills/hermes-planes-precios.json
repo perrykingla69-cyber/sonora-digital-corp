@@ -1,0 +1,17 @@
+{
+  "name": "hermes-planes-precios",
+  "priority": 10,
+  "triggers": [
+    "cuanto cuesta",
+    "precio",
+    "planes",
+    "paquetes",
+    "cuanto cobra",
+    "tarifa hermes",
+    "contratar hermes",
+    "suscripcion hermes",
+    "planes hermes"
+  ],
+  "method": "STATIC",
+  "response_text": "💎 *Planes HERMES — Contabilidad Inteligente*\n\n| Plan | Precio | Para quién |\n|------|--------|----------|\n| 🌱 *Personal* | $499/mes | Autónomos, freelancers |\n| 💼 *Profesional* | $2,500/mes | PyMEs, contadores |\n| 🚀 *Enterprise* | $8,500/mes | Empresas + Mystic AI |\n| 🤝 *Franquicia* | $15,000/mes | White-label para despachos |\n\n*Todos incluyen:*\n✅ Facturación ilimitada\n✅ Declaraciones automáticas\n✅ HERMES IA 24/7 (WhatsApp + Telegram)\n✅ Alertas SAT proactivas\n✅ Soporte humano\n\n📞 Para demo: sonoradigitalcorp.com\n💬 Escríbeme *DEMO* para que alguien te contacte hoy."
+}

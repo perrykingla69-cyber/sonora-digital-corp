@@ -1,0 +1,13 @@
+{
+  "name": "cfdi-xml-info",
+  "priority": 6,
+  "triggers": [
+    "xml de factura",
+    "archivo xml",
+    "como abrir xml",
+    "xml sat",
+    "que es xml cfdi"
+  ],
+  "method": "STATIC",
+  "response_text": "📁 *XML del CFDI — ¿Qué es y para qué sirve?*\n\nEl XML es el archivo oficial del CFDI. El PDF es solo una representación visual. *El XML es el documento legal.*\n\n*¿Para qué lo necesitas?*\n• Contabilidad electrónica — debes conservar todos tus XMLs\n• Deducción de impuestos — sin XML no es deducible\n• Auditorías — el SAT valida contra sus servidores\n\n*¿Dónde lo guardas?*\n• Al menos 5 años (10 si fue pérdida fiscal)\n• En tu ERP, nube o con HERMES (lo guardamos por ti)\n\n💡 _HERMES almacena y organiza todos tus CFDIs automáticamente._"
+}

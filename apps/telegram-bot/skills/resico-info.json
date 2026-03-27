@@ -1,0 +1,15 @@
+{
+  "name": "resico-info",
+  "priority": 9,
+  "triggers": [
+    "resico",
+    "regimen simplificado",
+    "resico confianza",
+    "cuanto pago en resico",
+    "tasa resico",
+    "resico personas fisicas"
+  ],
+  "method": "GET",
+  "endpoint": "http://api:8000/api/resico/resumen-mensual",
+  "response_template": "RESICO: {{resumen}}"
+}

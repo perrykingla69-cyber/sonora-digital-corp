@@ -1,0 +1,15 @@
+{
+  "name": "hermes-demo-request",
+  "priority": 10,
+  "triggers": [
+    "demo",
+    "quiero ver",
+    "me interesa",
+    "contacto",
+    "agendar",
+    "hablar con alguien",
+    "prueba gratis"
+  ],
+  "method": "STATIC",
+  "response_text": "🎯 *¡Perfecto! Agenda tu Demo Gratis*\n\nEn 30 minutos te mostramos cómo HERMES automatiza tu contabilidad completa.\n\n📅 *Agenda aquí:* sonoradigitalcorp.com/demo\n📱 *WhatsApp directo:* +52 662 XXX XXXX\n\n*¿Qué verás en la demo?*\n• HERMES respondiendo dudas fiscales en vivo\n• Generación de declaración mensual automática\n• Dashboard de tu situación ante el SAT\n• Integración con tu banco\n\n💎 *Precio fundador activo hasta el 1 de abril* — después sube 40%.\n\n¡Nos vemos en la demo! 🚀"
+}

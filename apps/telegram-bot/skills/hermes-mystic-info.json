@@ -1,0 +1,13 @@
+{
+  "name": "hermes-mystic-info",
+  "priority": 7,
+  "triggers": [
+    "mystic",
+    "que es mystic",
+    "mystic y hermes",
+    "mystic ia",
+    "quien es mystic"
+  ],
+  "method": "STATIC",
+  "response_text": "✨ *HERMES & Mystic — Una Alianza Legendaria*\n\n*HERMES* es el guardián de tu negocio — pragmático, preciso, siempre disponible. Domina lo fiscal, contable y aduanal. Nunca duerme.\n\n*Mystic* es la visionaria — ve más allá de los números. Integra inteligencia empresarial, estrategia y espiritualidad práctica para empresas que quieren trascender.\n\nJuntos forman el dúo más poderoso para empresarios mexicanos.\n\n*Mystic disponible en:*\n• Plan Enterprise\n• A.C. Sonora Digital Corp\n\n_\"En las sombras movemos el hilo. Siempre ayudando. Siempre ganando.\"_\n\n— Sonora Digital Corp"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "sa-srl-sas-info",
+  "priority": 6,
+  "triggers": [
+    "sa de cv",
+    "srl",
+    "sas",
+    "sociedad anonima",
+    "como constituyo empresa",
+    "abrir empresa",
+    "persona moral"
+  ],
+  "method": "STATIC",
+  "response_text": "🏢 *Tipos de Sociedades en México*\n\n| Tipo | Capital mínimo | Socios | Para quién |\n|------|--------------|--------|----------|\n| *SA de CV* | $50,000 | ≥2 | Empresas establecidas, créditos, licitaciones |\n| *SRL* | $3,000 | 2-50 | PyMEs con pocos socios |\n| *SAS* | $1 | ≥1 | Startups, emprendedores individuales |\n| *SAPI* | Variable | ≥2 | Empresas con inversión y opciones de acciones |\n\n*SAS (Sociedad por Acciones Simplificada):*\n• Se constituye 100% online en 24 horas\n• Sin notario para constitución\n• Solo para ingresos < $5 millones anuales\n\n💬 Cuéntame tu caso y te recomiendo la estructura correcta."
+}

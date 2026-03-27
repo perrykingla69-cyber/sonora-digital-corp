@@ -1,0 +1,15 @@
+{
+  "name": "cfdi-verificar",
+  "priority": 9,
+  "triggers": [
+    "verificar factura",
+    "validar cfdi",
+    "factura es real",
+    "cfdi es valido",
+    "checar factura",
+    "factura autentica"
+  ],
+  "method": "GET",
+  "endpoint": "http://api:8000/api/sat/verificar-cfdi",
+  "response_template": "Estado del CFDI: {{status}}"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "incoterms-info",
+  "priority": 6,
+  "triggers": [
+    "incoterms",
+    "fob",
+    "cif",
+    "exw",
+    "dap",
+    "ddu",
+    "terminos de comercio",
+    "quien paga el flete"
+  ],
+  "method": "STATIC",
+  "response_text": "🌍 *Incoterms más usados en México*\n\n| Incoterm | Significado | Riesgo pasa al comprador |\n|---------|------------|-------------------------|\n| *EXW* | En fábrica | Al recoger en origen |\n| *FOB* | Libre a bordo | Al cargar el barco |\n| *CIF* | Costo+seguro+flete | Al llegar al puerto |\n| *DAP* | Entregado en lugar | Al llegar al destino |\n| *DDP* | Entregado con derechos | El vendedor cubre todo |\n\n*Para efectos aduanales en México:*\nEl valor en aduana se calcula generalmente sobre *CIF* (incluye flete y seguro hasta frontera).\n\n💬 Cuéntame tu operación y te digo qué Incoterm usar."
+}

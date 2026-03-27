@@ -1,0 +1,13 @@
+{
+  "name": "musica-evento-cotizar",
+  "priority": 5,
+  "triggers": [
+    "cotizar evento",
+    "cuanto cuesta un evento",
+    "precio evento musical",
+    "presupuesto concierto",
+    "cuanto cobra el grupo"
+  ],
+  "method": "STATIC",
+  "response_text": "🎸 *Cotización de Eventos Musicales*\n\nPróximamente en HERMES — nicho artístico y musical en desarrollo.\n\nMientras tanto, contacta directamente a nuestro equipo:\n📱 sonoradigitalcorp.com/musica\n\n_Hermosillo, Sonora — Capital Musical del Noroeste_ 🎵"
+}

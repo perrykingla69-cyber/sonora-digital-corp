@@ -1,0 +1,13 @@
+{
+  "name": "cfdi-carta-porte",
+  "priority": 7,
+  "triggers": [
+    "carta porte",
+    "complemento carta porte",
+    "transportista cfdi",
+    "traslado mercancia",
+    "autotransporte federal"
+  ],
+  "method": "STATIC",
+  "response_text": "🚛 *Complemento Carta Porte*\n\nObligatorio desde 2022 para el traslado de mercancías por carretera.\n\n*¿A quién aplica?*\n• Transportistas que prestan el servicio\n• Empresas que mueven su propia mercancía en vehículo propio\n• Importadores y exportadores\n\n*Información requerida:*\n• RFC del transportista y destinatario\n• Descripción y peso de la mercancía\n• Origen y destino (con código postal)\n• Placas del vehículo, operador\n\n⚠️ Sin carta porte, el SAT puede detener la mercancía en tránsito.\n\n💡 _HERMES genera la carta porte con los datos de tu operación._"
+}

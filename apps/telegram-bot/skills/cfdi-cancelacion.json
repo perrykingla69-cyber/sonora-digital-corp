@@ -1,0 +1,14 @@
+{
+  "name": "cfdi-cancelacion",
+  "priority": 9,
+  "triggers": [
+    "cancelar factura",
+    "cancelar cfdi",
+    "anular factura",
+    "como cancelo",
+    "cancelacion de cfdi",
+    "cfdi cancelado"
+  ],
+  "method": "STATIC",
+  "response_text": "❌ *Cancelación de CFDI — Proceso*\n\n*Motivos válidos de cancelación (desde 2022):*\n• 01 — Comprobante emitido con errores con relación\n• 02 — Comprobante emitido con errores sin relación\n• 03 — No se llevó a cabo la operación\n• 04 — Operación nominativa relacionada en factura global\n\n⚠️ *Si tu cliente ya la usó para deducir, necesita aceptar la cancelación en el SAT (tienes 3 días).*\n\n*Plazo:* Puedes cancelar CFDIs del ejercicio fiscal en curso hasta el 31 de enero del año siguiente.\n\n🔗 Portal SAT → Factura Electrónica → Consulta/Cancelación"
+}
