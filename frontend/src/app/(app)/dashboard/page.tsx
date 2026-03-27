@@ -1,576 +1,331 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
-import { api, DashboardData, TipoCambio } from '@/lib/api'
+import { useEffect, useState, useCallback } from 'react'
+import { api } from '@/lib/api'
+import { getUser } from '@/lib/auth'
 import {
-  Mic, MicOff, CheckCircle, XCircle, ArrowRight, Zap,
-  Mail, FileText, AlertTriangle, Brain, MessageCircle,
-  ChevronRight, Volume2, Sun, Moon, RefreshCw, Eye,
-  Clock, TrendingUp, DollarSign, Bell, Play, Pause,
-  CheckCheck, MoreHorizontal, Sparkles,
+  FileText, TrendingUp, DollarSign, AlertTriangle, CheckCircle,
+  ExternalLink, Brain, Zap, Shield, Clock, ChevronRight,
+  RefreshCw, MessageCircle, GraduationCap, Star, CheckSquare,
+  ArrowRight, Info,
 } from 'lucide-react'
-
-// ── Types ──────────────────────────────────────────────────────────────────────
-type ActionPriority = 'critica' | 'alta' | 'normal'
-type ActionStatus   = 'pendiente' | 'aprobada' | 'rechazada' | 'delegada'
-type ActionSource   = 'email' | 'factura' | 'sat' | 'whatsapp' | 'sistema' | 'banco'
-
-interface AutoAction {
-  id: string
-  source: ActionSource
-  title: string
-  detail: string
-  amount?: number
-  priority: ActionPriority
-  status: ActionStatus
-  timestamp: string
-  recommendation: string
-  options: { label: string; action: string; style: 'approve' | 'reject' | 'delegate' | 'view' }[]
-}
-
-interface LiveEvent {
-  id: string
-  type: ActionSource
-  msg: string
-  time: string
-  handled: boolean
-}
+import Link from 'next/link'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const mxn = (v: number) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(v)
 
-const relTime = (iso: string) => {
-  const diff = Date.now() - new Date(iso).getTime()
-  if (diff < 60000) return 'ahora mismo'
-  if (diff < 3600000) return `hace ${Math.floor(diff / 60000)}m`
-  if (diff < 86400000) return `hace ${Math.floor(diff / 3600000)}h`
-  return `hace ${Math.floor(diff / 86400000)}d`
-}
-
-const SOURCE_META: Record<ActionSource, { icon: React.ReactNode; color: string; bg: string }> = {
-  email:    { icon: <Mail size={14} />,        color: 'text-sky-400',     bg: 'bg-sky-400/10'     },
-  factura:  { icon: <FileText size={14} />,    color: 'text-amber-400',   bg: 'bg-amber-400/10'   },
-  sat:      { icon: <AlertTriangle size={14}/>, color: 'text-red-400',    bg: 'bg-red-400/10'     },
-  whatsapp: { icon: <MessageCircle size={14}/>, color: 'text-emerald-400', bg: 'bg-emerald-400/10'},
-  sistema:  { icon: <Brain size={14} />,       color: 'text-purple-400',  bg: 'bg-purple-400/10'  },
-  banco:    { icon: <DollarSign size={14} />,  color: 'text-green-400',   bg: 'bg-green-400/10'   },
-}
-
-const PRIORITY_META: Record<ActionPriority, { label: string; color: string }> = {
-  critica: { label: 'Crítica', color: 'text-red-400 bg-red-400/10 border-red-400/20' },
-  alta:    { label: 'Alta',    color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
-  normal:  { label: 'Normal',  color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
-}
-
-// Acciones de muestra mientras no hay datos reales
-const SAMPLE_ACTIONS: AutoAction[] = [
-  {
-    id: '1',
-    source: 'email',
-    title: 'Solicitud de factura — Fourgea Industrial',
-    detail: 'Correo recibido: "Necesitamos factura por $38,500 servicio de filtración marzo". Datos extraídos automáticamente.',
-    amount: 38500,
-    priority: 'alta',
-    status: 'pendiente',
-    timestamp: new Date(Date.now() - 8 * 60000).toISOString(),
-    recommendation: 'Generar CFDI 4.0 ingreso. RFC Fourgea validado en SAT. Sin adeudos previos.',
-    options: [
-      { label: 'Generar Factura', action: 'generar_cfdi', style: 'approve' },
-      { label: 'Ver detalle',     action: 'ver_email',    style: 'view'    },
-      { label: 'Rechazar',        action: 'rechazar',     style: 'reject'  },
-    ],
-  },
-  {
-    id: '2',
-    source: 'sat',
-    title: 'Declaración IVA vence en 3 días',
-    detail: 'IVA neto calculado: $12,340. Pago domiciliado disponible. SAT confirma periodo feb 2026.',
-    amount: 12340,
-    priority: 'critica',
-    status: 'pendiente',
-    timestamp: new Date(Date.now() - 25 * 60000).toISOString(),
-    recommendation: 'Presentar declaración antes del 17. Brain IA preparó el formato. Solo requiere tu aprobación.',
-    options: [
-      { label: 'Aprobar y enviar', action: 'enviar_sat',   style: 'approve'  },
-      { label: 'Revisar cifras',   action: 'ver_cierre',   style: 'view'     },
-      { label: 'Delegar contador', action: 'delegar',      style: 'delegate' },
-    ],
-  },
-  {
-    id: '3',
-    source: 'banco',
-    title: 'Depósito sin identificar — $15,200',
-    detail: 'BBVA detectó depósito en cuenta 3871 sin referencia. Posible pago cliente Distribuidora Torres.',
-    amount: 15200,
-    priority: 'alta',
-    status: 'pendiente',
-    timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
-    recommendation: 'Historial sugiere: pago factura F-2024-089 de Torres. Aplicar cobro automáticamente.',
-    options: [
-      { label: 'Confirmar pago',   action: 'aplicar_cobro', style: 'approve'  },
-      { label: 'Ver movimiento',   action: 'ver_banco',     style: 'view'     },
-      { label: 'Reasignar',        action: 'reasignar',     style: 'delegate' },
-    ],
-  },
-  {
-    id: '4',
-    source: 'whatsapp',
-    title: 'Cliente pregunta estado nómina',
-    detail: 'WhatsApp +526621234567: "¿Ya está lista la nómina de esta quincena?" Brain IA tiene respuesta lista.',
-    priority: 'normal',
-    status: 'pendiente',
-    timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
-    recommendation: 'Nómina procesada al 100%. Respuesta automática preparada. Aprobar para enviar.',
-    options: [
-      { label: 'Enviar respuesta', action: 'enviar_wa',   style: 'approve' },
-      { label: 'Ver nómina',       action: 'ver_nomina',  style: 'view'    },
-      { label: 'Modificar resp.',  action: 'editar',      style: 'delegate'},
-    ],
-  },
+// ── Links oficiales ────────────────────────────────────────────────────────────
+const OFFICIAL_LINKS = [
+  { label: 'SAT — Portal Principal',       href: 'https://www.sat.gob.mx',             color: 'text-red-600'    },
+  { label: 'SAT — Buzón Tributario',       href: 'https://www.buzonjuridico.sat.gob.mx', color: 'text-red-600'  },
+  { label: 'DOF — Diario Oficial',         href: 'https://www.dof.gob.mx',             color: 'text-blue-600'   },
+  { label: 'VUCEM — Ventanilla Única',     href: 'https://www.ventanillaunica.gob.mx', color: 'text-green-700'  },
+  { label: 'IMSS — Portal Empresas',       href: 'https://www.imss.gob.mx/empresas',   color: 'text-teal-700'   },
+  { label: 'INFONAVIT — Patrones',         href: 'https://patronos.infonavit.org.mx',  color: 'text-orange-600' },
 ]
 
-const SAMPLE_EVENTS: LiveEvent[] = [
-  { id: 'e1', type: 'email',    msg: 'Fourgea Industrial — solicitud de factura recibida',  time: new Date(Date.now() - 8*60000).toISOString(),   handled: false },
-  { id: 'e2', type: 'sistema',  msg: 'Brain IA procesó 4 correos y generó 3 tareas',        time: new Date(Date.now() - 12*60000).toISOString(),  handled: true  },
-  { id: 'e3', type: 'sat',      msg: 'Alerta declaración IVA — 3 días para vencer',         time: new Date(Date.now() - 25*60000).toISOString(),  handled: false },
-  { id: 'e4', type: 'banco',    msg: 'Depósito no identificado $15,200 — BBVA',             time: new Date(Date.now() - 2*3600000).toISOString(), handled: false },
-  { id: 'e5', type: 'whatsapp', msg: 'Nuevo mensaje de cliente sobre nómina quincena',      time: new Date(Date.now() - 45*60000).toISOString(),  handled: false },
-  { id: 'e6', type: 'factura',  msg: 'CFDI cancelado por SAT — F-2024-071 requiere sustit.',time: new Date(Date.now() - 3*3600000).toISOString(), handled: true  },
-  { id: 'e7', type: 'sistema',  msg: 'Watchdog: todos los servicios operando correctamente',time: new Date(Date.now() - 5*60000).toISOString(),   handled: true  },
+// ── Beneficios clave ───────────────────────────────────────────────────────────
+const BENEFITS = [
+  { icon: Clock,       text: 'Ahorra hasta 12 horas de trabajo contable al mes',         color: 'text-amber-600'   },
+  { icon: Shield,      text: 'Cumplimiento fiscal garantizado con el SAT en todo momento', color: 'text-green-700'  },
+  { icon: DollarSign,  text: 'Evita multas y recargos con alertas automáticas de vencimientos', color: 'text-blue-600' },
+  { icon: Brain,       text: 'HERMES responde tus dudas fiscales 24/7 sin costo adicional', color: 'text-purple-600' },
+  { icon: FileText,    text: 'Facturación CFDI 4.0 en segundos, directa al SAT',          color: 'text-amber-600'   },
+  { icon: TrendingUp,  text: 'Reportes financieros en tiempo real para tomar mejores decisiones', color: 'text-green-700' },
 ]
 
-// ── Voice hook ─────────────────────────────────────────────────────────────────
-function useVoice(onResult: (text: string) => void) {
-  const [listening, setListening] = useState(false)
-  const [supported] = useState(() => typeof window !== 'undefined' && 'webkitSpeechRecognition' in window)
-  const recRef = useRef<any>(null)
+// ── Tareas delegables a HERMES ─────────────────────────────────────────────────
+const DELEGATE_TASKS = [
+  { id: 1, label: 'Generar factura de venta',        cmd: '/facturas',  priority: 'alta'   },
+  { id: 2, label: 'Calcular ISR del mes',            cmd: '/cierre',    priority: 'normal' },
+  { id: 3, label: 'Verificar alertas SAT',           cmd: '/alertas',   priority: 'critica'},
+  { id: 4, label: 'Conciliar movimientos bancarios', cmd: '/cierre',    priority: 'alta'   },
+  { id: 5, label: 'Calcular nómina quincenal',       cmd: '/nomina',    priority: 'normal' },
+]
 
-  const toggle = useCallback(() => {
-    if (!supported) return
-    if (listening) {
-      recRef.current?.stop()
-      setListening(false)
-      return
-    }
-    const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
-    const rec = new SR()
-    rec.lang = 'es-MX'
-    rec.continuous = false
-    rec.interimResults = false
-    rec.onresult = (e: any) => {
-      const text = e.results[0]?.[0]?.transcript || ''
-      if (text) onResult(text)
-    }
-    rec.onend = () => setListening(false)
-    rec.start()
-    recRef.current = rec
-    setListening(true)
-  }, [listening, supported, onResult])
-
-  const speak = useCallback((text: string) => {
-    if (!('speechSynthesis' in window)) return
-    window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(text)
-    utter.lang = 'es-MX'
-    utter.rate = 1.05
-    window.speechSynthesis.speak(utter)
-  }, [])
-
-  return { listening, supported, toggle, speak }
+const PRIORITY_STYLE: Record<string, string> = {
+  critica: 'bg-red-50 border-red-200 text-red-700',
+  alta:    'bg-amber-50 border-amber-200 text-amber-700',
+  normal:  'bg-green-50 border-green-200 text-green-700',
 }
 
-// ── Action Card ────────────────────────────────────────────────────────────────
-function ActionCard({
-  action, dark, onAction,
-}: { action: AutoAction; dark: boolean; onAction: (id: string, act: string) => void }) {
-  const sm = SOURCE_META[action.source]
-  const pm = PRIORITY_META[action.priority]
-  const done = action.status !== 'pendiente'
-
+// ── Componente legal ───────────────────────────────────────────────────────────
+function LegalNotice({ text }: { text: string }) {
   return (
-    <div className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
-      done ? 'opacity-50 scale-98' :
-      dark  ? 'bg-[#0f0f0f] border-[#2a2a2a] hover:border-[#D4AF37]/30' :
-              'bg-white border-gray-100 shadow-sm hover:shadow-md'
-    }`}>
-      {/* Priority stripe */}
-      <div className={`h-0.5 w-full ${
-        action.priority === 'critica' ? 'bg-red-500' :
-        action.priority === 'alta'    ? 'bg-amber-500' : 'bg-emerald-500'
-      }`} />
-
-      <div className="p-4">
-        {/* Header */}
-        <div className="flex items-start gap-3 mb-3">
-          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${sm.bg}`}>
-            <span className={sm.color}>{sm.icon}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-0.5">
-              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${pm.color}`}>
-                {pm.label}
-              </span>
-              <span className={`text-[10px] ${dark ? 'text-[#555]' : 'text-gray-400'}`}>
-                {relTime(action.timestamp)}
-              </span>
-            </div>
-            <p className={`text-sm font-semibold leading-tight ${dark ? 'text-[#E8E8E8]' : 'text-gray-900'}`}>
-              {action.title}
-            </p>
-          </div>
-          {action.amount && (
-            <div className="text-right flex-shrink-0">
-              <p className="text-sm font-black text-amber-500 tabular-nums">{mxn(action.amount)}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Detail */}
-        <p className={`text-xs leading-relaxed mb-3 ${dark ? 'text-[#888]' : 'text-gray-500'}`}>
-          {action.detail}
-        </p>
-
-        {/* AI Recommendation */}
-        <div className={`flex items-start gap-2 rounded-xl p-3 mb-4 ${
-          dark ? 'bg-[#D4AF37]/5 border border-[#D4AF37]/15' : 'bg-amber-50 border border-amber-100'
-        }`}>
-          <Sparkles size={12} className="text-amber-500 mt-0.5 flex-shrink-0" />
-          <p className={`text-xs leading-relaxed ${dark ? 'text-[#D4AF37]/80' : 'text-amber-700'}`}>
-            <span className="font-semibold">Brain IA: </span>{action.recommendation}
-          </p>
-        </div>
-
-        {/* Action buttons */}
-        {!done ? (
-          <div className="flex gap-2 flex-wrap">
-            {action.options.map(opt => (
-              <button
-                key={opt.action}
-                onClick={() => onAction(action.id, opt.action)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                  opt.style === 'approve'  ? 'bg-emerald-500 hover:bg-emerald-400 text-white' :
-                  opt.style === 'reject'   ? (dark ? 'bg-[#2a2a2a] hover:bg-red-500/20 text-red-400 border border-[#333]' : 'bg-gray-100 hover:bg-red-50 text-red-500 border border-gray-200') :
-                  opt.style === 'delegate' ? (dark ? 'bg-[#2a2a2a] hover:bg-purple-500/20 text-purple-400 border border-[#333]' : 'bg-gray-100 hover:bg-purple-50 text-purple-500 border border-gray-200') :
-                                             (dark ? 'bg-[#2a2a2a] text-[#aaa] border border-[#333] hover:border-[#555]' : 'bg-gray-100 text-gray-600 border border-gray-200')
-                }`}
-              >
-                {opt.style === 'approve'  && <CheckCircle size={11} />}
-                {opt.style === 'reject'   && <XCircle size={11} />}
-                {opt.style === 'delegate' && <ArrowRight size={11} />}
-                {opt.style === 'view'     && <Eye size={11} />}
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <CheckCheck size={14} className="text-emerald-500" />
-            <span className="text-xs text-emerald-500 font-semibold capitalize">{action.status}</span>
-          </div>
-        )}
-      </div>
+    <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-700">
+      <Info size={13} className="mt-0.5 shrink-0" />
+      <span>{text}</span>
     </div>
   )
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const [dash,    setDash]    = useState<DashboardData | null>(null)
-  const [tc,      setTc]      = useState<TipoCambio | null>(null)
-  const [dark,    setDark]    = useState(true)
-  const [actions, setActions] = useState<AutoAction[]>(SAMPLE_ACTIONS)
-  const [events,  setEvents]  = useState<LiveEvent[]>(SAMPLE_EVENTS)
-  const [voice,   setVoice]   = useState('')
-  const [aiReply, setAiReply] = useState('')
-  const [pulse,   setPulse]   = useState(false)
-  const [loading, setLoading] = useState(true)
+  const user = getUser()
+  const nombre = user?.nombre?.split(' ')[0] || 'Empresario'
 
-  // Fetch real data
-  useEffect(() => {
-    Promise.allSettled([
-      api.get<DashboardData>('/dashboard'),
-      api.get<TipoCambio>('/tipo-cambio/hoy'),
-    ]).then(([d, t]) => {
-      if (d.status === 'fulfilled') setDash(d.value)
-      if (t.status === 'fulfilled') setTc(t.value)
-    }).finally(() => setLoading(false))
-  }, [])
+  const [stats, setStats]       = useState({ facturas: 0, pendiente: 0, clientes: 0, ahorro: 48000 })
+  const [tc, setTc]             = useState<number | null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [hermesMsg, setHermesMsg]   = useState('')
+  const [hermesReply, setHermesReply] = useState('')
+  const [hermesLoading, setHermesLoading] = useState(false)
 
-  // Poll for new events & actions every 30s
-  useEffect(() => {
-    const id = setInterval(() => {
-      api.get<TipoCambio>('/tipo-cambio/hoy').then(setTc).catch(() => {})
-      // Fetch pending tasks from Brain IA
-      api.get<AutoAction[]>('/api/brain/tasks?status=pendiente').then(tasks => {
-        if (tasks?.length) setActions(prev => {
-          const ids = new Set(prev.map(a => a.id))
-          const novel = tasks.filter((t: AutoAction) => !ids.has(t.id))
-          if (novel.length) { setPulse(true); setTimeout(() => setPulse(false), 2000) }
-          return [...novel, ...prev]
-        })
-      }).catch(() => {})
-    }, 30_000)
-    return () => clearInterval(id)
-  }, [])
-
-  // Voice handler
-  const handleVoice = useCallback(async (text: string) => {
-    setVoice(text)
-    setAiReply('Procesando...')
+  const loadData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true)
     try {
-      const res = await api.post<{ answer: string }>('/api/brain/ask', {
-        question: text, channel: 'dashboard', tenant_id: dash?.tenant_id || 'default',
-      })
-      const reply = res.answer || 'Sin respuesta del Brain IA.'
-      setAiReply(reply)
-      speak(reply)
+      const [dash, tipoCambio] = await Promise.allSettled([
+        api.get('/dashboard'),
+        api.get('/tipo-cambio'),
+      ])
+      if (dash.status === 'fulfilled') {
+        const d = (dash.value as { data: Record<string, number> }).data
+        setStats({
+          facturas:  d.facturas_mes     ?? 0,
+          pendiente: d.monto_pendiente  ?? 0,
+          clientes:  d.clientes_activos ?? 0,
+          ahorro:    d.horas_ahorradas  ? d.horas_ahorradas * 800 : 48000,
+        })
+      }
+      if (tipoCambio.status === 'fulfilled') {
+        const tc2 = (tipoCambio.value as { data: Record<string, number> }).data
+        setTc(tc2?.precio_venta ?? null)
+      }
+    } catch {}
+    setLoading(false)
+    setRefreshing(false)
+  }, [])
+
+  useEffect(() => { loadData() }, [loadData])
+
+  const askHermes = async () => {
+    if (!hermesMsg.trim() || hermesLoading) return
+    setHermesLoading(true)
+    setHermesReply('')
+    try {
+      const res = await api.post('/api/brain/ask', { question: hermesMsg, channel: 'web' }) as { data: Record<string, string> }
+      setHermesReply(res.data?.answer || res.data?.respuesta || 'Procesando tu consulta...')
     } catch {
-      setAiReply('No pude conectar con Brain IA.')
+      setHermesReply('No pude conectar con HERMES en este momento. Intenta de nuevo.')
     }
-  }, [dash])
+    setHermesLoading(false)
+  }
 
-  const { listening, supported, toggle: toggleMic, speak } = useVoice(handleVoice)
-
-  const handleAction = useCallback(async (id: string, act: string) => {
-    const status: ActionStatus = act === 'rechazar' ? 'rechazada' : act === 'delegar' ? 'delegada' : 'aprobada'
-    setActions(prev => prev.map(a => a.id === id ? { ...a, status } : a))
-    // Notify Brain IA
-    try { await api.post('/api/brain/task/action', { task_id: id, action: act }) } catch {}
-    // Add to live feed
-    const target = actions.find(a => a.id === id)
-    if (target) {
-      setEvents(prev => [{
-        id: `ev_${Date.now()}`,
-        type: target.source,
-        msg: `${target.title} — ${status}`,
-        time: new Date().toISOString(),
-        handled: true,
-      }, ...prev.slice(0, 19)])
-    }
-  }, [actions])
-
-  const pending  = actions.filter(a => a.status === 'pendiente')
-  const resolved = actions.filter(a => a.status !== 'pendiente')
-  const tcVal    = tc?.usd_mxn || tc?.tipo_cambio || 0
-  const resumen  = dash?.resumen
-
-  const bg    = dark ? 'bg-[#070707] text-[#E8E8E8]' : 'bg-gray-50 text-gray-900'
-  const card  = dark ? 'bg-[#0f0f0f] border-[#1e1e1e]' : 'bg-white border-gray-100 shadow-sm'
-  const muted = dark ? 'text-[#555]' : 'text-gray-400'
+  const hora = new Date().getHours()
+  const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches'
 
   return (
-    <div className={`min-h-screen ${bg} transition-colors duration-300`}>
-      <div className="max-w-6xl mx-auto px-4 py-4 space-y-4">
+    <div className="min-h-screen p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
 
-        {/* ── Top bar ── */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${card}`}>
-              <span className={`w-2 h-2 rounded-full animate-pulse ${pulse ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-              <span className="text-xs font-semibold">
-                {pulse ? 'Nueva acción detectada' : 'Sistema activo'}
-              </span>
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-sovereign-text font-display">
+            {saludo}, {nombre}
+          </h1>
+          <p className="text-sm text-sovereign-muted mt-0.5">
+            Tu empresa está protegida y al corriente con el SAT
+          </p>
+        </div>
+        <button
+          onClick={() => loadData(true)}
+          className="p-2 rounded-xl glass hover:bg-white/80 transition-colors"
+          title="Actualizar"
+        >
+          <RefreshCw size={16} className={`text-sovereign-muted ${refreshing ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+
+      {/* ── KPIs ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Facturas este mes',  value: loading ? '—' : String(stats.facturas),   icon: FileText,    color: 'text-amber-600',  sub: 'emitidas' },
+          { label: 'Por cobrar',         value: loading ? '—' : mxn(stats.pendiente),      icon: DollarSign,  color: 'text-blue-600',   sub: 'pendiente' },
+          { label: 'Clientes activos',   value: loading ? '—' : String(stats.clientes),    icon: TrendingUp,  color: 'text-green-700',  sub: 'en plataforma' },
+          { label: 'USD/MXN hoy',        value: tc ? `$${tc.toFixed(2)}` : '—',            icon: Zap,         color: 'text-purple-600', sub: 'tipo de cambio' },
+        ].map((kpi, i) => (
+          <div key={i} className="glass rounded-2xl p-4">
+            <div className="flex items-start justify-between mb-2">
+              <p className="text-xs text-sovereign-muted">{kpi.label}</p>
+              <kpi.icon size={16} className={kpi.color} />
             </div>
-            {pending.length > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <Bell size={12} className="text-amber-500" />
-                <span className="text-xs font-bold text-amber-500">{pending.length} pendiente{pending.length > 1 ? 's' : ''}</span>
-              </div>
-            )}
+            <p className="text-xl font-bold text-sovereign-text font-display">{kpi.value}</p>
+            <p className="text-xs text-sovereign-muted mt-0.5">{kpi.sub}</p>
           </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        {/* ── HERMES interactivo ── */}
+        <div className="lg:col-span-2 glass rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-2">
-            {tcVal > 0 && (
-              <div className={`px-3 py-1.5 rounded-xl border text-xs tabular-nums font-black text-amber-500 ${card}`}>
-                ${tcVal.toFixed(2)} <span className={`font-normal ${muted}`}>USD/MXN</span>
-              </div>
-            )}
-            <button onClick={() => setDark(d => !d)}
-              className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${
-                dark ? 'bg-[#161616] border-[#333] text-[#888] hover:text-amber-400' : 'bg-white border-gray-200 text-gray-400 hover:text-amber-500'
-              }`}>
-              {dark ? <Sun size={14} /> : <Moon size={14} />}
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+              <Brain size={16} className="text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-sovereign-text text-sm">HERMES — Tu Contador Digital</p>
+              <p className="text-xs text-sovereign-muted">Disponible 24/7 · Respuesta inmediata</p>
+            </div>
+            <span className="ml-auto flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              En línea
+            </span>
+          </div>
+
+          <LegalNotice text="HERMES proporciona orientación fiscal basada en la legislación mexicana vigente (CFF, LISR, LIVA, IMSS). Para decisiones de alta complejidad, complementa con un contador certificado." />
+
+          <div className="flex gap-2">
+            <input
+              value={hermesMsg}
+              onChange={e => setHermesMsg(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && askHermes()}
+              placeholder="Pregunta algo: ¿cuándo vence mi declaración?, ¿cómo cancelo una factura?..."
+              className="flex-1 px-3 py-2.5 rounded-xl border border-sovereign-gold/20 bg-white/70 text-sm text-sovereign-text placeholder:text-sovereign-muted focus:outline-none focus:border-sovereign-gold/50"
+            />
+            <button
+              onClick={askHermes}
+              disabled={hermesLoading || !hermesMsg.trim()}
+              className="px-4 py-2.5 rounded-xl bg-sovereign-gold text-white text-sm font-medium disabled:opacity-50 hover:bg-amber-500 transition-colors"
+            >
+              {hermesLoading ? '...' : 'Preguntar'}
             </button>
           </div>
-        </div>
 
-        {/* ── KPI bar rápida ── */}
-        {resumen && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {[
-              { l: 'Ingresos',    v: mxn(resumen.ingresos_mes), icon: <TrendingUp size={12} />,  color: 'text-emerald-400' },
-              { l: 'Utilidad',    v: mxn(resumen.utilidad_mes), icon: <DollarSign size={12} />,  color: resumen.utilidad_mes >= 0 ? 'text-emerald-400' : 'text-red-400' },
-              { l: 'Por Cobrar',  v: mxn(resumen.por_cobrar),   icon: <Clock size={12} />,        color: 'text-amber-400' },
-              { l: 'Facturas',    v: String(resumen.facturas_mes), icon: <FileText size={12} />, color: 'text-sky-400' },
-            ].map(k => (
-              <div key={k.l} className={`rounded-xl border px-3 py-2.5 flex items-center gap-2.5 ${card}`}>
-                <span className={k.color}>{k.icon}</span>
-                <div>
-                  <p className={`text-[10px] uppercase tracking-wide ${muted}`}>{k.l}</p>
-                  <p className="text-sm font-black tabular-nums">{k.v}</p>
-                </div>
-              </div>
+          {hermesReply && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-100 text-sm text-sovereign-text whitespace-pre-wrap">
+              {hermesReply}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {['¿Cuándo vence el IVA?', '¿Cómo timbro una factura?', 'Diferencia ISR vs RESICO'].map(q => (
+              <button
+                key={q}
+                onClick={() => { setHermesMsg(q); }}
+                className="px-3 py-1 rounded-full text-xs bg-white border border-sovereign-gold/20 text-sovereign-muted hover:text-sovereign-text hover:border-sovereign-gold/40 transition-colors"
+              >
+                {q}
+              </button>
             ))}
           </div>
-        )}
-        {!resumen && !loading && (
-          <div className={`rounded-xl border px-4 py-3 text-sm ${muted} ${card}`}>
-            Sin datos financieros · verificar conexión API
-          </div>
-        )}
+        </div>
 
-        {/* ── Main 2-col layout ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
-
-          {/* ── LEFT: Cola de decisiones ── */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-bold flex items-center gap-2">
-                  <Sparkles size={14} className="text-amber-500" />
-                  Cola de decisiones
-                </h2>
-                <p className={`text-xs mt-0.5 ${muted}`}>
-                  Brain IA detectó y preparó estas acciones. Solo aprueba o rechaza.
-                </p>
+        {/* ── Acciones rápidas ── */}
+        <div className="glass rounded-2xl p-5 space-y-3">
+          <p className="font-semibold text-sovereign-text text-sm">Acceso rápido</p>
+          {[
+            { label: 'Nueva factura',         href: '/facturas', icon: FileText,       color: 'bg-amber-50 text-amber-700'  },
+            { label: 'Cierre del mes',        href: '/cierre',   icon: TrendingUp,     color: 'bg-blue-50 text-blue-700'    },
+            { label: 'Tareas pendientes',     href: '/tasks',    icon: CheckSquare,    color: 'bg-green-50 text-green-700'  },
+            { label: 'Academia HERMES',       href: '/academy',  icon: GraduationCap,  color: 'bg-purple-50 text-purple-700'},
+            { label: 'Chat con HERMES',       href: '/chat',     icon: MessageCircle,  color: 'bg-amber-50 text-amber-700'  },
+          ].map((item, i) => (
+            <Link
+              key={i}
+              href={item.href}
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition-colors group"
+            >
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.color}`}>
+                <item.icon size={15} />
               </div>
-              {resolved.length > 0 && (
-                <span className={`text-[10px] px-2 py-1 rounded-full border ${muted} border-current`}>
-                  {resolved.length} resuelta{resolved.length > 1 ? 's' : ''} hoy
-                </span>
-              )}
-            </div>
-
-            {pending.length === 0 ? (
-              <div className={`rounded-2xl border p-10 text-center ${card}`}>
-                <CheckCheck size={32} className="mx-auto mb-3 text-emerald-500" />
-                <p className="text-sm font-semibold text-emerald-400">Todo al día</p>
-                <p className={`text-xs mt-1 ${muted}`}>Brain IA está monitoreando. Te avisaré cuando haya algo.</p>
-              </div>
-            ) : (
-              pending.map(action => (
-                <ActionCard key={action.id} action={action} dark={dark} onAction={handleAction} />
-              ))
-            )}
-
-            {/* Resolved (collapsed) */}
-            {resolved.length > 0 && (
-              <div className={`rounded-xl border px-4 py-3 ${card}`}>
-                <div className="flex items-center gap-2">
-                  <CheckCheck size={13} className="text-emerald-500" />
-                  <span className="text-xs font-semibold text-emerald-500">
-                    {resolved.length} acción{resolved.length > 1 ? 'es resueltas' : ' resuelta'} en esta sesión
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── RIGHT: Live feed + Voice ── */}
-          <div className="space-y-4">
-
-            {/* Voice command */}
-            <div className={`rounded-2xl border p-4 ${card}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <Brain size={14} className="text-amber-500" />
-                <span className="text-xs font-semibold">Consulta por voz</span>
-                {!supported && <span className={`text-[10px] ${muted}`}>(solo Chrome)</span>}
-              </div>
-
-              <button
-                onClick={toggleMic}
-                disabled={!supported}
-                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
-                  listening
-                    ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
-                    : dark
-                      ? 'bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/20'
-                      : 'bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200'
-                }`}
-              >
-                {listening ? <MicOff size={16} /> : <Mic size={16} />}
-                {listening ? 'Escuchando...' : 'Hablar con Brain IA'}
-              </button>
-
-              {voice && (
-                <div className="mt-3 space-y-2">
-                  <div className={`rounded-xl px-3 py-2 text-xs ${dark ? 'bg-[#1a1a1a]' : 'bg-gray-50'}`}>
-                    <span className={muted}>Tú: </span>
-                    <span className="font-medium">{voice}</span>
-                  </div>
-                  {aiReply && (
-                    <div className={`rounded-xl px-3 py-2 text-xs border ${
-                      dark ? 'bg-[#D4AF37]/5 border-[#D4AF37]/15 text-[#D4AF37]/90' : 'bg-amber-50 border-amber-100 text-amber-700'
-                    }`}>
-                      <div className="flex items-start gap-1.5">
-                        <Volume2 size={11} className="mt-0.5 flex-shrink-0" />
-                        <span>{aiReply}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Live feed */}
-            <div className={`rounded-2xl border overflow-hidden ${card}`}>
-              <div className={`px-4 py-3 border-b flex items-center justify-between ${dark ? 'border-[#1e1e1e]' : 'border-gray-100'}`}>
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs font-semibold">Actividad en vivo</span>
-                </div>
-                <span className={`text-[10px] ${muted}`}>{events.length} eventos hoy</span>
-              </div>
-              <div className={`divide-y max-h-[400px] overflow-y-auto ${dark ? 'divide-[#131313]' : 'divide-gray-50'}`}>
-                {events.map(ev => {
-                  const sm = SOURCE_META[ev.type]
-                  return (
-                    <div key={ev.id} className={`flex items-start gap-3 px-4 py-3 transition-colors ${
-                      ev.handled
-                        ? dark ? 'opacity-40' : 'opacity-50'
-                        : dark ? 'hover:bg-[#141414]' : 'hover:bg-gray-50'
-                    }`}>
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${sm.bg}`}>
-                        <span className={`${sm.color} scale-90`}>{sm.icon}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs leading-snug ${ev.handled ? '' : 'font-medium'}`}>{ev.msg}</p>
-                        <p className={`text-[10px] mt-0.5 ${muted}`}>{relTime(ev.time)}</p>
-                      </div>
-                      {!ev.handled && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0 mt-1.5" />
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Quick actions */}
-            <div className={`rounded-2xl border p-4 ${card}`}>
-              <p className="text-xs font-semibold mb-3">Acciones rápidas</p>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: 'Nueva factura', href: '/facturas/nueva', color: 'text-amber-500' },
-                  { label: 'Consultar SAT', href: '/fiscal', color: 'text-red-400' },
-                  { label: 'Ver nómina',    href: '/nomina',  color: 'text-emerald-400' },
-                  { label: 'Brain IA',      href: '/brain',   color: 'text-purple-400' },
-                ].map(item => (
-                  <a key={item.href} href={item.href}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                      dark ? 'bg-[#161616] hover:bg-[#1e1e1e] border border-[#2a2a2a]' : 'bg-gray-50 hover:bg-gray-100 border border-gray-100'
-                    } ${item.color}`}
-                  >
-                    <ChevronRight size={10} />
-                    {item.label}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-          </div>
+              <span className="text-sm text-sovereign-text">{item.label}</span>
+              <ChevronRight size={14} className="ml-auto text-sovereign-muted group-hover:text-sovereign-text transition-colors" />
+            </Link>
+          ))}
         </div>
       </div>
+
+      {/* ── Tareas delegables a HERMES ── */}
+      <div className="glass rounded-2xl p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="font-semibold text-sovereign-text text-sm">Delega a HERMES</p>
+          <span className="text-xs text-sovereign-muted">Tareas que HERMES puede hacer por ti</span>
+        </div>
+        <LegalNotice text="Cada acción ejecutada por HERMES se registra con timestamp y referencia legal aplicable (artículo de ley). Siempre tienes control y aprobación final." />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {DELEGATE_TASKS.map(task => (
+            <div key={task.id} className={`flex items-center justify-between p-3 rounded-xl border ${PRIORITY_STYLE[task.priority]}`}>
+              <div className="flex items-center gap-2">
+                <CheckSquare size={14} />
+                <span className="text-sm font-medium">{task.label}</span>
+              </div>
+              <Link href={task.cmd} className="text-xs underline underline-offset-2 opacity-70 hover:opacity-100">
+                Ir
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Beneficios ── */}
+      <div className="glass rounded-2xl p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Star size={16} className="text-amber-500" />
+          <p className="font-semibold text-sovereign-text text-sm">Por qué HERMES transforma tu empresa</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {BENEFITS.map((b, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/50 border border-white/80">
+              <b.icon size={16} className={`mt-0.5 shrink-0 ${b.color}`} />
+              <p className="text-sm text-sovereign-text">{b.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Links oficiales ── */}
+      <div className="glass rounded-2xl p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Shield size={16} className="text-green-700" />
+          <p className="font-semibold text-sovereign-text text-sm">Portales oficiales — siempre en línea</p>
+          <span className="ml-auto text-xs text-sovereign-muted">Acceso directo a fuentes gubernamentales</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {OFFICIAL_LINKS.map((link, i) => (
+            <a
+              key={i}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/60 border border-white/80 hover:bg-white transition-colors group"
+            >
+              <ExternalLink size={12} className={`shrink-0 ${link.color}`} />
+              <span className={`text-xs font-medium ${link.color} group-hover:underline`}>{link.label}</span>
+            </a>
+          ))}
+        </div>
+        <LegalNotice text="HERMES integra y monitorea cambios en DOF, SAT y normativas IMSS/INFONAVIT. Te notificamos automáticamente cuando hay actualizaciones que afectan tu empresa." />
+      </div>
+
+      {/* ── Academia preview ── */}
+      <div className="glass rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <GraduationCap size={16} className="text-purple-600" />
+            <p className="font-semibold text-sovereign-text text-sm">Academia HERMES</p>
+          </div>
+          <Link href="/academy" className="text-xs text-sovereign-muted hover:text-sovereign-text flex items-center gap-1">
+            Ver todo <ArrowRight size={12} />
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {[
+            { title: 'Facturación CFDI 4.0 sin errores',         tag: 'Fiscal',       tiempo: '8 min' },
+            { title: 'Cómo reducir ISR legalmente en tu empresa', tag: 'Impuestos',    tiempo: '12 min' },
+            { title: 'Nómina IMSS: errores que cuestan miles',    tag: 'Nómina',       tiempo: '10 min' },
+          ].map((curso, i) => (
+            <Link key={i} href="/academy" className="p-3 rounded-xl bg-white/50 border border-white/80 hover:bg-white transition-colors group">
+              <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">{curso.tag}</span>
+              <p className="text-sm font-medium text-sovereign-text mt-2 group-hover:text-amber-700 transition-colors">{curso.title}</p>
+              <p className="text-xs text-sovereign-muted mt-1">{curso.tiempo} de lectura</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+
     </div>
   )
 }

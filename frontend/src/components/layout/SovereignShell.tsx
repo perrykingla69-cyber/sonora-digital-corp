@@ -8,7 +8,7 @@ import {
   Zap, ChevronRight, LogOut, LayoutDashboard, Building2,
   Receipt, CheckSquare, MessageCircle, ShieldCheck,
   CreditCard, Loader2, ThumbsUp, ThumbsDown, X,
-  Bot, Sparkles, BookUser,
+  Bot, Sparkles, BookUser, GraduationCap, Star,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -35,21 +35,14 @@ const QUICK_CMDS = [
   { label: 'Estado',         icon: Zap,         cmd: '/status' },
 ]
 
-// ── Nav items for icon dock ──────────────────────────────────────────
+// ── Nav items for icon dock — simplificado ───────────────────────────
 const DOCK_ITEMS = [
-  { href: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/facturas',   icon: FileText,         label: 'Facturas' },
-  { href: '/nomina',     icon: Users,             label: 'Nómina' },
-  { href: '/cierre',     icon: Calculator,        label: 'Cierre' },
-  { href: '/mve',        icon: Package,           label: 'MVE' },
-  { href: '/directorio', icon: Building2,          label: 'Directorio' },
-  { href: '/resico',     icon: Receipt,            label: 'RESICO' },
-  { href: '/contador',   icon: BookUser,           label: 'Clientes' },
-  { href: '/tasks',      icon: CheckSquare,        label: 'Tareas' },
-  { href: '/brain',      icon: Brain,              label: 'Brain IA' },
-  { href: '/whatsapp',   icon: MessageCircle,      label: 'WhatsApp' },
-  { href: '/admin',      icon: ShieldCheck,        label: 'Admin' },
-  { href: '/billing',    icon: CreditCard,         label: 'Billing' },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Inicio'    },
+  { href: '/facturas',  icon: FileText,         label: 'Facturas'  },
+  { href: '/cierre',    icon: Calculator,       label: 'Finanzas'  },
+  { href: '/academy',   icon: GraduationCap,    label: 'Academia'  },
+  { href: '/tasks',     icon: CheckSquare,      label: 'Tareas'    },
+  { href: '/admin',     icon: ShieldCheck,      label: 'Admin'     },
 ]
 
 const MODULE_ROUTES: Record<string, string> = {
