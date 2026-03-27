@@ -3,9 +3,9 @@
 
 > Este archivo carga automáticamente en cada sesión. Mantén el idioma en español y no pegues secretos reales en prompts, commits o archivos versionados.
 
-## 🔑 PALABRA CLAVE DE ACTIVACIÓN: `DENIURGO`
+## 🔑 PALABRA CLAVE DE ACTIVACIÓN: `.DENIURGO`
 
-Cuando Marco escribe **DENIURGO** al inicio de una sesión, ejecutar automáticamente:
+Cuando Luis Daniel escribe **.DENIURGO** (con punto adelante, en cualquier parte del mensaje), ejecutar automáticamente:
 
 1. `mem_context` → recuperar sesión anterior (Engram)
 2. `mem_search "pendientes"` → tareas críticas abiertas
