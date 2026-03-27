@@ -1,0 +1,118 @@
+{
+  "name": "MYSTIC — Publicación Automática Redes Sociales",
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "parameters": {
+        "path": "social-post",
+        "method": "POST",
+        "responseMode": "onReceived"
+      },
+      "position": [200, 300]
+    },
+    {
+      "id": "brain",
+      "name": "Brain IA — Generar Contenido",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/brain/ask",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "question", "value": "=Genera un post profesional para redes sociales sobre: {{$json.evento}}. Empresa: Sonora Digital Corp. Tone: profesional, breve, con emoji. Max 280 chars para Twitter, 500 para LinkedIn." },
+            { "name": "tenant_id", "value": "={{$json.tenant_id || 'sonora'}}" },
+            { "name": "channel", "value": "social" }
+          ]
+        }
+      },
+      "position": [450, 300]
+    },
+    {
+      "id": "split",
+      "name": "Dividir por Red",
+      "type": "n8n-nodes-base.switch",
+      "parameters": {
+        "dataPropertyName": "={{$json.redes || ['instagram','linkedin']}}",
+        "rules": {
+          "rules": [
+            { "value": "instagram" },
+            { "value": "linkedin"  },
+            { "value": "twitter"   },
+            { "value": "facebook"  }
+          ]
+        }
+      },
+      "position": [700, 300]
+    },
+    {
+      "id": "instagram",
+      "name": "Instagram (via Meta API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{$env.INSTAGRAM_ACCOUNT_ID}}/media",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "caption", "value": "={{$node['Brain IA — Generar Contenido'].json.answer}}" },
+            { "name": "access_token", "value": "={{$env.META_ACCESS_TOKEN}}" }
+          ]
+        }
+      },
+      "position": [950, 200]
+    },
+    {
+      "id": "linkedin",
+      "name": "LinkedIn Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/v2/ugcPosts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$env.LINKEDIN_TOKEN}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "author", "value": "=urn:li:person:{{$env.LINKEDIN_PERSON_ID}}" },
+            { "name": "lifecycleState", "value": "PUBLISHED" },
+            { "name": "specificContent.com.linkedin.ugc.ShareContent.shareCommentary.text", "value": "={{$node['Brain IA — Generar Contenido'].json.answer}}" },
+            { "name": "specificContent.com.linkedin.ugc.ShareContent.shareMediaCategory", "value": "NONE" },
+            { "name": "visibility.com.linkedin.ugc.MemberNetworkVisibility", "value": "PUBLIC" }
+          ]
+        }
+      },
+      "position": [950, 350]
+    },
+    {
+      "id": "notify",
+      "name": "Notificar Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{$env.TELEGRAM_CEO_CHAT_ID}}",
+        "text": "=✅ *Post publicado*\n\n{{$node['Brain IA — Generar Contenido'].json.answer}}\n\n_Evento: {{$json.evento}}_"
+      },
+      "position": [1200, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger":          { "main": [[{ "node": "Brain IA — Generar Contenido", "type": "main", "index": 0 }]] },
+    "Brain IA — Generar Contenido": { "main": [[{ "node": "Dividir por Red", "type": "main", "index": 0 }]] },
+    "Dividir por Red": {
+      "main": [
+        [{ "node": "Instagram (via Meta API)", "type": "main", "index": 0 }],
+        [{ "node": "LinkedIn Post",            "type": "main", "index": 0 }]
+      ]
+    },
+    "Instagram (via Meta API)": { "main": [[{ "node": "Notificar Telegram", "type": "main", "index": 0 }]] },
+    "LinkedIn Post":            { "main": [[{ "node": "Notificar Telegram", "type": "main", "index": 0 }]] }
+  }
+}

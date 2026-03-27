@@ -1,0 +1,277 @@
+{
+  "_readme": {
+    "nombre": "WhatsApp Personal — Brain IA MYSTIC",
+    "descripcion": "Webhook que recibe mensajes del número personal de Luis Daniel (526623538272) y los procesa como consultas al Brain IA de MYSTIC. Verifica el número remitente, consulta el Brain IA y responde automáticamente por WhatsApp.",
+    "version": "1.0.0",
+    "autor": "Marco / Sonora Digital Corp",
+    "instalacion": [
+      "1. En N8N ir a Workflows > Import from JSON",
+      "2. Pegar el contenido de este archivo",
+      "3. Activar el workflow — el webhook se registra automáticamente",
+      "4. Configurar Baileys (http://wa:3001) para enviar webhooks a:",
+      "   POST http://n8n:5679/webhook/personal-wa",
+      "5. El payload que envía Baileys debe tener la estructura:",
+      "   { 'from': '526623538272@s.whatsapp.net', 'body': 'mensaje del usuario' }",
+      "   o alternativamente:",
+      "   { 'data': { 'from': '...', 'body': '...' } }",
+      "6. El Brain IA debe estar corriendo en http://api:8000",
+      "7. Verificar que el endpoint /api/brain/ask esté activo"
+    ],
+    "variables_requeridas": {},
+    "variables_opcionales": {
+      "BRAIN_API_URL": "URL del Brain IA (default: http://api:8000)",
+      "WA_SERVICE_URL": "URL del servicio Baileys (default: http://wa:3001)"
+    },
+    "notas": [
+      "El número de Luis Daniel está hardcodeado como 526623538272 (MX + número)",
+      "Mensajes de otros números son ignorados silenciosamente",
+      "tenant_id es 'luis_daniel' para personalizar respuestas del Brain IA",
+      "Si el Brain IA no responde, el nodo tiene continueOnFail activado"
+    ],
+    "tags": ["agenda", "luis-daniel", "personal"],
+    "webhook_path": "/webhook/personal-wa",
+    "metodo": "POST"
+  },
+  "name": "WhatsApp Personal — Brain IA MYSTIC",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "personal-wa",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-wa",
+      "name": "Webhook WhatsApp Personal",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "personal-wa-luis-daniel"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// VERIFICACIÓN DE NÚMERO + EXTRACCIÓN DE MENSAJE\n// Solo procesa mensajes de Luis Daniel: 526623538272\n// ============================================================\n\nconst body = $input.first().json.body || {};\n\n// --- Número autorizado de Luis Daniel ---\nconst NUMERO_AUTORIZADO = '526623538272';\n\n// --- Extraer datos del payload de Baileys ---\n// Baileys puede enviar el payload de varias formas según configuración\nlet from = '';\nlet mensaje = '';\n\n// Estructura plana: { from, body }\nif (body.from) {\n  from = String(body.from).replace('@s.whatsapp.net', '').replace('@c.us', '').trim();\n  mensaje = body.body || body.message || body.text || '';\n}\n// Estructura anidada: { data: { from, body } }\nelse if (body.data && body.data.from) {\n  from = String(body.data.from).replace('@s.whatsapp.net', '').replace('@c.us', '').trim();\n  mensaje = body.data.body || body.data.message || body.data.text || '';\n}\n// Estructura de evento de Baileys: { messages: [{ key: { remoteJid }, message: { conversation } }] }\nelse if (body.messages && body.messages.length > 0) {\n  const msg = body.messages[0];\n  from = String(msg.key?.remoteJid || '').replace('@s.whatsapp.net', '').replace('@c.us', '').trim();\n  mensaje = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';\n}\n\n// --- Verificar que sea el número de Luis Daniel ---\nif (from !== NUMERO_AUTORIZADO) {\n  console.log(`Mensaje ignorado de número no autorizado: ${from}`);\n  return [{\n    json: {\n      autorizado: false,\n      from,\n      razon: 'Número no autorizado — solo se procesan mensajes de Luis Daniel'\n    }\n  }];\n}\n\n// --- Mensaje vacío ---\nif (!mensaje || mensaje.trim() === '') {\n  return [{\n    json: {\n      autorizado: false,\n      from,\n      razon: 'Mensaje vacío — ignorado'\n    }\n  }];\n}\n\n// --- Limpiar y preparar el mensaje ---\nconst mensajeLimpio = mensaje.trim();\n\n// --- Detectar comandos especiales ---\nlet comandoEspecial = null;\nif (mensajeLimpio.toLowerCase().startsWith('/agenda')) comandoEspecial = 'agenda';\nif (mensajeLimpio.toLowerCase().startsWith('/estado')) comandoEspecial = 'estado_mystic';\nif (mensajeLimpio.toLowerCase().startsWith('/ayuda')) comandoEspecial = 'ayuda';\n\nreturn [{\n  json: {\n    autorizado: true,\n    from: NUMERO_AUTORIZADO,\n    mensaje: mensajeLimpio,\n    comando_especial: comandoEspecial,\n    tenant_id: 'luis_daniel',\n    canal: 'whatsapp_personal',\n    timestamp: new Date().toISOString()\n  }\n}];\n"
+      },
+      "id": "node-code-verify",
+      "name": "Verificar Número + Extraer Mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-autorizado",
+              "leftValue": "={{ $json.autorizado }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-autorizado",
+      "name": "¿Número Autorizado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/brain/ask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"question\": \"{{ $json.mensaje }}\",\n  \"tenant_id\": \"{{ $json.tenant_id }}\",\n  \"channel\": \"{{ $json.canal }}\",\n  \"user_id\": \"luis_daniel\",\n  \"context\": {\n    \"from\": \"{{ $json.from }}\",\n    \"timestamp\": \"{{ $json.timestamp }}\"\n  }\n}",
+        "options": {
+          "timeout": 30000,
+          "continueOnFail": true
+        }
+      },
+      "id": "node-brain-ask",
+      "name": "Consultar Brain IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// PREPARAR RESPUESTA FINAL\n// Maneja respuesta del Brain IA o fallback si falla\n// ============================================================\n\nconst brainResponse = $input.first().json;\nconst mensajeOriginal = $node['Verificar Número + Extraer Mensaje'].json.mensaje;\n\nlet respuesta = '';\n\n// --- Verificar si el Brain IA respondió correctamente ---\nif (brainResponse.error || !brainResponse) {\n  // Fallback si el Brain IA no está disponible\n  respuesta = `🤖 *MYSTIC Brain IA*\\n\\nEn este momento no puedo procesar tu consulta (Brain IA no disponible).\\n\\nTu pregunta fue: _\"${mensajeOriginal}\"_\\n\\nIntenta de nuevo en unos minutos o accede al panel: https://mystic.sonora.digital`;\n} else {\n  // Usar la respuesta del Brain IA\n  const respuestaBrain = brainResponse.answer || brainResponse.response || brainResponse.message || brainResponse.result || JSON.stringify(brainResponse);\n  const fuente = brainResponse.source || brainResponse.model || 'Brain IA';\n  const confianza = brainResponse.confidence ? ` (confianza: ${Math.round(brainResponse.confidence * 100)}%)` : '';\n  \n  respuesta = `🧠 *MYSTIC Brain IA*${confianza}\\n\\n${respuestaBrain}\\n\\n_Powered by MYSTIC AI OS_`;\n}\n\nreturn [{\n  json: {\n    numero_destino: '526623538272',\n    respuesta,\n    brain_raw: brainResponse\n  }\n}];\n"
+      },
+      "id": "node-code-respuesta",
+      "name": "Preparar Respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://wa:3001/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.numero_destino }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.respuesta }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000,
+          "continueOnFail": true
+        }
+      },
+      "id": "node-wa-send",
+      "name": "Responder por WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1340, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"processed\": true }",
+        "options": {}
+      },
+      "id": "node-response-ok",
+      "name": "Responder Webhook OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1560, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ignored\", \"processed\": false }",
+        "options": {}
+      },
+      "id": "node-response-ignored",
+      "name": "Responder Webhook Ignorado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 420]
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp Personal": {
+      "main": [
+        [
+          {
+            "node": "Verificar Número + Extraer Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Número + Extraer Mensaje": {
+      "main": [
+        [
+          {
+            "node": "¿Número Autorizado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Número Autorizado?": {
+      "main": [
+        [
+          {
+            "node": "Consultar Brain IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder Webhook Ignorado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Brain IA": {
+      "main": [
+        [
+          {
+            "node": "Preparar Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Responder por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder por WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "tags": [
+    { "name": "agenda" },
+    { "name": "luis-daniel" },
+    { "name": "personal" }
+  ],
+  "pinData": {}
+}

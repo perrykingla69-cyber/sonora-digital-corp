@@ -1,0 +1,181 @@
+{
+  "_readme": {
+    "nombre": "Alarma 5:30 AM — Física Cuántica + MYSTIC",
+    "descripcion": "Se ejecuta todos los días a las 5:30 AM hora Hermosillo. Genera un mensaje con concepto de física cuántica rotatorio, su aplicación a MYSTIC y la vida de Luis Daniel, una afirmación de transformación y el objetivo del día. Envía por Telegram y WhatsApp.",
+    "version": "1.0.0",
+    "autor": "Marco / Sonora Digital Corp",
+    "instalacion": [
+      "1. En N8N ir a Workflows > Import from JSON",
+      "2. Pegar el contenido de este archivo",
+      "3. Configurar las variables de entorno en Settings > Variables:",
+      "   - TELEGRAM_BOT_TOKEN : Token del bot de Telegram (obtenido de @BotFather)",
+      "   - TELEGRAM_CEO_CHAT_ID : Chat ID de Luis Daniel en Telegram",
+      "4. Activar el workflow con el toggle ON",
+      "5. El nodo WhatsApp es opcional — asegurarse que el servicio Baileys corra en http://wa:3001"
+    ],
+    "variables_requeridas": {
+      "TELEGRAM_BOT_TOKEN": "Token del bot Telegram — obtenido en @BotFather",
+      "TELEGRAM_CEO_CHAT_ID": "Chat ID numérico de Luis Daniel en Telegram"
+    },
+    "variables_opcionales": {
+      "WA_SERVICE_URL": "URL del servicio Baileys WhatsApp (default: http://wa:3001)"
+    },
+    "tags": ["agenda", "luis-daniel", "personal"],
+    "timezone": "America/Hermosillo",
+    "cron": "30 5 * * *"
+  },
+  "name": "Alarma 5:30 AM — Física Cuántica + MYSTIC",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 5 * * *"
+            }
+          ]
+        },
+        "timezone": "America/Hermosillo"
+      },
+      "id": "node-schedule-alarm",
+      "name": "Schedule Trigger 5:30 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// ALARMA 5:30 AM — FÍSICA CUÁNTICA + MYSTIC AI OS\n// Marco / Sonora Digital Corp\n// ============================================================\n\nconst now = new Date();\n\n// --- Fecha formateada en español ---\nconst opcionesFecha = {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric',\n  timeZone: 'America/Hermosillo'\n};\nconst fechaTexto = now.toLocaleDateString('es-MX', opcionesFecha);\nconst diaSemana = now.toLocaleDateString('es-MX', { weekday: 'long', timeZone: 'America/Hermosillo' }).toLowerCase();\n\n// --- 30 Conceptos de Física Cuántica con aplicación MYSTIC ---\nconst conceptosQuantum = [\n  {\n    nombre: 'Superposición Cuántica',\n    descripcion: 'Un sistema puede existir en múltiples estados simultáneamente hasta que es observado.',\n    aplicacion_mystic: 'MYSTIC puede procesar múltiples escenarios financieros en paralelo antes de presentar la respuesta óptima al cliente.',\n    aplicacion_vida: 'Mantén múltiples posibilidades abiertas en tus decisiones. No colapses prematuramente hacia una sola opción.'\n  },\n  {\n    nombre: 'Entrelazamiento Cuántico',\n    descripcion: 'Dos partículas entrelazadas se afectan mutuamente instantáneamente sin importar la distancia.',\n    aplicacion_mystic: 'Los módulos de MYSTIC (facturación, contabilidad, IA) están entrelazados: un cambio en uno actualiza el estado global instantáneamente.',\n    aplicacion_vida: 'Tus relaciones clave (equipo, clientes, familia) están entrelazadas contigo. Cuídalas conscientemente.'\n  },\n  {\n    nombre: 'Colapso de Función de Onda',\n    descripcion: 'Al medir un sistema cuántico, las posibilidades colapsan en una realidad definida.',\n    aplicacion_mystic: 'Cada decisión de arquitectura en MYSTIC colapsa infinitas posibilidades en una implementación concreta. Elige bien.',\n    aplicacion_vida: 'Tus decisiones diarias colapsan tu futuro en una trayectoria específica. Decide con intención.'\n  },\n  {\n    nombre: 'Principio de Incertidumbre de Heisenberg',\n    descripcion: 'No se puede conocer simultáneamente la posición y el momento exacto de una partícula.',\n    aplicacion_mystic: 'No puedes optimizar velocidad y precisión al máximo al mismo tiempo en el Brain IA. Encuentra el equilibrio correcto.',\n    aplicacion_vida: 'Acepta la incertidumbre como parte del proceso. El control total es una ilusión; la adaptación es la fortaleza.'\n  },\n  {\n    nombre: 'Efecto Túnel Cuántico',\n    descripcion: 'Una partícula puede atravesar barreras que clásicamente serían infranqueables.',\n    aplicacion_mystic: 'MYSTIC puede superar barreras de adopción en PYMEs tradicionales siendo tan fácil que los contadores no puedan resistirlo.',\n    aplicacion_vida: 'Los obstáculos que parecen infranqueables tienen grietas cuánticas. Busca el túnel, no el muro.'\n  },\n  {\n    nombre: 'Dualidad Onda-Partícula',\n    descripcion: 'La luz y la materia exhiben propiedades de onda y partícula dependiendo del contexto.',\n    aplicacion_mystic: 'MYSTIC es tanto producto (partícula concreta) como plataforma (onda expansiva). Saber cuándo ser cada uno es clave.',\n    aplicacion_vida: 'Tú eres tanto individuo único (partícula) como parte de algo mayor (onda). Ambas identidades son reales.'\n  },\n  {\n    nombre: 'Decoherencia Cuántica',\n    descripcion: 'La interacción con el entorno destruye las propiedades cuánticas llevando al comportamiento clásico.',\n    aplicacion_mystic: 'El ruido del mercado puede decoherir tu visión original. Protege el núcleo de MYSTIC de las distracciones externas.',\n    aplicacion_vida: 'El ambiente que te rodea moldea tu estado mental. Cuida con quién y con qué interactúas cada día.'\n  },\n  {\n    nombre: 'Teletransportación Cuántica',\n    descripcion: 'Transferencia del estado cuántico exacto de una partícula a otra ubicación distante.',\n    aplicacion_mystic: 'La sincronización de datos entre clientes de MYSTIC debe ser tan perfecta como la teletransportación: el estado exacto, replicado.',\n    aplicacion_vida: 'Tu conocimiento y energía pueden teleportarse a través de tu equipo. Lo que tú sabes, ellos lo pueden ejecutar.'\n  },\n  {\n    nombre: 'Campo Cuántico',\n    descripcion: 'La realidad fundamental está compuesta por campos que permean todo el espacio-tiempo.',\n    aplicacion_mystic: 'El Brain IA de MYSTIC es el campo subyacente que da coherencia a todos los módulos y respuestas.',\n    aplicacion_vida: 'Tu mentalidad es el campo desde el que emerge toda tu realidad. Ajusta el campo, cambia la realidad.'\n  },\n  {\n    nombre: 'Principio de Complementariedad',\n    descripcion: 'Propiedades mutuamente exclusivas son igualmente necesarias para una descripción completa.',\n    aplicacion_mystic: 'MYSTIC necesita ser simple PARA el usuario final y sofisticado BAJO EL CAPÓ. Ambos aspectos son igualmente reales.',\n    aplicacion_vida: 'La dualidad de tu vida (trabajo-descanso, individuo-familia) no es contradicción. Es complementariedad necesaria.'\n  },\n  {\n    nombre: 'Espín Cuántico',\n    descripcion: 'Propiedad intrínseca de las partículas subatómicas sin equivalente clásico directo.',\n    aplicacion_mystic: 'Cada módulo de MYSTIC tiene propiedades intrínsecas únicas que no se pueden reducir a sus partes. El todo es más que la suma.',\n    aplicacion_vida: 'Tu identidad tiene dimensiones que no se pueden reducir a tus roles. Eres irreduciblemente único.'\n  },\n  {\n    nombre: 'Números Cuánticos',\n    descripcion: 'Valores discretos que describen el estado único de cada partícula en un sistema.',\n    aplicacion_mystic: 'Cada cliente, cada tenant en MYSTIC tiene números cuánticos únicos: su industria, tamaño, flujos. No hay dos iguales.',\n    aplicacion_vida: 'Tu combinación de experiencias, habilidades y visión es cuánticamente única en el universo.'\n  },\n  {\n    nombre: 'Efecto Zeeman',\n    descripcion: 'Los niveles de energía atómica se separan bajo la influencia de un campo magnético externo.',\n    aplicacion_mystic: 'La presión del mercado (campo externo) puede separar las prioridades de MYSTIC. Mantén el campo interno más fuerte.',\n    aplicacion_vida: 'Las presiones externas revelan tus niveles de energía internos. Conócelos para navegar cualquier campo externo.'\n  },\n  {\n    nombre: 'Condensado de Bose-Einstein',\n    descripcion: 'A temperaturas cercanas al cero absoluto, partículas forman un único estado cuántico macroscópico.',\n    aplicacion_mystic: 'Cuando el equipo de MYSTIC alcanza alineación total (cero ruido de ego), actúan como un solo ente superpoderoso.',\n    aplicacion_vida: 'La alineación profunda con tu visión enfría el ruido mental y crea coherencia total. Opera desde ese estado.'\n  },\n  {\n    nombre: 'Radiación de Hawking',\n    descripcion: 'Los agujeros negros no son completamente negros; emiten radiación cuántica lentamente.',\n    aplicacion_mystic: 'Incluso los problemas más opacos en MYSTIC tienen una salida cuántica. Busca la radiación en el problema.',\n    aplicacion_vida: 'Cada situación oscura emite información. Aprende a detectar la radiación de Hawking en tus problemas.'\n  },\n  {\n    nombre: 'Principio Holográfico',\n    descripcion: 'Toda la información de un volumen 3D puede codificarse en su superficie 2D.',\n    aplicacion_mystic: 'El dashboard de MYSTIC debe ser la superficie holográfica perfecta: toda la información del negocio en una pantalla.',\n    aplicacion_vida: 'Tu visión diaria (superficie) contiene toda la información de tu proyecto de vida (volumen). Léela bien cada mañana.'\n  },\n  {\n    nombre: 'Teoría de Cuerdas',\n    descripcion: 'Las partículas fundamentales son cuerdas vibrantes en dimensiones adicionales del espacio-tiempo.',\n    aplicacion_mystic: 'Los módulos de MYSTIC son cuerdas que vibran en frecuencias diferentes pero forman una sinfonía unificada para el cliente.',\n    aplicacion_vida: 'Tus diferentes roles (CEO, padre, aprendiz) son cuerdas que juntas crean la sinfonía de tu vida.'\n  },\n  {\n    nombre: 'Cromodinámica Cuántica',\n    descripcion: 'Teoría que describe la fuerza nuclear fuerte entre quarks mediante el intercambio de gluones.',\n    aplicacion_mystic: 'Los microservicios de MYSTIC se unen por fuerzas invisibles (APIs, eventos) tan fuertes que no pueden separarse en producción.',\n    aplicacion_vida: 'Las fuerzas que te unen a tu propósito son las más fuertes del universo. Confía en ellas.'\n  },\n  {\n    nombre: 'Bosón de Higgs',\n    descripcion: 'Partícula que da masa a otras partículas a través del campo de Higgs.',\n    aplicacion_mystic: 'El Brain IA es el bosón de Higgs de MYSTIC: da peso y significado a todos los datos que fluyen por el sistema.',\n    aplicacion_vida: 'Tu propósito es tu campo de Higgs personal. Le da masa y gravedad a todas tus acciones.'\n  },\n  {\n    nombre: 'Mecánica Cuántica de Muchos Mundos',\n    descripcion: 'Cada medición cuántica ramifica el universo en múltiples ramas de realidad paralelas.',\n    aplicacion_mystic: 'Cada decisión en el roadmap de MYSTIC ramifica el producto en versiones paralelas. Elige la rama ganadora conscientemente.',\n    aplicacion_vida: 'En alguna rama del multiverso ya lograste todo lo que deseas. Este yo también puede. Elige esa rama hoy.'\n  },\n  {\n    nombre: 'Transición de Fase Cuántica',\n    descripcion: 'Cambio abrupto en el estado de un sistema cuántico al variar un parámetro de control.',\n    aplicacion_mystic: 'MYSTIC está acercándose a una transición de fase: de startup a empresa establecida. El parámetro de control es el número de clientes.',\n    aplicacion_vida: 'Estás cerca de una transición de fase personal. Los cambios que haces hoy son el parámetro que la desencadena.'\n  },\n  {\n    nombre: 'Energía del Punto Cero',\n    descripcion: 'Incluso en el estado de mínima energía, un sistema cuántico tiene energía residual no nula.',\n    aplicacion_mystic: 'MYSTIC nunca llega a cero valor para el cliente. Incluso en el plan básico, siempre hay energía del punto cero de utilidad.',\n    aplicacion_vida: 'Incluso en tus días de menor energía, tienes energía del punto cero. Nunca llegas a cero. Siempre hay un punto de partida.'\n  },\n  {\n    nombre: 'Paradoja EPR',\n    descripcion: 'Einstein, Podolsky y Rosen cuestionaron la completitud de la mecánica cuántica con correlaciones no locales.',\n    aplicacion_mystic: 'Las correlaciones no locales en los datos de clientes de MYSTIC revelan patrones que ningún contador vería manualmente.',\n    aplicacion_vida: 'Hay conexiones no locales entre tus decisiones presentes y futuros que la lógica lineal no puede ver. Confía en el proceso.'\n  },\n  {\n    nombre: 'Teorema de Bell',\n    descripcion: 'Prueba matemática de que la mecánica cuántica no puede ser explicada por variables ocultas locales.',\n    aplicacion_mystic: 'No hay variables ocultas locales en el éxito de MYSTIC. La no-localidad del mercado (internet) está a tu favor.',\n    aplicacion_vida: 'Tu potencial no tiene variables ocultas limitantes locales. No te circunscribas a Hermosillo. El mundo es tu mercado.'\n  },\n  {\n    nombre: 'Gato de Schrödinger',\n    descripcion: 'Experimento mental donde un gato está simultáneamente vivo y muerto hasta que se observa.',\n    aplicacion_mystic: 'Cada feature de MYSTIC en desarrollo está simultáneamente viva y muerta hasta el primer usuario real que la observa.',\n    aplicacion_vida: 'Tus proyectos no resueltos están en superposición. Colapsa los que más importan. Observa, decide, actúa.'\n  },\n  {\n    nombre: 'Interferencia Cuántica',\n    descripcion: 'Las funciones de onda pueden interferir constructiva o destructivamente, amplificando o cancelando probabilidades.',\n    aplicacion_mystic: 'Las estrategias de MYSTIC bien alineadas interfieren constructivamente. Las contradictorias se cancelan. Mantén coherencia.',\n    aplicacion_vida: 'Tus hábitos bien alineados interfieren constructivamente con tu visión. Los hábitos opuestos se cancelan mutuamente.'\n  },\n  {\n    nombre: 'Medición Débil Cuántica',\n    descripcion: 'Técnica que permite obtener información de un sistema cuántico con mínima perturbación.',\n    aplicacion_mystic: 'El feedback de clientes de MYSTIC debe ser medición débil: obtener máxima información con mínima perturbación al usuario.',\n    aplicacion_vida: 'Aprende a hacer mediciones débiles de tu progreso. Observa sin destruir el flujo. Métricas sin obsesión.'\n  },\n  {\n    nombre: 'Computación Cuántica',\n    descripcion: 'Uso de fenómenos cuánticos para procesar información de formas imposibles para computadoras clásicas.',\n    aplicacion_mystic: 'El Brain IA de MYSTIC simula computación cuántica clásicamente: explora el espacio de soluciones más amplio que cualquier contador.',\n    aplicacion_vida: 'Tu mente en estado óptimo (meditación, sueño, flujo) opera cuánticamente: resuelve problemas que el yo lineal no puede.'\n  },\n  {\n    nombre: 'Corrección de Errores Cuántica',\n    descripcion: 'Técnicas para proteger la información cuántica frente a la decoherencia y errores.',\n    aplicacion_mystic: 'MYSTIC necesita corrección de errores cuántica en sus datos: redundancia, validación y recuperación automática.',\n    aplicacion_vida: 'Los errores son información, no fallos. Tu sistema personal de corrección de errores te hace antifrágil.'\n  },\n  {\n    nombre: 'Algoritmo de Grover',\n    descripcion: 'Algoritmo cuántico que busca en bases de datos no estructuradas con ventaja cuadrática.',\n    aplicacion_mystic: 'El Brain IA de MYSTIC busca la respuesta correcta para cada PYME con ventaja cuadrática sobre la búsqueda manual.',\n    aplicacion_vida: 'Tu intuición entrenada es el algoritmo de Grover de tu mente. Encuentra soluciones más rápido que la búsqueda lineal.'\n  }\n];\n\n// --- Selección del concepto del día (rotatorio) ---\nconst diaDelAno = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);\nconst conceptoHoy = conceptosQuantum[diaDelAno % conceptosQuantum.length];\n\n// --- Objetivo del día por día de semana ---\nconst objetivosPorDia = {\n  lunes:     { emoji: '📋', titulo: 'PLANIFICACIÓN ESTRATÉGICA', descripcion: 'Define las prioridades de la semana. Revisa el roadmap de MYSTIC. Asegura que el equipo tenga contexto claro.' },\n  martes:    { emoji: '⚙️', titulo: 'DESARROLLO TÉCNICO', descripcion: 'Sprint de código. Features, bugs, arquitectura. Mínimo 4 horas de deep work en MYSTIC.' },\n  miércoles: { emoji: '📞', titulo: 'VENTAS Y DEMOS', descripcion: 'Contacto con prospectos. Demos de MYSTIC. Seguimiento a leads calientes. Cierra algo hoy.' },\n  jueves:    { emoji: '🔁', titulo: 'OPERACIONES Y CLIENTES', descripcion: 'Atención a clientes actuales. Revisión de tickets. Mejoras operativas. Calidad y retención.' },\n  viernes:   { emoji: '🚀', titulo: 'DEPLOY Y REVISIÓN', descripcion: 'Lanza lo que construiste. Revisa métricas de la semana. Documenta aprendizajes. Prepara el siguiente sprint.' },\n  sábado:    { emoji: '🧠', titulo: 'APRENDIZAJE PROFUNDO', descripcion: 'Estudia tecnología clave. Lee. Experimenta. Construye algo pequeño y nuevo. Invierte en ti.' },\n  domingo:   { emoji: '❤️', titulo: 'FAMILIA Y RECARGA', descripcion: 'Tiempo completo con familia. Desconecta del trabajo. Recarga tu energía para la semana que comienza.' }\n};\nconst objetivoHoy = objetivosPorDia[diaSemana] || objetivosPorDia['lunes'];\n\n// --- Afirmaciones de transformación mental ---\nconst afirmaciones = [\n  'Soy el arquitecto de mi realidad. Cada pensamiento es un ladrillo, cada acción una columna.',\n  'Mi mente es un campo cuántico de posibilidades infinitas. Hoy colapso la mejor versión.',\n  'No ejecuto tareas, materializo visiones. MYSTIC es inevitable porque yo soy imparable.',\n  'Soy un sistema antifrágil. Los obstáculos me hacen más fuerte, no me detienen.',\n  'Mi propósito es más grande que mis miedos. La acción disuelve la duda.',\n  'Construyo el futuro de las PYMEs mexicanas. Ese mandato me da energía ilimitada.',\n  'Cada día soy el CEO que mi visión merece. Actúo desde el resultado, no hacia él.',\n  'Mi enfoque es mi superpoder cuántico. Donde va mi atención, fluye mi energía.',\n  'Soy el puente entre la tecnología y los empresarios mexicanos. Mi valor es único.',\n  'Hoy avanzo un 1% mejor. Compuesto en 365 días: soy 37 veces mejor que hace un año.'\n];\nconst afirmacionHoy = afirmaciones[diaDelAno % afirmaciones.length];\n\n// --- Construir mensaje Markdown para Telegram ---\nconst mensaje = `🌅 *BUENOS DÍAS, LUIS DANIEL*\n━━━━━━━━━━━━━━━━━━━━━━\n📅 *${fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1)}*\n⏰ Son las 5:30 AM — Tu ventaja empieza AHORA\n\n━━━━━━━━━━━━━━━━━━━━━━\n⚛️ *CONCEPTO CUÁNTICO DEL DÍA*\n━━━━━━━━━━━━━━━━━━━━━━\n*${conceptoHoy.nombre}*\n\n_${conceptoHoy.descripcion}_\n\n🔬 *Aplicación en MYSTIC:*\n${conceptoHoy.aplicacion_mystic}\n\n🧬 *Aplicación en tu vida:*\n${conceptoHoy.aplicacion_vida}\n\n━━━━━━━━━━━━━━━━━━━━━━\n💫 *AFIRMACIÓN DE HOY*\n━━━━━━━━━━━━━━━━━━━━━━\n_\"${afirmacionHoy}\"_\n\n━━━━━━━━━━━━━━━━━━━━━━\n${objetivoHoy.emoji} *OBJETIVO DE HOY — ${objetivoHoy.titulo}*\n━━━━━━━━━━━━━━━━━━━━━━\n${objetivoHoy.descripcion}\n\n━━━━━━━━━━━━━━━━━━━━━━\n🚀 *MYSTIC AI OS — El futuro de las PYMEs mexicanas*\n_Tu agenda detallada llega en 5 minutos..._`;\n\nreturn [{\n  json: {\n    mensaje,\n    concepto: conceptoHoy.nombre,\n    objetivo: objetivoHoy.titulo,\n    fecha: fechaTexto,\n    dia_semana: diaSemana\n  }\n}];\n"
+      },
+      "id": "node-code-quantum",
+      "name": "Generar Mensaje Cuántico",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CEO_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensaje }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            },
+            {
+              "name": "disable_web_page_preview",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "node-telegram-alarm",
+      "name": "Enviar Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://wa:3001/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "526623538272"
+            },
+            {
+              "name": "message",
+              "value": "={{ $node['Generar Mensaje Cuántico'].json.mensaje }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000,
+          "continueOnFail": true
+        }
+      },
+      "id": "node-whatsapp-alarm",
+      "name": "Enviar WhatsApp (Opcional)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 460]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger 5:30 AM": {
+      "main": [
+        [
+          {
+            "node": "Generar Mensaje Cuántico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Mensaje Cuántico": {
+      "main": [
+        [
+          {
+            "node": "Enviar Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Enviar WhatsApp (Opcional)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "tags": [
+    { "name": "agenda" },
+    { "name": "luis-daniel" },
+    { "name": "personal" }
+  ],
+  "pinData": {}
+}

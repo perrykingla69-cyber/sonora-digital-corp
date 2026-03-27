@@ -58,6 +58,7 @@ services:
       OLLAMA_TIMEOUT: ${OLLAMA_TIMEOUT:-90}
       BRAIN_CACHE_TTL: ${BRAIN_CACHE_TTL:-3600}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      QDRANT_URL: http://qdrant:6333
       ENVIRONMENT: production
     depends_on:
       postgres:
@@ -150,6 +151,8 @@ services:
     container_name: hermes_qdrant
     volumes:
       - qdrant_data:/qdrant/storage
+    ports:
+      - "127.0.0.1:6333:6333"
     networks:
       - hermes_net
     restart: unless-stopped

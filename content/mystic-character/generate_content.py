@@ -8,6 +8,7 @@ Uso:
   python generate_content.py --scene ceo --count 4
   python generate_content.py --scene podcast
   python generate_content.py --batch  # genera todas las escenas
+  python generate_content.py --list   # muestra escenas disponibles con captions
 
 Configurar variables de entorno:
   export FAL_KEY=tu_key_de_fal_ai        # https://fal.ai/dashboard/keys
@@ -23,7 +24,18 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-FAL_KEY    = os.environ.get("FAL_KEY", "")
+# ── HuggingFace Inference API — gratis con token HF ─────────────────────────
+# Token gratis en: https://huggingface.co/settings/tokens (Read token)
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
+if not HF_TOKEN:
+    print()
+    print("❌ HF_TOKEN no configurada.")
+    print("   1. Ve a: https://huggingface.co/settings/tokens")
+    print("   2. Crea un token tipo 'Read' (gratis)")
+    print("   3. Ejecuta: export HF_TOKEN=hf_tu_token")
+    print()
+    sys.exit(1)
+
 TG_TOKEN   = os.environ.get("TELEGRAM_TOKEN_BOT", "")
 TG_CHANNEL = os.environ.get("TELEGRAM_CHANNEL_ID", "")
 
@@ -61,6 +73,14 @@ SCENES = {
             "depth of field, 85mm portrait lens, shot by Annie Leibovitz, "
             "Vogue México editorial quality"
         ),
+        "instagram_caption": (
+            "No esperes que alguien te dé el trono. Constrúyelo.\n\n"
+            "HERMES automatiza tu contabilidad para que tú te enfoques en lo que importa: "
+            "crecer tu empresa.\n\n"
+            "Conoce HERMES en sonoradigitalcorp.com 🔗 en bio\n\n"
+            "#HermesAI #ContabilidadMX #PYMEsMexicanas #SAT #IA #FinanzasMX "
+            "#CEOMexicana #EmprendedoresMX #LiderazgoFemenino"
+        ),
     },
     "podcast": {
         "caption": "La Academia. Donde el conocimiento se convierte en poder.",
@@ -70,6 +90,13 @@ SCENES = {
             "seated in cognac leather armchair, warm tungsten bookshelf lighting, "
             "golden vintage microphone, bookshelf with business books, tropical plants, "
             "intimate podcast studio, warm editorial photography, 50mm lens"
+        ),
+        "instagram_caption": (
+            "El conocimiento que no se aplica no sirve de nada.\n\n"
+            "Con HERMES, cada dueño de negocio entiende sus finanzas — sin ser contador.\n\n"
+            "Conoce HERMES en sonoradigitalcorp.com 🔗 en bio\n\n"
+            "#HermesAI #ContabilidadMX #PYMEsMexicanas #SAT #IA #FinanzasMX "
+            "#EducacionFinanciera #NegociosMX #EmprendimientoMX"
         ),
     },
     "oracle": {
@@ -81,6 +108,14 @@ SCENES = {
             "cinematic movie poster composition, ultra dramatic shadows, "
             "luxury perfume advertisement, shot by Mario Testino, Vogue editorial"
         ),
+        "instagram_caption": (
+            "Los números de tu empresa ya tienen la respuesta. ¿La estás leyendo?\n\n"
+            "HERMES analiza tu situación fiscal en tiempo real. Tú tomas las decisiones, "
+            "nosotros ponemos la inteligencia.\n\n"
+            "Conoce HERMES en sonoradigitalcorp.com 🔗 en bio\n\n"
+            "#HermesAI #ContabilidadMX #PYMEsMexicanas #SAT #IA #FinanzasMX "
+            "#DecisionesInteligentes #InteligenciaArtificial #AutomatizacionMX"
+        ),
     },
     "rooftop": {
         "caption": "El amanecer es para los que no durmieron construyendo.",
@@ -90,6 +125,14 @@ SCENES = {
             "city skyline in background, infinity pool reflection behind her, "
             "natural golden backlighting, wind in hair, holding black coffee cup, "
             "relaxed powerful expression, Vogue Living aesthetic, lifestyle luxury"
+        ),
+        "instagram_caption": (
+            "Mientras otros duermen, tú estás construyendo.\n\n"
+            "HERMES trabaja 24/7 para que tu negocio nunca se detenga — facturas, "
+            "cierres, nómina. Todo automatizado.\n\n"
+            "Conoce HERMES en sonoradigitalcorp.com 🔗 en bio\n\n"
+            "#HermesAI #ContabilidadMX #PYMEsMexicanas #SAT #IA #FinanzasMX "
+            "#AutomatizacionContable #MindsetEmprendedor #GrindMX"
         ),
     },
     "blockchain": {
@@ -101,6 +144,13 @@ SCENES = {
             "holographic data floating, Ethereum gold logos, NFT digital art on screens, "
             "blue-purple-gold ambient lighting, tech luxury aesthetic, editorial"
         ),
+        "instagram_caption": (
+            "El futuro de las finanzas ya llegó. ¿Tu empresa está lista?\n\n"
+            "HERMES integra tecnología de punta para que tus PYMEs operen como Fortune 500.\n\n"
+            "Conoce HERMES en sonoradigitalcorp.com 🔗 en bio\n\n"
+            "#HermesAI #ContabilidadMX #PYMEsMexicanas #SAT #IA #FinanzasMX "
+            "#FinTechMX #TransformacionDigital #TecnologiaFinanciera"
+        ),
     },
     "boardroom": {
         "caption": "Cuando ella habla, todos escuchan. Así funciona la autoridad.",
@@ -111,67 +161,112 @@ SCENES = {
             "natural daylight from floor windows, commanding presence, "
             "corporate luxury photography, Harvard Business Review aesthetic"
         ),
+        "instagram_caption": (
+            "La sala de juntas es tuya cuando dominas tus números.\n\n"
+            "HERMES te da reportes financieros claros, sin jerga contable. "
+            "Entra a cada reunión con todo el poder.\n\n"
+            "Conoce HERMES en sonoradigitalcorp.com 🔗 en bio\n\n"
+            "#HermesAI #ContabilidadMX #PYMEsMexicanas #SAT #IA #FinanzasMX "
+            "#ReportesFinancieros #GestionEmpresarial #DirectivosMX"
+        ),
+    },
+    "sat_warning": {
+        "caption": "El SAT no espera. Tú tampoco deberías.",
+        "prompt": BASE + (
+            ", power CEO look with sharp black structured blazer and deep red blouse, "
+            "standing before massive holographic control panel with fiscal data dashboards, "
+            "SAT compliance charts in red and gold floating in air, "
+            "dark command center ambiance with red accent lighting, "
+            "golden data streams flowing around her, calculated alert expression, "
+            "one hand on holographic interface, futuristic tax control room, "
+            "cinematic red-gold-black color palette, ultra dramatic atmosphere, "
+            "8K editorial photography"
+        ),
+        "instagram_caption": (
+            "El SAT no manda recordatorios simpáticos. Manda multas.\n\n"
+            "Con HERMES, tus declaraciones, complementos y cierres fiscales están al día — "
+            "automáticamente. Sin sorpresas. Sin multas.\n\n"
+            "¿Cuándo fue la última vez que revisaste tu situación fiscal?\n\n"
+            "Conoce HERMES en sonoradigitalcorp.com 🔗 en bio\n\n"
+            "#HermesAI #ContabilidadMX #PYMEsMexicanas #SAT #IA #FinanzasMX "
+            "#SAT2024 #DeclaracionesSAT #CumplimientoFiscal #MultasSAT"
+        ),
+    },
+    "whatsapp_demo": {
+        "caption": "Tu contador en WhatsApp. 24/7. Sin excusas.",
+        "prompt": BASE + (
+            ", casual-power style: fitted premium charcoal blazer over white fitted tee, "
+            "dark slim jeans, white sneakers, hair down relaxed waves, "
+            "holding latest iPhone with WhatsApp chat interface visible on screen, "
+            "showing conversation with HERMES AI financial assistant, "
+            "modern co-working space background with warm bokeh lighting, "
+            "golden hour natural light, approachable confident smile, "
+            "lifestyle tech photography, 35mm editorial lens"
+        ),
+        "instagram_caption": (
+            "¿Necesitas saber tu saldo de IVA a las 11pm? Pregúntale a HERMES por WhatsApp.\n\n"
+            "Sin esperar al contador. Sin abrir Excel. Sin estrés.\n\n"
+            "HERMES responde en segundos con información real de tu empresa — "
+            "facturas, gastos, cierres, todo desde tu celular.\n\n"
+            "Conoce HERMES en sonoradigitalcorp.com 🔗 en bio\n\n"
+            "#HermesAI #ContabilidadMX #PYMEsMexicanas #SAT #IA #FinanzasMX "
+            "#WhatsAppBusiness #ContadorDigital #FinanzasEnTuCelular"
+        ),
     },
 }
 
 
+def list_scenes():
+    """Muestra todas las escenas disponibles con su caption e instagram caption."""
+    print()
+    print("=" * 60)
+    print("  ESCENAS DISPONIBLES — Mystic Content Generator")
+    print("=" * 60)
+    for name, data in SCENES.items():
+        print(f"\n  [{name.upper()}]")
+        print(f"  Caption: {data['caption']}")
+        print(f"  Instagram:")
+        # Mostrar primeras dos líneas del instagram caption
+        lines = data['instagram_caption'].split('\n')
+        for line in lines[:3]:
+            print(f"    {line}")
+        if len(lines) > 3:
+            print(f"    (...)")
+    print()
+    print(f"  Total: {len(SCENES)} escenas")
+    print()
+    print("  Uso:")
+    print("    python generate_content.py --scene <nombre>")
+    print("    python generate_content.py --batch")
+    print()
+
+
 def generate_image_fal(prompt: str, scene: str) -> str | None:
-    if not FAL_KEY:
-        print("FAL_KEY no configurado. Exporta: export FAL_KEY=tu_key")
-        print("Obtén gratis en: https://fal.ai/dashboard/keys")
-        return None
-
-    payload = json.dumps({
-        "prompt": prompt,
-        "negative_prompt": NEGATIVE,
-        "num_images": 1,
-        "image_size": "portrait_4_3",
-        "num_inference_steps": 28,
-        "guidance_scale": 3.5,
-        "enable_safety_checker": False,
-    }).encode()
-
+    """Genera imagen via HuggingFace Inference API — gratis con token HF."""
+    payload = json.dumps({"inputs": prompt[:500]}).encode()
     req = urllib.request.Request(
-        "https://queue.fal.run/fal-ai/flux/dev",
+        "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
         data=payload,
-        headers={"Authorization": f"Key {FAL_KEY}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {HF_TOKEN}",
+            "Content-Type": "application/json",
+        },
         method="POST"
     )
+    print(f"  Generando con HuggingFace FLUX.1 (gratis)...")
     try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            job = json.loads(r.read())
-        request_id = job.get("request_id")
-        print(f"  Job enviado: {request_id}")
+        with urllib.request.urlopen(req, timeout=120) as r:
+            image_data = r.read()
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        seed = int(time.time()) % 99999
+        filename = f"{scene}_{ts}_{seed}.jpg"
+        path = OUTPUT_DIR / filename
+        path.write_bytes(image_data)
+        print(f"  ✅ Imagen guardada: {filename}")
+        return str(path)
     except Exception as e:
-        print(f"  Error enviando job: {e}")
+        print(f"  Error: {e}")
         return None
-
-    poll_url = f"https://queue.fal.run/fal-ai/flux/dev/requests/{request_id}"
-    for attempt in range(60):
-        time.sleep(3)
-        req2 = urllib.request.Request(
-            poll_url,
-            headers={"Authorization": f"Key {FAL_KEY}"},
-            method="GET"
-        )
-        try:
-            with urllib.request.urlopen(req2, timeout=10) as r:
-                result = json.loads(r.read())
-            status = result.get("status")
-            if status == "COMPLETED":
-                image_url = result["output"]["images"][0]["url"]
-                print(f"  Imagen generada: {image_url[:60]}...")
-                return image_url
-            elif status == "FAILED":
-                print(f"  Job fallo: {result.get('error')}")
-                return None
-            else:
-                print(f"  Estado: {status} ({attempt+1}/60)")
-        except Exception as e:
-            print(f"  Poll error: {e}")
-
-    print("  Timeout esperando imagen")
-    return None
 
 
 def download_image(url: str, filename: str) -> str:
@@ -226,27 +321,41 @@ def run(scene_name: str, count: int = 1):
         return
 
     print(f"\nGenerando escena: {scene_name.upper()} ({count} imagen{'es' if count>1 else ''})")
+    print(f"  Caption: {scene['caption']}")
 
     for i in range(count):
         print(f"\n  Imagen {i+1}/{count}")
-        url = generate_image_fal(scene["prompt"], scene_name)
-        if not url:
+        path = generate_image_fal(scene["prompt"], scene_name)
+        if not path:
             continue
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"mystic_{scene_name}_{ts}_{i+1}.jpg"
-        path = download_image(url, filename)
         print(f"  Guardada: {path}")
-        send_to_telegram(path, scene["caption"] + "\n\n#Mystic #MysticConsulting #SoberaniaDigital")
+
+        # Guardar instagram caption en archivo de texto junto a la imagen
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        caption_file = OUTPUT_DIR / f"mystic_{scene_name}_{ts}_{i+1}_caption.txt"
+        caption_file.write_text(scene["instagram_caption"], encoding="utf-8")
+        print(f"  Caption IG: {caption_file}")
+
+        send_to_telegram(path, scene["caption"] + "\n\n#HermesAI #ContabilidadMX #PYMEsMexicanas")
         if i < count - 1:
             time.sleep(2)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Mystic Content Generator")
-    parser.add_argument("--scene", choices=list(SCENES.keys()), default="ceo")
-    parser.add_argument("--count", type=int, default=1)
-    parser.add_argument("--batch", action="store_true", help="Genera todas las escenas")
+    parser = argparse.ArgumentParser(description="Mystic Content Generator — HERMES")
+    parser.add_argument("--scene", choices=list(SCENES.keys()), default="ceo",
+                        help="Escena a generar")
+    parser.add_argument("--count", type=int, default=1,
+                        help="Número de variaciones")
+    parser.add_argument("--batch", action="store_true",
+                        help="Genera todas las escenas (1 imagen cada una)")
+    parser.add_argument("--list", action="store_true",
+                        help="Lista todas las escenas disponibles con sus captions")
     args = parser.parse_args()
+
+    if args.list:
+        list_scenes()
+        sys.exit(0)
 
     if args.batch:
         for name in SCENES:

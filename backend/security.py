@@ -12,7 +12,9 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 
-SECRET_KEY = os.getenv("SECRET_KEY", "mystic-jwt-ultra-secreto-2026")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY no configurada en variables de entorno")
 SYSTEM_TOKEN = os.getenv("SYSTEM_TOKEN", "")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 30

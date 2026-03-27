@@ -1,0 +1,9 @@
+{
+  "name": "resico-summary",
+  "version": "1.0.0",
+  "description": "Calcula el resumen RESICO del mes: ISR e IVA a pagar.",
+  "triggers": ["resico", "régimen simplificado", "resumen resico"],
+  "endpoint": "http://api:8000/api/resico/resumen-mensual",
+  "method": "GET",
+  "response_template": "📊 Resumen RESICO del mes:\nISR retenido: ${{isr_retenido}}\nIVA: ${{iva}}\nTotal a pagar: ${{total_pagar}}"
+}

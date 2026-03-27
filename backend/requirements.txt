@@ -15,3 +15,5 @@ pytesseract>=0.3.13
 Pillow>=10.0.0
 # Whisper STT (CPU)
 openai-whisper>=20231117
+# Rate Limiting
+slowapi==0.1.9

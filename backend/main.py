@@ -42,17 +42,29 @@ from security import (create_token, get_current_user, hash_password,
 # ── INIT ──
 Base.metadata.create_all(bind=engine)
 
+env = os.getenv("ENVIRONMENT", "development")
 app = FastAPI(
     title="Hermes - API Contable",
     description="Sistema contable multi-tenant para importadores/exportadores. Fourgea & Triple R.",
     version="2.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if env != "production" else None,
+    redoc_url="/redoc" if env != "production" else None,
+    openapi_url="/openapi.json" if env != "production" else None,
 )
 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+cors_origins_str = os.getenv("CORS_ORIGINS", "https://sonoradigitalcorp.com,http://localhost:3000")
+allow_origins = [o.strip() for o in cors_origins_str.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -157,7 +169,8 @@ async def health(db: Session = Depends(get_db)):
 # ═══════════════════════════════════════════════
 
 @app.post("/auth/login", response_model=LoginResponse, tags=["Auth"])
-async def login(body: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(
         Usuario.email == body.email,
         Usuario.activo == True
@@ -2490,6 +2503,7 @@ def _session_history_text(db: Session, session_id: str | None) -> str:
 
 
 @app.post("/api/brain/ask", response_model=_BrainResponse, tags=["Brain"])
+@limiter.limit("20/minute")
 async def brain_ask(request: Request, body: _BrainRequest, db: Session = Depends(get_db)):
     """
     Brain RAG: busca en knowledge_base fiscal → Ollama con contexto verificado.

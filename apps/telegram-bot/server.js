@@ -1,8 +1,19 @@
+// Forzar IPv4 — Docker no routea IPv6, Telegram se cae en silencio
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 const { Telegraf } = require('telegraf');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+
+// Logger estructurado (wrapper sobre console con prefijo y nivel)
+const log = {
+  info:  (...a) => console.log('[INFO]', ...a),
+  warn:  (...a) => console.warn('[WARN]', ...a),
+  error: (...a) => console.error('[ERROR]', ...a),
+};
 
 const API_BASE = process.env.API_BASE || 'http://api:8000';
 const DEFAULT_BOT_TOKEN = process.env.DEFAULT_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
@@ -18,7 +29,7 @@ function loadSkills() {
     .map(f => { try { return JSON.parse(fs.readFileSync(path.join(SKILLS_DIR, f))); } catch { return null; } })
     .filter(Boolean)
     .sort((a, b) => (b.priority || 0) - (a.priority || 0));
-  console.log(`[Skills] ${skills.length} cargados: ${skills.map(s => s.name).join(', ')}`);
+  log.info(`[Skills] ${skills.length} cargados: ${skills.map(s => s.name).join(', ')}`);
 }
 
 function matchSkill(message) {
@@ -38,10 +49,11 @@ async function invokeSkill(skill, message, tenantId) {
       ? skill.response_template.replace(/\{\{(\w+)\}\}/g, (_, k) => res.data[k] ?? '')
       : JSON.stringify(res.data);
   }
+  // Interpolar template con JSON.stringify para escapar correctamente los valores
   const payload = JSON.parse(
     JSON.stringify(skill.payload || {})
-      .replace(/\{\{message\}\}/g, message)
-      .replace(/\{\{tenant_id\}\}/g, tenantId)
+      .replace(/"\{\{message\}\}"/g, JSON.stringify(message))
+      .replace(/"\{\{tenant_id\}\}"/g, JSON.stringify(tenantId))
   );
   const res = await axios.post(url, payload, { timeout: 20000 });
   return res.data[skill.response_field || 'answer'] || 'Procesado.';
@@ -56,7 +68,7 @@ function createTelegrafInstance(tenantId, token) {
   const bot = new Telegraf(token);
 
   bot.start(ctx => ctx.reply(
-    `✨ *Hola, soy Mystic*\n\nTu asistente contable inteligente, disponible las 24 horas.\n\n` +
+    `✨ *Hola, soy HERMES*\n\nTu asistente contable inteligente, disponible las 24 horas.\n\n` +
     `Cuéntame lo que necesitas — facturas, impuestos, nómina, importaciones o cualquier duda fiscal.\n\n` +
     `_Solo escríbeme como le escribirías a un contador de confianza._`,
     { parse_mode: 'Markdown' }
@@ -97,7 +109,7 @@ function createTelegrafInstance(tenantId, token) {
         await ctx.reply(text, { parse_mode: 'Markdown' });
       }
     } catch (err) {
-      console.error(`[${tenantId}] msg error:`, err.message);
+      log.error(`[${tenantId}] msg error:`, err.message);
       await ctx.reply('Algo salió mal al procesar tu consulta. Por favor intenta de nuevo en un momento.');
     }
   });
@@ -127,7 +139,7 @@ const MAX_RETRIES = 20; // máximo 20 intentos antes de rendirse
 
 async function launchBot(tenantId, token, attempt = 1) {
   if (attempt > MAX_RETRIES) {
-    console.error(`[${tenantId}] Max reintentos (${MAX_RETRIES}) alcanzado. Bot detenido.`);
+    log.error(`[${tenantId}] Max reintentos (${MAX_RETRIES}) alcanzado. Bot detenido.`);
     return;
   }
 
@@ -145,17 +157,17 @@ async function launchBot(tenantId, token, attempt = 1) {
   _activeBot = bot;
 
   bot.launch().then(() => {
-    console.log(`[${tenantId}] Bot conectado a Telegram ✅`);
+    log.info(`[${tenantId}] Bot conectado a Telegram ✅`);
   }).catch(async err => {
     const is409 = err.response?.error_code === 409;
     const isNet = err.code === 'ETIMEDOUT' || err.code === 'ECONNREFUSED' || err.type === 'system';
     if (is409 || isNet) {
-      // En 409 esperar 35s extra para asegurar que Telegram libere la sesión
-      const wait = is409 ? 35000 : Math.min(60000, attempt * 8000);
-      console.warn(`[${tenantId}] ${is409 ? '409 Conflict' : 'Red timeout'} → retry en ${wait/1000}s (intento ${attempt}/${MAX_RETRIES})`);
+      // Esperar 35s en ambos casos — Telegram necesita ese tiempo para liberar la sesión
+      const wait = 35000;
+      log.warn(`[${tenantId}] ${is409 ? '409 Conflict' : 'Red timeout'} → retry en ${wait/1000}s (intento ${attempt}/${MAX_RETRIES})`);
       setTimeout(() => launchBot(tenantId, token, attempt + 1), wait);
     } else {
-      console.error(`[${tenantId}] Error fatal:`, err.message);
+      log.error(`[${tenantId}] Error fatal:`, err.message);
     }
   });
 }
@@ -164,7 +176,16 @@ async function launchBot(tenantId, token, attempt = 1) {
 const app = express();
 app.use(express.json());
 
-app.post('/:tenantId/start', (req, res) => {
+// Middleware: autenticación por API key en endpoints de gestión
+const MGMT_API_KEY = process.env.MGMT_API_KEY || '';
+function requireApiKey(req, res, next) {
+  if (!MGMT_API_KEY) return next(); // sin env var → solo accesible desde red interna
+  const key = req.headers['x-api-key'] || req.query.apiKey;
+  if (key !== MGMT_API_KEY) return res.status(401).json({ error: 'Unauthorized' });
+  next();
+}
+
+app.post('/:tenantId/start', requireApiKey, (req, res) => {
   const { tenantId } = req.params;
   const token = req.body.token || DEFAULT_BOT_TOKEN;
   if (!token) return res.status(400).json({ error: 'Token requerido' });
@@ -172,13 +193,13 @@ app.post('/:tenantId/start', (req, res) => {
   res.json({ success: true, message: `Bot ${tenantId} iniciando` });
 });
 
-app.post('/:tenantId/stop', (req, res) => {
+app.post('/:tenantId/stop', requireApiKey, (req, res) => {
   const bot = botInstances.get(req.params.tenantId);
   if (bot) { try { bot.stop(); } catch {} botInstances.delete(req.params.tenantId); }
   res.json({ success: true });
 });
 
-app.get('/:tenantId/status', (req, res) => {
+app.get('/:tenantId/status', requireApiKey, (req, res) => {
   res.json({ tenantId: req.params.tenantId, active: botInstances.has(req.params.tenantId) });
 });
 
@@ -186,11 +207,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', activeBots: botInstances.size, skills: skills.length });
 });
 
-// Auto-start
+// Auto-start — delay inicial 40s para que Telegram libere sesión del container anterior
 if (DEFAULT_BOT_TOKEN) {
-  launchBot('default', DEFAULT_BOT_TOKEN);
-  console.log('[default] Bot iniciando...');
+  log.info('[default] Bot iniciando...');
+  setTimeout(() => launchBot('default', DEFAULT_BOT_TOKEN), 40000);
 }
 
 const PORT = process.env.PORT || 3003;
-app.listen(PORT, () => console.log(`🤖 Telegram Bot Manager en puerto ${PORT}`));
+app.listen(PORT, () => log.info(`🤖 Telegram Bot Manager en puerto ${PORT}`));
