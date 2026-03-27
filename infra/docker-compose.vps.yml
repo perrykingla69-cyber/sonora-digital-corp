@@ -136,6 +136,10 @@ services:
       WEBHOOK_URL: https://sonoradigitalcorp.com/n8n/
       N8N_SECURE_COOKIE: "true"
       N8N_EDITOR_BASE_URL: https://sonoradigitalcorp.com/n8n/
+      DOCKER_API_URL: http://host.docker.internal:2375
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_TOKEN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
@@ -197,6 +201,16 @@ services:
       - hermes_net
     restart: unless-stopped
 
+  docker-proxy:
+    image: alpine/socat
+    container_name: hermes_docker_proxy
+    command: TCP-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:2375:2375"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
   telegram-bot:
     build:
       context: ../apps/telegram-bot
@@ -208,7 +222,12 @@ services:
       PORT: 3003
       API_BASE: http://api:8000
       DEFAULT_BOT_TOKEN: ${TELEGRAM_TOKEN}
+      AUREA_BOT_TOKEN: ${AUREA_BOT_TOKEN:-}
+      CLAUDE_BOT_TOKEN: ${CLAUDE_BOT_TOKEN:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      HERMES_ADMIN_CHAT_ID: ${HERMES_ADMIN_CHAT_ID:-}
+      HERMES_ALERT_CHANNEL_ID: ${HERMES_ALERT_CHANNEL_ID:-}
     depends_on:
       api:
         condition: service_healthy

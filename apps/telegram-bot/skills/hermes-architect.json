@@ -1,0 +1,10 @@
+{
+  "name": "hermes-architect",
+  "description": "Diseño de arquitectura y decisiones técnicas para HERMES",
+  "version": "1.0.0",
+  "priority": 85,
+  "triggers": ["arquitectura", "diseñar", "arquitecturar", "cómo implementar", "como implementar", "propuesta técnica", "diseño técnico"],
+  "method": "BRAIN",
+  "question_template": "Actúa como arquitecto de software senior especializado en SaaS para PYMEs mexicanas. El stack es: FastAPI, Next.js 14, PostgreSQL, Redis, Docker, N8N, Telegram Bot, WhatsApp. Diseña una solución técnica para: {{message}}. Incluye: decisión recomendada, alternativas consideradas, riesgos y pasos de implementación.",
+  "response_field": "answer"
+}

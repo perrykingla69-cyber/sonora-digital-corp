@@ -1,0 +1,10 @@
+{
+  "name": "hermes-watchdog-status",
+  "description": "Estado del sistema y health check desde Telegram",
+  "version": "1.0.0",
+  "priority": 95,
+  "triggers": ["sistema", "estado del sistema", "health", "servicios", "todo bien", "cómo está el sistema", "como esta el sistema"],
+  "method": "GET",
+  "endpoint": "http://api:8000/status",
+  "response_template": "*Estado HERMES* 🤖\n\nAPI: {{status}}\nDB: {{db}}\nRedis: {{redis}}\nVersión: {{version}}"
+}

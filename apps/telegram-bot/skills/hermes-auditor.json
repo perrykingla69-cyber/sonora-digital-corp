@@ -1,0 +1,10 @@
+{
+  "name": "hermes-auditor",
+  "description": "Auditoría de seguridad y dependencias del proyecto HERMES",
+  "version": "1.0.0",
+  "priority": 90,
+  "triggers": ["auditar", "auditoria", "seguridad", "vulnerabilidades", "dependencias", "audit"],
+  "method": "BRAIN",
+  "question_template": "Actúa como un auditor de seguridad senior. Analiza el siguiente mensaje y responde con recomendaciones de seguridad específicas para un sistema SaaS contable (FastAPI + Next.js + PostgreSQL + Docker): {{message}}",
+  "response_field": "answer"
+}

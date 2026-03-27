@@ -13,6 +13,38 @@ const log = require('./logger');
 const API_BASE = process.env.API_BASE || 'http://api:8000';
 const DEFAULT_BOT_TOKEN = process.env.DEFAULT_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
 
+// ── ClawdBot (OpenRouter directo — mismo modelo que OpenClaw) ──────────────────
+const CLAWD_API_KEY = process.env.OPENROUTER_API_KEY || '';
+const CLAWD_MODEL   = process.env.CLAWD_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
+const CLAWD_SYSTEM  = `Eres HERMES, asistente de IA de Sonora Digital Corp.
+Ayudas a Luis Daniel (CEO) con contabilidad, automatización, código y estrategia de negocio para PYMEs mexicanas.
+Responde siempre en español, de forma directa y práctica. Sin rodeos.`;
+
+async function askClawd(message, history = []) {
+  if (!CLAWD_API_KEY) throw new Error('OPENROUTER_API_KEY no configurada');
+  const messages = [
+    { role: 'system', content: CLAWD_SYSTEM },
+    ...history.slice(-6),
+    { role: 'user', content: message },
+  ];
+  const res = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+    model: CLAWD_MODEL,
+    messages,
+    max_tokens: 800,
+  }, {
+    headers: {
+      'Authorization': `Bearer ${CLAWD_API_KEY}`,
+      'HTTP-Referer': 'https://hermesai.mx',
+      'X-Title': 'HERMES AI',
+    },
+    timeout: 30000,
+  });
+  return res.data?.choices?.[0]?.message?.content || 'Sin respuesta.';
+}
+
+// Historial de conversación por usuario (en memoria, se limpia al reiniciar)
+const clawdHistory = new Map();
+
 // ── OpenClaw Skills ────────────────────────────────────────────────────────────
 const SKILLS_DIR = path.join(__dirname, 'skills');
 let skills = [];
@@ -105,12 +137,43 @@ function createTelegrafInstance(tenantId, token) {
     }
   });
 
+  // /clawd — ClawdBot directo (OpenRouter, Llama 3.3 70B)
+  bot.command('clawd', async (ctx) => {
+    try {
+      const question = ctx.message.text.replace(/^\/clawd\s*/i, '').trim();
+      if (!question) { await ctx.reply('Escríbeme algo después de /clawd\nEjemplo: /clawd ¿qué workflows tengo activos?'); return; }
+      await ctx.sendChatAction('typing');
+      const userId = String(ctx.from.id);
+      const history = clawdHistory.get(userId) || [];
+      const answer = await askClawd(question, history);
+      // Guardar historial (últimas 6 rondas)
+      history.push({ role: 'user', content: question });
+      history.push({ role: 'assistant', content: answer });
+      clawdHistory.set(userId, history.slice(-12));
+      await ctx.reply(answer, { parse_mode: 'Markdown' });
+    } catch (err) {
+      log.error('[bot.command/clawd] error:', { err: err.message });
+      await ctx.reply('ClawdBot no disponible en este momento. Verifica OPENROUTER_API_KEY.');
+    }
+  });
+
+  // /reset — limpia historial de ClawdBot
+  bot.command('reset', async (ctx) => {
+    try {
+      clawdHistory.delete(String(ctx.from.id));
+      await ctx.reply('Historial de ClawdBot limpiado. ¿En qué te ayudo?');
+    } catch (err) {
+      log.error('[bot.command/reset] error:', { err: err.message });
+    }
+  });
+
   bot.command('alertas', async (ctx) => {
     try {
       const { getMonthAlerts } = require('./sat-alerts');
       const alerts = getMonthAlerts ? getMonthAlerts() : [];
       if (!alerts || alerts.length === 0) {
-        return ctx.reply('✅ Sin alertas fiscales pendientes este mes.');
+        await ctx.reply('✅ Sin alertas fiscales pendientes este mes.');
+        return;
       }
       const text = alerts.map(a => `📅 *${a.date}* — ${a.description}`).join('\n');
       await ctx.reply(`*Alertas SAT este mes:*\n\n${text}`, { parse_mode: 'Markdown' });
@@ -122,12 +185,12 @@ function createTelegrafInstance(tenantId, token) {
 
   bot.command('estado', async (ctx) => {
     try {
-      const res = await axios.get(`${API_BASE}/status`, { timeout: 5000 });
+      const res = await axios.get(`${API_BASE}/status`, { timeout: 10000 });
       const s = res.data;
       const lines = [
         `*Estado HERMES* — ${new Date().toLocaleString('es-MX')}`,
-        `API: ${s.status === 'ok' ? '✅' : '⚠️'} ${s.status}`,
-        s.qdrant ? `Qdrant: ${s.qdrant.status === 'ok' ? '✅' : '⚠️'}` : '',
+        `API: ${s?.status === 'ok' ? '✅' : '⚠️'} ${s?.status ?? 'unknown'}`,
+        s?.qdrant ? `Qdrant: ${s.qdrant?.status === 'ok' ? '✅' : '⚠️'}` : '',
       ].filter(Boolean);
       await ctx.reply(lines.join('\n'), { parse_mode: 'Markdown' });
     } catch (e) {
@@ -139,7 +202,21 @@ function createTelegrafInstance(tenantId, token) {
   bot.on('text', async ctx => {
     await ctx.sendChatAction('typing');
     const msg = ctx.message.text;
+    const userId = String(ctx.from.id);
+    const CEO_CHAT_ID = process.env.HERMES_ADMIN_CHAT_ID || '';
+
     try {
+      // Modo CEO: si el mensaje viene del dueño, va directo a ClawdBot
+      if (CEO_CHAT_ID && userId === CEO_CHAT_ID && CLAWD_API_KEY) {
+        const history = clawdHistory.get(userId) || [];
+        const answer = await askClawd(msg, history);
+        history.push({ role: 'user', content: msg });
+        history.push({ role: 'assistant', content: answer });
+        clawdHistory.set(userId, history.slice(-12));
+        await ctx.reply(answer, { parse_mode: 'Markdown' });
+        return;
+      }
+
       const skill = matchSkill(msg);
       let text, actions = [];
       if (skill) {
