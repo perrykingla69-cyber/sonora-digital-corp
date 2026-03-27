@@ -107,7 +107,7 @@ function createTelegrafInstance(tenantId, token) {
 
   bot.command('alertas', async (ctx) => {
     try {
-      const { getTodayAlerts, getMonthAlerts } = require('./sat-alerts');
+      const { getMonthAlerts } = require('./sat-alerts');
       const alerts = getMonthAlerts ? getMonthAlerts() : [];
       if (!alerts || alerts.length === 0) {
         return ctx.reply('✅ Sin alertas fiscales pendientes este mes.');
