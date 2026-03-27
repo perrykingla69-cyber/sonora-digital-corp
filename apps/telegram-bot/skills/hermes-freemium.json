@@ -1,0 +1,17 @@
+{
+  "name": "hermes-freemium",
+  "priority": 10,
+  "triggers": [
+    "prueba",
+    "gratis",
+    "trial",
+    "probar",
+    "freemium",
+    "quiero probar",
+    "sin costo",
+    "demo gratis",
+    "acceso gratis"
+  ],
+  "method": "STATIC",
+  "response_text": "🎁 *Acceso Freemium HERMES — 7 días*\n\nPerfecto. Sin tarjeta, sin compromiso, sin letra chica.\n\n*¿Qué incluye tu prueba?*\n✅ Brain IA fiscal disponible 24/7 (este chat)\n✅ Verificación de hasta 10 CFDIs\n✅ Calculadora de nómina (hasta 3 empleados)\n✅ Alertas SAT del calendario fiscal\n✅ Dashboard básico en sonoradigitalcorp.com\n\n*Lo que NO incluye el freemium:*\n— Declaraciones automáticas (esas las presentamos nosotros)\n— Timbrado de nómina\n— Integración bancaria\n\n📋 *Para activar tu prueba, cuéntame:*\n1. ¿Tu nombre y empresa?\n2. ¿Cuántos empleados tienes?\n3. ¿Estás en qué régimen? (RESICO, general, asalariado...)\n\nCon eso te tengo activo en menos de 5 minutos. 🚀"
+}

@@ -3,6 +3,21 @@
 
 > Este archivo carga automáticamente en cada sesión. Mantén el idioma en español y no pegues secretos reales en prompts, commits o archivos versionados.
 
+## 🔑 PALABRA CLAVE DE ACTIVACIÓN: `DENIURGO`
+
+Cuando Marco escribe **DENIURGO** al inicio de una sesión, ejecutar automáticamente:
+
+1. `mem_context` → recuperar sesión anterior (Engram)
+2. `mem_search "pendientes"` → tareas críticas abiertas
+3. `docker ps --format` → verificar containers activos
+4. `curl localhost:8000/status` + `curl localhost:3003/health` → salud del sistema
+5. `git status` → cambios pendientes de commit
+6. Reportar en 10 líneas: ✅ OK / ⚠️ Atención / 🔴 Caído
+7. Mostrar top 3 acciones: las que necesitan credenciales y las que no
+8. Preguntar: *"¿por dónde arrancamos?"*
+
+**Sin que Marco tenga que pedir nada.**
+
 ---
 
 ## IDENTIDAD DEL PROYECTO
