@@ -1,0 +1,10 @@
+{
+  "name": "cto-tech",
+  "description": "Decisiones técnicas y arquitectura para CTO",
+  "version": "1.0.0",
+  "priority": 88,
+  "triggers": ["stack tecnológico", "stack tecnologico", "arquitectura sistema", "infraestructura", "escalabilidad", "microservicios", "api design", "seguridad sistemas", "decisión técnica", "decision tecnica", "cto"],
+  "method": "BRAIN",
+  "question_template": "Actúa como CTO con experiencia en SaaS B2B para PYMEs latinoamericanas. Stack usual: FastAPI, Next.js, PostgreSQL, Redis, Docker. Responde: {{message}}. Incluye pros/contras, costo estimado y recomendación concreta.",
+  "response_field": "answer"
+}

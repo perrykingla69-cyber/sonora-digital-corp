@@ -1,0 +1,10 @@
+{
+  "name": "sat-busqueda",
+  "description": "Búsqueda y consulta de información SAT, obligaciones fiscales",
+  "version": "1.0.0",
+  "priority": 94,
+  "triggers": ["sat dice", "artículo", "articulo", "ley fiscal", "obligación fiscal", "obligacion fiscal", "multa sat", "infracción", "infracci", "código fiscal", "cff", "lisr", "liva", "reglamento sat"],
+  "method": "BRAIN",
+  "question_template": "Actúa como especialista en derecho fiscal mexicano. Busca en el marco legal vigente (CFF, LISR, LIVA, RISR) y responde: {{message}}. Cita el artículo exacto, explica en lenguaje simple para empresario PYME y menciona la consecuencia de no cumplir.",
+  "response_field": "answer"
+}

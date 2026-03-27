@@ -1,0 +1,10 @@
+{
+  "name": "legal-contratos",
+  "description": "Contratos mercantiles, aspectos legales de empresa",
+  "version": "1.0.0",
+  "priority": 86,
+  "triggers": ["contrato", "cláusula", "clausula", "sociedad", "acta constitutiva", "poder notarial", "demanda", "litigio", "ley mercantil", "lgsm", "sociedad anonima", "sas", "srl"],
+  "method": "BRAIN",
+  "question_template": "Actúa como abogado mercantilista con experiencia en empresas mexicanas. Responde: {{message}}. Cita leyes aplicables (LGSM, CCF, Código de Comercio). Advierte que esta orientación no reemplaza asesoría legal formal para decisiones de alto riesgo.",
+  "response_field": "answer"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "auditor-revision",
+  "description": "Auditoría financiera, riesgos y control interno",
+  "version": "1.0.0",
+  "priority": 91,
+  "triggers": ["auditoría", "auditoria", "control interno", "riesgo financiero", "fraude", "revisión contable", "revision contable", "dictamen", "conciliación auditoria", "hallazgo"],
+  "method": "BRAIN",
+  "question_template": "Actúa como auditor financiero certificado (CPC) con experiencia en PYMEs mexicanas. Analiza y responde: {{message}}. Incluye riesgos identificados, artículos de ley aplicables (CFF, LISR, LIVA, LFT) y recomendaciones de control interno.",
+  "response_field": "answer"
+}

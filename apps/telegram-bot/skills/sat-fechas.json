@@ -1,0 +1,10 @@
+{
+  "name": "sat-fechas",
+  "description": "Calendario fiscal SAT 2026 — fechas límite y obligaciones",
+  "version": "1.0.0",
+  "priority": 96,
+  "triggers": ["cuándo vence", "cuando vence", "fecha límite", "fecha limite", "calendario fiscal", "día 17", "dia 17", "vencimiento", "plazo fiscal", "próxima obligación", "proxima obligacion"],
+  "method": "BRAIN",
+  "question_template": "Eres un experto en calendario fiscal SAT México 2026. Responde con fechas exactas y obligaciones específicas: {{message}}. Incluye: qué se declara, quién está obligado, consecuencia de no presentar y si hay prórroga disponible. UMA 2026: $108.57/día.",
+  "response_field": "answer"
+}

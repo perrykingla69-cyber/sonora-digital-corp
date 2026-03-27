@@ -1,0 +1,10 @@
+{
+  "name": "ceo-kpis",
+  "description": "KPIs financieros y dashboard ejecutivo para CEO",
+  "version": "1.0.0",
+  "priority": 92,
+  "triggers": ["kpi", "kpis", "métricas", "metricas", "dashboard ejecutivo", "indicadores", "rentabilidad", "ebitda", "margen"],
+  "method": "BRAIN",
+  "question_template": "Actúa como CFO de una PYME mexicana. El CEO pregunta: {{message}}. Responde con KPIs concretos, fórmulas y benchmarks para PYMEs mexicanas. Incluye valores de referencia (bueno/malo/alerta) y qué acción tomar.",
+  "response_field": "answer"
+}
