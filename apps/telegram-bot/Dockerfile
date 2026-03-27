@@ -3,6 +3,8 @@ WORKDIR /app
 COPY package.json .
 RUN npm install --omit=dev
 COPY server.js .
+COPY logger.js .
+COPY sat-alerts.js .
 COPY skills/ ./skills/
 EXPOSE 3003
 CMD ["node", "server.js"]
