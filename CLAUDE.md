@@ -1,4 +1,4 @@
-# CLAUDE.md — MYSTIC AI OS
+# CLAUDE.md — HERMES AI OS
 ## Sonora Digital Corp
 
 > Este archivo carga automáticamente en cada sesión. Mantén el idioma en español y no pegues secretos reales en prompts, commits o archivos versionados.
@@ -16,16 +16,16 @@ Cuando Luis Daniel escribe **.DENIURGO** (con punto adelante, en cualquier parte
 7. Mostrar top 3 acciones: las que necesitan credenciales y las que no
 8. Preguntar: *"¿por dónde arrancamos?"*
 
-**Sin que Marco tenga que pedir nada.**
+**Sin que Luis Daniel tenga que pedir nada.**
 
 ---
 
 ## IDENTIDAD DEL PROYECTO
 
-**MYSTIC** es un AI Orchestrator SaaS para PYMEs mexicanas.
+**HERMES** es un AI Orchestrator SaaS para PYMEs mexicanas.
 Automatiza contabilidad, nómina, facturas, CRM y Brain IA por WhatsApp/Telegram.
 
-- **Dueño:** Marco (CEO)
+- **Dueño:** Luis Daniel Guerrero Enciso (CEO)
 - **VPS:** Hostinger Ubuntu (IP y acceso fuera del repo)
 - **Repo:** `github.com/perrykingla69-cyber/sonora-digital-corp`
 - **Rama estable:** `main`
@@ -127,3 +127,25 @@ GET  /status
 - Pausar Ollama si no se está usando.
 - Evitar contenedores en restart-loop.
 - Toda credencial real vive fuera del repo y debe rotarse si alguna vez se expuso.
+- `docker restart hermes_telegram_bot` (no docker compose restart desde raíz — falla sin compose file)
+- Container Telegram usa `DEFAULT_BOT_TOKEN` internamente (mapeado desde `TELEGRAM_TOKEN` en infra/.env)
+
+---
+
+## PENDIENTES CRÍTICOS (actualizado 2026-03-27)
+
+### Credenciales faltantes en infra/.env
+- 🔴 `MP_ACCESS_TOKEN` — MercadoPago real (generar en developers.mercadopago.com)
+- 🔴 `CLAUDE_BOT_TOKEN` — vacío; definir si se activa o se comenta
+- 🔴 `ANTHROPIC_API_KEY` — agregar desde console.anthropic.com
+- 🟡 Credencial TW — nombre de var pendiente confirmar con Luis Daniel
+
+### Infraestructura
+- 🟡 Chip Telcel número WhatsApp dedicado (para Baileys)
+- 🟡 Verificar Telegram bot responde con token rotado (2026-03-27)
+- 🟢 Rebuild frontend en producción (imagen nueva pendiente deploy)
+
+### Completado esta sesión (2026-03-27)
+- ✅ TELEGRAM_TOKEN rotado en BotFather + infra/.env actualizado
+- ✅ Rebrand MYSTIC→HERMES: soul.md, n8n_catalog.yaml, mystic_monitor.sh→hermes_monitor.sh
+- ✅ Commit 6b9d398 + push a main
