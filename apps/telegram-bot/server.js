@@ -348,5 +348,17 @@ if (DEFAULT_BOT_TOKEN) {
   setTimeout(() => launchBot('default', DEFAULT_BOT_TOKEN), 40000);
 }
 
+const AUREA_BOT_TOKEN = process.env.AUREA_BOT_TOKEN;
+if (AUREA_BOT_TOKEN) {
+  log.info('[aurea] Bot iniciando...');
+  setTimeout(() => launchBot('aurea', AUREA_BOT_TOKEN), 50000);
+}
+
+const CLAUDE_BOT_TOKEN = process.env.CLAUDE_BOT_TOKEN;
+if (CLAUDE_BOT_TOKEN) {
+  log.info('[clawd] Bot iniciando...');
+  setTimeout(() => launchBot('clawd', CLAUDE_BOT_TOKEN), 60000);
+}
+
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => log.info(`🤖 Telegram Bot Manager en puerto ${PORT}`));
