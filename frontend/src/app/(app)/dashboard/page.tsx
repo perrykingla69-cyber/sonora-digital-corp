@@ -78,7 +78,7 @@ export default function DashboardPage() {
     try {
       const [dash, tipoCambio] = await Promise.allSettled([
         api.get('/dashboard'),
-        api.get('/tipo-cambio'),
+        api.get('/tipo-cambio/hoy'),
       ])
       if (dash.status === 'fulfilled') {
         const d = (dash.value as { data: Record<string, number> }).data
@@ -91,7 +91,7 @@ export default function DashboardPage() {
       }
       if (tipoCambio.status === 'fulfilled') {
         const tc2 = (tipoCambio.value as { data: Record<string, number> }).data
-        setTc(tc2?.precio_venta ?? null)
+        setTc(tc2?.usd_mxn ?? null)
       }
     } catch {}
     setLoading(false)

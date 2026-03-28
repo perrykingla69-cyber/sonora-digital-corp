@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { api, Factura } from '@/lib/api'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Upload, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { Upload, CheckCircle, XCircle, Clock, Plus } from 'lucide-react'
+import Link from 'next/link'
 
 const fmt = (v: number, moneda = 'MXN') =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: moneda }).format(v)
@@ -75,17 +76,25 @@ export default function FacturasPage() {
           </p>
         </div>
 
-        <div>
+        <div className="flex items-center gap-2">
           <input ref={fileRef} type="file" accept=".xml" className="hidden" onChange={handleUploadXML} />
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm
+            className="flex items-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm
                        font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
           >
             <Upload size={16} />
-            {uploading ? 'Subiendo...' : 'Cargar CFDI XML'}
+            {uploading ? 'Subiendo...' : 'Cargar XML'}
           </button>
+          <Link
+            href="/facturas/nueva"
+            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm
+                       font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus size={16} />
+            Nueva factura
+          </Link>
           {uploadMsg && <p className="text-xs mt-1 text-right">{uploadMsg}</p>}
         </div>
       </div>

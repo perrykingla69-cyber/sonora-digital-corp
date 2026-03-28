@@ -47,9 +47,8 @@ TOOL_PATTERNS = {
         (r"(elimina|borra|cancela)\s+(la\s+)?(factura|nómina|empleado)", 0.8),
     ],
     "sat_query": [
-        (r"(verifica|valida|consulta)\s+(el\s+)?(cfdi|factura)\s+['\"]?([A-F0-9-]+)['\"]?", 0.95),
-        (r"(consulta|busca)\s+(el\s+)?(rfc|contribuyente)\s+['\"]?(\w+)['\"]?", 0.9),
-        (r"(cuándo\s+vence|fecha\s+límite|calendario)\s+(del\s+)?(mes|año|SAT)?", 0.8),
+        (r"(verifica|valida|consulta)\s+(el\s+)?(cfdi|factura)\s+['\"]?([A-F0-9-]{36,})['\"]?", 0.95),
+        (r"(consulta|busca)\s+(el\s+)?(rfc|contribuyente)\s+['\"]?([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{2,3})['\"]?", 0.9),
     ],
     "rag_index": [
         (r"(indexa|guarda|almacena)\s+(estos\s+)?(documentos|archivos|datos)", 0.85),
