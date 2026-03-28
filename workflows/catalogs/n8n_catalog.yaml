@@ -1,4 +1,4 @@
-# MYSTIC — Catálogo de Workflows N8N
+# HERMES — Catálogo de Workflows N8N
 workflows:
   - id: alert_vencimientos_sat
     name: Alerta Vencimientos SAT

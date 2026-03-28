@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# mystic_monitor.sh — Health check completo + auto-repair + Telegram report
-# Uso: ./mystic_monitor.sh [--silent]   (--silent omite el reporte si todo OK)
+# hermes_monitor.sh — Health check completo + auto-repair + Telegram report
+# Uso: ./hermes_monitor.sh [--silent]   (--silent omite el reporte si todo OK)
 
 set -euo pipefail
 
 SILENT="${1:-}"
-DC_CMD="docker compose -f /home/mystic/sonora-digital-corp/infra/docker-compose.vps.yml --env-file /home/mystic/sonora-digital-corp/infra/.env.vps --project-name mystic"
-CONTAINERS=(mystic_postgres mystic_redis mystic_api mystic_n8n mystic-ollama mystic_qdrant mystic_frontend mystic_bot mystic_wa)
+DC_CMD="docker compose -f /home/mystic/sonora-digital-corp/infra/docker-compose.vps.yml --env-file /home/mystic/sonora-digital-corp/infra/.env.vps --project-name hermes"
+CONTAINERS=(hermes_postgres hermes_redis hermes_api hermes_n8n hermes_ollama hermes_qdrant hermes_frontend hermes_telegram_bot hermes_wa)
 API_URL="http://localhost:8000/status"
 ISSUES=()
 REPAIRED=()
@@ -118,9 +118,9 @@ ISSUE_COUNT=${#ISSUES[@]}
 REPAIR_COUNT=${#REPAIRED[@]}
 
 if [[ "$ISSUE_COUNT" -eq 0 ]]; then
-  HEADER="🟢 <b>Mystic — Todo operativo</b>"
+  HEADER="🟢 <b>HERMES — Todo operativo</b>"
 else
-  HEADER="🔴 <b>Mystic — ${ISSUE_COUNT} problema(s) detectado(s)</b>"
+  HEADER="🔴 <b>HERMES — ${ISSUE_COUNT} problema(s) detectado(s)</b>"
 fi
 
 MSG="${HEADER}
