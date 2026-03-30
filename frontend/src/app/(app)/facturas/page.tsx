@@ -39,21 +39,45 @@ export default function FacturasPage() {
   }
 
   async function handleUploadXML(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const selectedFiles = e.target.files
+    if (!selectedFiles || selectedFiles.length === 0) return
+    const files = Array.from(selectedFiles).filter(file => file.name.toLowerCase().endsWith('.xml'))
+    if (files.length === 0) {
+      setUploadMsg('⚠️ Solo se aceptan archivos XML')
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
     setUploading(true)
     setUploadMsg('')
     try {
-      const text = await file.text()
       const BASE = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('hermes_token')
-      const res = await fetch(`${BASE}/facturas/xml`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/xml', Authorization: `Bearer ${token}` },
-        body: text,
-      })
-      if (!res.ok) throw new Error((await res.json()).detail || 'Error')
-      setUploadMsg('✅ CFDI importado correctamente')
+      const results = await Promise.allSettled(
+        files.map(async (file) => {
+          const text = await file.text()
+          const res = await fetch(`${BASE}/facturas/xml`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/xml', Authorization: `Bearer ${token}` },
+            body: text,
+          })
+          if (!res.ok) {
+            const detail = (await res.json()).detail || 'Error'
+            throw new Error(`${file.name}: ${detail}`)
+          }
+          return file.name
+        })
+      )
+      const successCount = results.filter(result => result.status === 'fulfilled').length
+      const failedResults = results
+        .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+        .map(result => result.reason instanceof Error ? result.reason.message : 'Error desconocido')
+
+      if (failedResults.length === 0) {
+        setUploadMsg(`✅ ${successCount} XML importados correctamente`)
+      } else {
+        const errorsPreview = failedResults.slice(0, 2).join(' | ')
+        setUploadMsg(`⚠️ ${successCount} importados, ${failedResults.length} con error. ${errorsPreview}`)
+      }
       load()
     } catch (err: unknown) {
       setUploadMsg(`❌ ${err instanceof Error ? err.message : 'Error'}`)
@@ -77,7 +101,7 @@ export default function FacturasPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <input ref={fileRef} type="file" accept=".xml" className="hidden" onChange={handleUploadXML} />
+          <input ref={fileRef} type="file" accept=".xml" multiple className="hidden" onChange={handleUploadXML} />
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
@@ -85,7 +109,7 @@ export default function FacturasPage() {
                        font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
           >
             <Upload size={16} />
-            {uploading ? 'Subiendo...' : 'Cargar XML'}
+            {uploading ? 'Subiendo...' : 'Cargar XMLs'}
           </button>
           <Link
             href="/facturas/nueva"
