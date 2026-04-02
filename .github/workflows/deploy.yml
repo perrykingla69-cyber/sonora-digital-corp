@@ -4,76 +4,81 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      force_rebuild:
-        description: 'Forzar rebuild de contenedores'
-        required: false
-        default: 'false'
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     environment: production
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Deploy al VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 300s
+          script: |
+            set -e
+            cd /home/mystic/hermes-os
 
-      - name: Pull latest & rebuild
-        run: |
-          set -e
-          cd /home/mystic/sonora-digital-corp
+            echo "==> Pull latest"
+            git fetch origin main
+            git reset --hard origin/main
 
-          echo "==> Pull latest"
-          git fetch origin
-          git reset --hard origin/main
-          git clean -fd
+            echo "==> Detectar cambios"
+            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")
+            echo "Archivos cambiados: $CHANGED"
 
-          cd infra
+            echo "==> Rebuild servicios afectados"
+            if echo "$CHANGED" | grep -qE "apps/api/|all"; then
+              echo "  -> Rebuild hermes-api"
+              docker compose build hermes-api
+              docker compose up -d --force-recreate hermes-api
+            fi
 
-          # Detectar qué cambió para rebuild selectivo
-          CHANGED=$(git -C /home/mystic/sonora-digital-corp diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")
+            if echo "$CHANGED" | grep -qE "apps/clawbot/|all"; then
+              echo "  -> Rebuild clawbot"
+              docker compose build clawbot
+              docker compose up -d --force-recreate clawbot
+            fi
 
-          DC="docker compose -f docker-compose.vps.yml --env-file .env.vps --project-name mystic"
+            if echo "$CHANGED" | grep -qE "apps/hermes/|all"; then
+              echo "  -> Rebuild hermes-agent"
+              docker compose build hermes-agent
+              docker compose up -d --force-recreate hermes-agent
+            fi
 
-          echo "==> Rebuild API"
-          $DC build api --no-cache
+            if echo "$CHANGED" | grep -qE "apps/mystic/|all"; then
+              echo "  -> Rebuild mystic-agent"
+              docker compose build mystic-agent
+              docker compose up -d --force-recreate mystic-agent
+            fi
 
-          # Rebuild frontend solo si cambió algo en frontend/
-          if echo "$CHANGED" | grep -q "^frontend/" || echo "$CHANGED" | grep -q "all" || [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
-            echo "==> Rebuild Frontend"
-            $DC build frontend --no-cache
-          else
-            echo "==> Frontend sin cambios, skip rebuild"
-          fi
+            if echo "$CHANGED" | grep -qE "apps/content-agent/|all"; then
+              echo "  -> Rebuild content-agent"
+              docker compose build content-agent
+              docker compose up -d --force-recreate content-agent
+            fi
 
-          # Rebuild bot solo si cambió bot/
-          if echo "$CHANGED" | grep -q "^bot/" || [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
-            echo "==> Rebuild Bot"
-            $DC build bot --no-cache
-          else
-            echo "==> Bot sin cambios, skip rebuild"
-          fi
+            if echo "$CHANGED" | grep -q "docker-compose.yml"; then
+              echo "  -> docker-compose cambio, up -d general"
+              docker compose up -d
+            fi
 
-          echo "==> Levantar todos los servicios"
-          $DC up -d --remove-orphans
+            echo "==> Estado final"
+            docker ps --format "table {{.Names}}\t{{.Status}}"
 
-          echo "==> Verify health"
-          sleep 10
-          STATUS=$(python3 -c "import urllib.request; r=urllib.request.urlopen('http://localhost:8000/status'); print(r.read().decode())" 2>/dev/null)
-          echo "API Status: $STATUS"
-          echo "$STATUS" | grep -q '"api":"ok"' && echo "✅ DEPLOY OK" || (echo "❌ HEALTH CHECK FAILED" && exit 1)
-
-      - name: Notify Telegram
+      - name: Notificar CEO via Telegram
         if: always()
+        env:
+          STATUS: ${{ job.status }}
+          TOKEN: ${{ secrets.TELEGRAM_TOKEN_CEO }}
+          CHAT_ID: ${{ secrets.CEO_CHAT_ID }}
+          COMMIT: ${{ github.event.head_commit.message }}
+          SHA: ${{ github.sha }}
         run: |
-          STATUS="${{ job.status }}"
-          ICON=$([[ "$STATUS" == "success" ]] && echo "✅" || echo "❌")
-          MSG="${ICON} Deploy ${STATUS} — sonora-digital-corp @ ${{ github.sha }}"
-          python3 -c "
-          import urllib.request, json
-          data = json.dumps({'chat_id': '${{ secrets.TELEGRAM_CHAT_ID }}', 'text': '$MSG'}).encode()
-          req = urllib.request.Request('https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage', data=data, headers={'Content-Type': 'application/json'})
-          urllib.request.urlopen(req)
-          print('Telegram notified')
-          " 2>/dev/null || echo "Telegram notification skipped"
+          EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "🔴")
+          MSG="${EMOJI} Deploy ${STATUS} en HERMES OS%0A%0ACommit: ${SHA:0:7}%0A${COMMIT}%0A%0A$(date -u '+%Y-%m-%d %H:%M UTC')"
+          curl -s "https://api.telegram.org/bot${TOKEN}/sendMessage" \
+            -d "chat_id=${CHAT_ID}&text=${MSG}" > /dev/null
