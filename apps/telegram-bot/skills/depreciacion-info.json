@@ -1,0 +1,14 @@
+{
+  "name": "depreciacion-info",
+  "priority": 6,
+  "triggers": [
+    "depreciacion",
+    "amortizacion",
+    "activo fijo",
+    "deduccion inmediata",
+    "vida util activo",
+    "depreciar equipo"
+  ],
+  "method": "STATIC",
+  "response_text": "📉 *Depreciación de Activos Fijos*\n\n*Tasas anuales SAT:*\n| Activo | Tasa SAT |\n|--------|----------|\n| Equipo de cómputo | 30% |\n| Automóviles | 25% |\n| Maquinaria general | 10% |\n| Mobiliario y equipo | 10% |\n| Construcciones | 5% |\n| Terrenos | No deprecian |\n\n*Deducción inmediata:* En año de compra puedes deducir hasta el 87% del valor en lugar de la tasa normal (solo activos nuevos en zonas prioritarias).\n\n⚠️ *Autos: límite de deducción $175,000 MXN (IVA incluido)*\n\n💡 _HERMES registra y calcula depreciaciones automáticamente._"
+}

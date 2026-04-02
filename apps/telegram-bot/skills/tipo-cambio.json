@@ -1,0 +1,15 @@
+{
+  "name": "tipo-cambio",
+  "priority": 9,
+  "triggers": [
+    "tipo de cambio",
+    "dolar hoy",
+    "cuanto esta el dolar",
+    "precio del dolar",
+    "usd mxn",
+    "dolar peso"
+  ],
+  "method": "GET",
+  "endpoint": "http://api:8000/api/tipo-cambio",
+  "response_template": "💵 Tipo de cambio: ${{valor}} MXN/USD (Fuente: Banxico, {{fecha}})"
+}

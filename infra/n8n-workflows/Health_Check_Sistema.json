@@ -1,0 +1,122 @@
+{
+  "id": "f7a1b2c3-d4e5-4f60-a7b8-c9d0e1f23456",
+  "name": "Health Check Sistema",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "*/30 * * * *" }]
+        }
+      },
+      "name": "Trigger Cada 30min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/status",
+        "method": "GET",
+        "options": {
+          "timeout": 5000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "name": "GET Status API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst statusCode = response.statusCode || 200;\nconst body = response.body || response;\nconst latencia = response.headers?.['x-response-time']\n  ? parseInt(response.headers['x-response-time'])\n  : (Date.now() - ($env.CHECK_START || Date.now()));\nconst statusOk = (body.status === 'ok' || statusCode === 200);\nconst latenciaOk = latencia < 5000;\nconst hayProblema = !statusOk || !latenciaOk;\nreturn [{\n  json: {\n    hayProblema,\n    statusOk,\n    latenciaOk,\n    latencia,\n    statusCode,\n    statusBody: body.status || 'desconocido',\n    mensaje: `🔴 *MYSTIC — Alerta Sistema*\\n\\n` +\n      `⚠️ Se detectó un problema en el API\\n\\n` +\n      `📡 Status: ${body.status || 'error'} (HTTP ${statusCode})\\n` +\n      `⏱️ Latencia: ${latencia}ms${!latenciaOk ? ' ⚠️ ALTA' : ''}\\n` +\n      `🕐 Hora: ${new Date().toLocaleString('es-MX', {timeZone:'America/Hermosillo'})}\\n\\n` +\n      `👉 Revisar: sonoradigitalcorp.com/panel`,\n    numero: '526622681111'\n  }\n}];"
+      },
+      "name": "Evaluar Estado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.hayProblema }}", "value2": true }]
+        }
+      },
+      "name": "Hay Problema?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar Alerta WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {},
+      "name": "Sin Problema — OK",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const err = $input.item.json;\nreturn [{ json: { numero: '526622681111', mensaje: `⚠️ Error en workflow: ${$workflow.name}\\nDetalles: ${JSON.stringify(err).slice(0,200)}` } }];"
+      },
+      "name": "Alerta Error WA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 480]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 480]
+    }
+  ],
+  "connections": {
+    "Trigger Cada 30min": { "main": [[{ "node": "GET Status API", "type": "main", "index": 0 }]] },
+    "GET Status API": { "main": [[{ "node": "Evaluar Estado", "type": "main", "index": 0 }]] },
+    "Evaluar Estado": { "main": [[{ "node": "Hay Problema?", "type": "main", "index": 0 }]] },
+    "Hay Problema?": {
+      "main": [
+        [{ "node": "Enviar Alerta WA", "type": "main", "index": 0 }],
+        [{ "node": "Sin Problema — OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Alerta Error WA": { "main": [[{ "node": "Enviar WA Error", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "sat-multa-info",
+  "priority": 8,
+  "triggers": [
+    "multa sat",
+    "multa del sat",
+    "me multaron",
+    "cuanto es la multa",
+    "sancion fiscal",
+    "infraccion sat"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario pregunta sobre multas del SAT. Explica los tipos de multas más comunes (por no declarar, CFDI incorrecto, no tener RFC), montos aproximados, y cómo evitarlas con HERMES. Mensaje: {{message}}"
+}

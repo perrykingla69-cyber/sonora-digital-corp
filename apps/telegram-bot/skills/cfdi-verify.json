@@ -1,0 +1,16 @@
+{
+  "name": "cfdi-verify",
+  "version": "1.0.0",
+  "description": "Verifica un CFDI por UUID via SAT — estado válido, cancelado o no encontrado.",
+  "triggers": ["verificar cfdi", "verificar factura", "validar cfdi", "cfdi"],
+  "endpoint": "http://api:8000/api/sat/verificar-cfdi",
+  "method": "POST",
+  "payload": {
+    "uuid": "{{message}}",
+    "tenant_id": "{{tenant_id}}"
+  },
+  "response_field": "resultado",
+  "actions": [
+    { "label": "🔍 Verificar otro CFDI", "callback": "action_cfdi" }
+  ]
+}

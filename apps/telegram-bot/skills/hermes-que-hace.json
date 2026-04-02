@@ -1,0 +1,14 @@
+{
+  "name": "hermes-que-hace",
+  "priority": 9,
+  "triggers": [
+    "que hace hermes",
+    "para que sirve hermes",
+    "como funciona hermes",
+    "hermes puede",
+    "beneficios de hermes",
+    "hermes vs contador"
+  ],
+  "method": "STATIC",
+  "response_text": "🤖 *¿Qué hace HERMES AI OS?*\n\nHERMES es tu contador inteligente disponible 24/7. Automatiza:\n\n📋 *Fiscal*\n• Declaraciones mensuales y anuales automáticas\n• Verificación de CFDIs en tiempo real\n• Alertas antes de vencimientos SAT\n• DIOT, nómina timbrada, retenciones\n\n💰 *Contabilidad*\n• Cierre mensual automático\n• Conciliación bancaria\n• Balance general y estado de resultados\n\n📦 *Aduanas*\n• Clasificación arancelaria con IA\n• Verificación MVE\n• Pedimentos y carta porte\n\n🧠 *Brain IA*\n• Responde dudas fiscales a las 2am\n• Aprende de tu empresa con el tiempo\n• Integrado en WhatsApp y Telegram\n\n*vs Contador tradicional:*\n• Contador: $2,000-8,000/mes + errores humanos\n• HERMES: desde $499/mes + disponible 24/7\n\n💬 Escríbeme *DEMO* para ver HERMES en acción."
+}

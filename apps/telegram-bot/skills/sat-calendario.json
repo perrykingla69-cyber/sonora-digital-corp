@@ -1,0 +1,9 @@
+{
+  "name": "sat-calendario",
+  "version": "1.0.0",
+  "description": "Consulta fechas límite y obligaciones fiscales del mes actual.",
+  "triggers": ["calendario sat", "fechas sat", "obligaciones fiscales", "vencimientos"],
+  "endpoint": "http://api:8000/api/sat/calendario",
+  "method": "GET",
+  "response_template": "📅 Obligaciones SAT del mes:\n{{obligaciones}}"
+}

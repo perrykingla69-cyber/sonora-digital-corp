@@ -1,0 +1,13 @@
+{
+  "name": "sat-carta-invitacion",
+  "priority": 8,
+  "triggers": [
+    "carta invitacion",
+    "carta del sat",
+    "sat me mando carta",
+    "discrepancia fiscal",
+    "diferencia en declaracion"
+  ],
+  "method": "STATIC",
+  "response_text": "📨 *Carta Invitación SAT*\n\nNo es una auditoría, pero sí una señal de alerta. El SAT detectó una discrepancia en tu información. Tipos:\n\n• *Tipo A:* Diferencia entre ingresos declarados y facturas emitidas\n• *Tipo B:* Gastos sin soporte fiscal\n• *Tipo C:* Depósitos bancarios sin justificar\n\n✅ *Qué hacer:*\n1. No ignores — tienes 15-30 días para aclarar\n2. Reúne tus CFDIs y estados de cuenta\n3. Presenta aclaración en el portal del SAT\n\n💬 Mándame los detalles de la carta y te oriento paso a paso."
+}

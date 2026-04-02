@@ -1,0 +1,85 @@
+# HERMES — Catálogo de Workflows N8N
+workflows:
+  - id: alert_vencimientos_sat
+    name: Alerta Vencimientos SAT
+    file: infra/n8n-workflows/Alerta_Vencimientos_SAT.json
+    trigger: cron
+    schedule: "0 8 * * 1"
+    tags: [fiscal, sat, alertas]
+
+  - id: alert_manana
+    name: Resumen Diario 6am
+    file: infra/n8n-workflows/Alert_Mañana_-_Resumen_Diario_6am.json
+    trigger: cron
+    schedule: "0 6 * * 1-5"
+    tags: [reporte, diario]
+
+  - id: alert_tarde
+    name: Resumen Diario 6pm
+    file: infra/n8n-workflows/Alert_Tarde_-_Resumen_Diario_6pm.json
+    trigger: cron
+    schedule: "0 18 * * 1-5"
+    tags: [reporte, diario]
+
+  - id: reporte_ejecutivo_lunes
+    name: Reporte Ejecutivo Lunes
+    file: infra/n8n-workflows/Reporte_Ejecutivo_Lunes_WA.json
+    trigger: cron
+    schedule: "0 9 * * 1"
+    tags: [reporte, semanal]
+
+  - id: scorecard_semanal
+    name: Scorecard Semanal
+    file: infra/n8n-workflows/Scorecard_Semanal_WA.json
+    trigger: cron
+    schedule: "0 10 * * 5"
+    tags: [kpis, scorecard]
+
+  - id: cierre_mensual
+    name: Cierre Mensual
+    file: infra/n8n-workflows/Cierre_Mensual_Cerrado_WA.json
+    trigger: cron
+    schedule: "0 9 1 * *"
+    tags: [contabilidad, cierre]
+
+  - id: recordatorio_sat_dia17
+    name: Recordatorio SAT Día 17
+    file: infra/n8n-workflows/Recordatorio_SAT_Dia_17.json
+    trigger: cron
+    schedule: "0 9 14 * *"
+    tags: [fiscal, recordatorio]
+
+  - id: webhook_factura_nueva
+    name: Webhook Factura Nueva
+    file: infra/n8n-workflows/Webhook_Factura_Nueva_WA.json
+    trigger: webhook
+    endpoint: /webhook/factura-nueva
+    tags: [facturas, webhook]
+
+  - id: clasificacion_arancelaria
+    name: Clasificación Arancelaria
+    file: infra/n8n-workflows/Clasificacion_Arancelaria_WA.json
+    trigger: webhook
+    endpoint: /webhook/clasificacion
+    tags: [aduanas, aranceles]
+
+  - id: pedimento_calculo
+    name: Cálculo de Pedimento
+    file: infra/n8n-workflows/Pedimento_Calculo_WA.json
+    trigger: webhook
+    endpoint: /webhook/pedimento
+    tags: [aduanas, pedimento]
+
+  - id: onboarding_bienvenida
+    name: Onboarding Bienvenida
+    file: infra/n8n-workflows/Onboarding_Bienvenida_WA.json
+    trigger: webhook
+    endpoint: /webhook/onboarding
+    tags: [onboarding, crm]
+
+  - id: dof_auto_seed
+    name: DOF Auto Seed Semanal
+    file: infra/n8n-workflows/DOF_Auto_Seed_Semanal.json
+    trigger: cron
+    schedule: "0 7 * * 1"
+    tags: [dof, rag, seed]

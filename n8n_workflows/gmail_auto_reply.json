@@ -1,0 +1,79 @@
+{
+  "name": "MYSTIC — Auto-Respuesta Gmail Inteligente",
+  "nodes": [
+    {
+      "id": "gmail_trigger",
+      "name": "Gmail — Correo Nuevo",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "filters": {
+          "sender": "={{$env.GMAIL_FILTER_FROM || ''}}",
+          "readStatus": "unread"
+        }
+      },
+      "position": [200, 300]
+    },
+    {
+      "id": "classify",
+      "name": "Brain IA — Clasificar y Responder",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/brain/ask",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "question", "value": "=Clasifica este correo y sugiere respuesta profesional en español. De: {{$json.from}}. Asunto: {{$json.subject}}. Mensaje: {{$json.text || $json.snippet}}. Responde con JSON: {clasificacion: 'cliente|proveedor|fiscal|spam|otro', urgencia: 'alta|media|baja', respuesta_sugerida: '...'}" },
+            { "name": "tenant_id", "value": "sonora" },
+            { "name": "channel", "value": "gmail" }
+          ]
+        }
+      },
+      "position": [450, 300]
+    },
+    {
+      "id": "urgente_only",
+      "name": "Solo urgentes",
+      "type": "n8n-nodes-base.if",
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{$json.answer}}", "operation": "contains", "value2": "alta" }]
+        }
+      },
+      "position": [700, 300]
+    },
+    {
+      "id": "notify_telegram",
+      "name": "Notificar CEO en Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{$env.TELEGRAM_CEO_CHAT_ID}}",
+        "text": "=📧 *Correo urgente*\n\nDe: {{$node['Gmail — Correo Nuevo'].json.from}}\nAsunto: {{$node['Gmail — Correo Nuevo'].json.subject}}\n\n💡 Respuesta sugerida por Brain IA está lista.\n\n_Responde: /responder para enviar_"
+      },
+      "position": [950, 200]
+    },
+    {
+      "id": "label",
+      "name": "Etiquetar en Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{$node['Gmail — Correo Nuevo'].json.id}}",
+        "labelIds": ["MYSTIC_PROCESADO"]
+      },
+      "position": [950, 400]
+    }
+  ],
+  "connections": {
+    "Gmail — Correo Nuevo":              { "main": [[{ "node": "Brain IA — Clasificar y Responder", "type": "main", "index": 0 }]] },
+    "Brain IA — Clasificar y Responder": { "main": [[{ "node": "Solo urgentes", "type": "main", "index": 0 }]] },
+    "Solo urgentes": {
+      "main": [
+        [{ "node": "Notificar CEO en Telegram", "type": "main", "index": 0 }],
+        [{ "node": "Etiquetar en Gmail",        "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

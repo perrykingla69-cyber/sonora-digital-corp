@@ -1,0 +1,58 @@
+name: Monitor — Mystic Health Check
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'   # cada 2 horas
+    - cron: '0 8 * * *'     # reporte diario 8 AM (Hermosillo = UTC-7 → 15:00 UTC)
+  workflow_dispatch:
+    inputs:
+      silent:
+        description: 'Solo reportar si hay problemas'
+        required: false
+        default: 'false'
+
+jobs:
+  health-check:
+    runs-on: self-hosted
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ejecutar monitor
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          chmod +x scripts/mystic_monitor.sh
+          SILENT_FLAG=""
+          [[ "${{ github.event.inputs.silent }}" == "true" ]] && SILENT_FLAG="--silent"
+          bash scripts/mystic_monitor.sh $SILENT_FLAG || true
+
+      - name: Auto-fix — sync repo si está desactualizado
+        run: |
+          cd /home/mystic/sonora-digital-corp
+          LOCAL=$(git rev-parse HEAD)
+          REMOTE=$(git rev-parse origin/main)
+          if [[ "$LOCAL" != "$REMOTE" ]]; then
+            echo "==> Sincronizando repo..."
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
+            echo "✅ Repo sincronizado a $(git rev-parse --short HEAD)"
+          else
+            echo "✅ Repo ya al día"
+          fi
+
+      - name: Auto-fix — levantar contenedores caídos
+        run: |
+          DC="docker compose -f /home/mystic/sonora-digital-corp/infra/docker-compose.vps.yml --env-file /home/mystic/sonora-digital-corp/infra/.env.vps --project-name mystic"
+          DOWN=$(docker ps --filter "status=exited" --filter "name=mystic" --format "{{.Names}}" 2>/dev/null)
+          if [[ -n "$DOWN" ]]; then
+            echo "==> Contenedores caídos: $DOWN"
+            $DC up -d --remove-orphans
+            echo "✅ Servicios levantados"
+          else
+            echo "✅ Todos los contenedores corriendo"
+          fi

@@ -1,0 +1,96 @@
+{
+  "id": "e5f6a7b8-9012-34ef-g012-555666777888",
+  "name": "DOF Auto Seed Semanal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 7 * * 1" }]
+        }
+      },
+      "name": "Trigger Lunes 7am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/admin/seed/dof",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "dias", "value": "7" },
+            { "name": "include_qa", "value": "false" }
+          ]
+        },
+        "options": { "timeout": 120000 }
+      },
+      "name": "Ejecutar Seed DOF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Ejecutar Seed DOF').first().json;\nconst ok = d.indexed || 0;\nconst err = d.errors || 0;\nlet msg = `📚 *DOF Auto-Seed Semanal*\\n\\n`;\nmsg += `✅ Documentos nuevos indexados: *${ok}*\\n`;\nmsg += `❌ Errores: ${err}\\n`;\nif (d.topics && d.topics.length) {\n  msg += `\\n📂 Temas: ${d.topics.join(', ')}\\n`;\n}\nmsg += `\\n🕐 ${new Date().toLocaleString('es-MX')}`;\nreturn [{ json: { mensaje: msg, numero: '526622681111' } }];"
+      },
+      "name": "Formatear Reporte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Notificar WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const err = $input.item.json;\nreturn [{ json: { numero: '526622681111', mensaje: `⚠️ Error DOF Seed:\\n${JSON.stringify(err).slice(0,200)}` } }];"
+      },
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 480]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Notificar Error WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 480]
+    }
+  ],
+  "connections": {
+    "Trigger Lunes 7am": { "main": [[{ "node": "Ejecutar Seed DOF", "type": "main", "index": 0 }]] },
+    "Ejecutar Seed DOF": { "main": [[{ "node": "Formatear Reporte", "type": "main", "index": 0 }]] },
+    "Formatear Reporte": { "main": [[{ "node": "Notificar WA", "type": "main", "index": 0 }]] },
+    "Error Handler": { "main": [[{ "node": "Notificar Error WA", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "declaracion-anual-info",
+  "priority": 7,
+  "triggers": [
+    "declaracion anual",
+    "declaracion de abril",
+    "renta anual",
+    "declaracion personas fisicas",
+    "saldo a favor",
+    "devolucion sat"
+  ],
+  "method": "STATIC",
+  "response_text": "📊 *Declaración Anual — Personas Físicas*\n\n*Plazo:* Abril del año siguiente (ej. 2025 → hasta 30 abril 2026)\n\n*¿Quién la presenta?*\n• Personas físicas con actividad empresarial o profesional\n• Asalariados con ingresos > $400,000 anuales o múltiples patrones\n• Arrendadores\n• RESICO (si obtienen saldo a favor)\n\n*Deducciones personales que puedes aplicar:*\n• Honorarios médicos, dentales, hospitalarios\n• Colegiaturas (tope por nivel educativo)\n• Intereses hipotecarios\n• Aportaciones voluntarias AFORE\n• Donativos a organizaciones autorizadas\n\n💡 _HERMES calcula tus deducciones automáticamente para maximizar tu devolución._"
+}

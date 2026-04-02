@@ -1,0 +1,14 @@
+{
+  "name": "musica-derechos-info",
+  "priority": 5,
+  "triggers": [
+    "derechos de autor",
+    "sacm",
+    "smia",
+    "regalias",
+    "registro musical",
+    "proteger cancion"
+  ],
+  "method": "STATIC",
+  "response_text": "🎵 *Derechos de Autor — Músicos en México*\n\n*SACM (Sociedad de Autores y Compositores de México):*\n• Registro gratuito en sacm.org.mx\n• Distribuye regalías por ejecuciones públicas (radio, bar, evento)\n• Requiere: partitura o letra, grabación demo\n\n*SMIA (Sociedad Mexicana de Intérpretes y Artistas):*\n• Para artistas intérpretes (vocalistas, músicos)\n• Regalías por grabaciones\n\n*Distribución digital:*\n• DistroKid, TuneCore, CD Baby — distribuyen a Spotify, Apple Music, etc.\n• Regalías: ~$0.003-0.005 USD por stream en Spotify\n\n💡 _HERMES para Artistas — próximamente._ 🎸"
+}

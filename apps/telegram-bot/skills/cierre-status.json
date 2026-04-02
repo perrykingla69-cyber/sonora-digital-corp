@@ -1,0 +1,12 @@
+{
+  "name": "cierre-status",
+  "version": "1.0.0",
+  "description": "Consulta el estado del cierre contable mensual: pendiente, en proceso o completado.",
+  "triggers": ["cierre", "cierre mensual", "estado cierre", "cerrar mes"],
+  "endpoint": "http://api:8000/api/cierre/status",
+  "method": "GET",
+  "response_template": "📋 Cierre mensual — Estado: {{estado}}\nMes: {{mes}} {{año}}\n{{detalle}}",
+  "actions": [
+    { "label": "📊 ¿Cómo voy con el SAT?", "callback": "action_status" }
+  ]
+}

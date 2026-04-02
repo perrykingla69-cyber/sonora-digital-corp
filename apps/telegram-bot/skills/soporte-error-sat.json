@@ -1,0 +1,14 @@
+{
+  "name": "soporte-error-sat",
+  "priority": 8,
+  "triggers": [
+    "error en el sat",
+    "sat no me deja",
+    "problema sat",
+    "portal sat no funciona",
+    "sat caido",
+    "no puedo declarar sat"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario tiene un problema técnico con el portal del SAT. Ayúdalo a identificar el error (códigos comunes: 403 certificado, error de XML, firma caducada, navegador incompatible) y da pasos concretos para resolverlo. Mensaje: {{message}}"
+}

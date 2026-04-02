@@ -1,0 +1,11 @@
+{
+  "name": "n8n-alerta-test",
+  "priority": 5,
+  "triggers": [
+    "probar alerta",
+    "test alerta sat",
+    "alerta de prueba"
+  ],
+  "method": "STATIC",
+  "response_text": "🔔 Las alertas SAT están activas. Te notificaré automáticamente los días 1, 10, 14, 16, 17, 20 y 25 de cada mes con recordatorios de tus obligaciones fiscales. Sin que tengas que hacer nada. 💡"
+}

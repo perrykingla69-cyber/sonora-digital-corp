@@ -1,0 +1,13 @@
+{
+  "name": "cfdi-global-info",
+  "priority": 6,
+  "triggers": [
+    "factura global",
+    "cfdi global",
+    "ticket sin factura",
+    "venta al publico en general",
+    "operaciones con publico"
+  ],
+  "method": "STATIC",
+  "response_text": "🏪 *CFDI Global (Factura al Público en General)*\n\nSi vendes a consumidores finales que no piden factura, debes emitir un CFDI Global que agrupe esas ventas.\n\n*Periodicidad:*\n• Diaria, semanal, quincenal o mensual (según tu régimen)\n• RESICO: mensual\n• Personas morales: mensual\n\n*Datos del receptor:*\n• RFC: XAXX010101000 (público general nacional)\n• RFC: XEXX010101000 (extranjero)\n\n⚠️ Sin CFDI Global, tus ingresos sin factura quedan sin respaldo ante el SAT."
+}

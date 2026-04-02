@@ -1,0 +1,10 @@
+{
+  "name": "ventas-crm",
+  "description": "Estrategia de ventas, seguimiento de clientes y CRM",
+  "version": "1.0.0",
+  "priority": 82,
+  "triggers": ["prospecto", "vender", "cerrar venta", "seguimiento cliente", "crm", "pipeline", "propuesta comercial", "cotización", "descuento", "objeción", "objecion"],
+  "method": "BRAIN",
+  "question_template": "Actúa como director comercial con experiencia en ventas B2B para PYMEs mexicanas. Responde: {{message}}. Usa metodología SPIN o consultiva cuando aplique. Da ejemplos concretos con contexto de contabilidad y servicios digitales.",
+  "response_field": "answer"
+}

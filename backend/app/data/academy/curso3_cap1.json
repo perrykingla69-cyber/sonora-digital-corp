@@ -1,0 +1,34 @@
+{
+  "curso_id": "nomina-imss",
+  "curso_nombre": "Nómina y IMSS paso a paso",
+  "capitulo": 1,
+  "titulo": "Entendiendo el costo real de un empleado",
+  "duracion_video_min": 3,
+  "xp": 100,
+  "objetivos": [
+    "Calcular el costo total que representa un empleado más allá del salario neto que recibe",
+    "Identificar las cuotas patronales del IMSS: Enfermedad y Maternidad, Invalidez y Vida, Guarderías, Retiro, Cesantía y Vejez (RCV), e Infonavit",
+    "Distinguir entre Salario Base de Cotización (SBC), Salario Diario Integrado (SDI) y salario neto",
+    "Entender qué son las prestaciones mínimas de ley según la Ley Federal del Trabajo (LFT): aguinaldo, vacaciones, prima vacacional",
+    "Reconocer la importancia de dar de alta correctamente a los empleados ante el IMSS desde el primer día"
+  ],
+  "contenido_pdf": "/academy/curso3_cap1_contenido.md",
+  "guion_video": "/academy/curso3_cap1_guion.md",
+  "tarea": {
+    "titulo": "Calcula el costo real de tu empleado",
+    "instrucciones": "Elige un empleado de tu empresa (o crea un caso hipotético) con un salario mensual neto de $12,000 pesos. Usando la información de este capítulo, realiza los siguientes cálculos: 1) Calcula el salario diario. 2) Calcula el Salario Diario Integrado considerando las prestaciones mínimas de ley (aguinaldo 15 días, prima vacacional 25% sobre 12 días en el primer año, que equivalen a 3 días de vacaciones proporcionales en el primer mes, más el salario). Usa el factor de integración correspondiente al primer año de trabajo. 3) Estima las cuotas patronales al IMSS usando los porcentajes vigentes del ejercicio 2024 (los aprenderás en capítulos posteriores, por ahora investígalos en el portal del IMSS). 4) Suma el costo total mensual: salario + cuotas patronales + aportación Infonavit + SAR. 5) Calcula qué porcentaje representa el costo adicional sobre el salario neto. Presenta tus cálculos en una tabla y escribe una conclusión de 100 palabras.",
+    "criterios": [
+      "Presenta el cálculo del Salario Diario Integrado con la fórmula correcta",
+      "Incluye al menos 4 conceptos de cuotas patronales en el cálculo",
+      "La tabla de costos es clara y los números son coherentes",
+      "La conclusión menciona el impacto del costo real vs salario neto",
+      "Identifica al menos un riesgo de no dar de alta al empleado en el IMSS"
+    ]
+  },
+  "recursos_externos": [
+    "IMSS - Portal patronal IDSE: http://idse.imss.gob.mx/",
+    "IMSS - Cuotas y aportaciones vigentes: https://www.imss.gob.mx/patrones/cuotas-obrero-patronales",
+    "Ley Federal del Trabajo - DOF: https://www.diputados.gob.mx/LeyesBiblio/pdf/LFT.pdf",
+    "SAT - CFDI de Nómina versión 1.2: https://www.sat.gob.mx/consultas/01928/complemento-de-nomina"
+  ]
+}

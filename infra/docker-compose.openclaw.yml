@@ -1,0 +1,110 @@
+# docker-compose.openclaw.yml — Agente OpenClaw persistente en VPS
+# Integra OpenClaw como agente IA autónomo conectado al ecosistema HERMES
+#
+# Uso:
+#   docker compose \
+#     -f docker-compose.vps.yml \
+#     -f docker-compose.openclaw.yml \
+#     --env-file .env up -d openclaw-agent
+#
+# Requiere en infra/.env:
+#   ANTHROPIC_API_KEY=<tu-clave-real>
+#   TELEGRAM_BOT_TOKEN=<token-del-bot-de-openclaw>
+#   OPENCLAW_MODEL=claude-haiku-4-5-20251001   # o anular aquí
+#
+# NOTA DE SEGURIDAD: nunca pegar valores reales en este archivo.
+# Todos los secretos deben venir de infra/.env (excluido de git).
+
+version: '3.9'
+
+services:
+
+  openclaw-agent:
+    # Imagen base Node 20 Alpine; OpenClaw se instala vía npm al inicio
+    image: node:20-alpine
+    container_name: hermes_openclaw
+
+    # El entrypoint ejecuta el script de arranque que instala dependencias,
+    # levanta engram y pone a escuchar al agente.
+    entrypoint: ["/bin/sh", "/workspace/infra/openclaw/agent.sh"]
+
+    environment:
+      # --- Credenciales IA (valor real en .env, nunca aquí) ---
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
+      # --- Bot de Telegram exclusivo para el agente OpenClaw ---
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+
+      # --- Modelo Claude que usará OpenClaw ---
+      OPENCLAW_MODEL: ${OPENCLAW_MODEL:-claude-haiku-4-5-20251001}
+
+      # --- Directorio de trabajo dentro del contenedor ---
+      OPENCLAW_WORKSPACE: /workspace
+
+      # --- Ruta de configuración persistente de OpenClaw ---
+      OPENCLAW_CONFIG_DIR: /root/.openclaw
+
+      # --- Variables de entorno para Node / npm ---
+      NODE_ENV: production
+      NPM_CONFIG_UPDATE_NOTIFIER: "false"
+
+    volumes:
+      # Configuración persistente de OpenClaw (sesión, memoria, índices)
+      - openclaw_config:/root/.openclaw
+
+      # Repositorio completo montado como workspace de solo lectura
+      # (el agente puede leer código y proponer cambios, no escribir directo)
+      - /home/mystic/sonora-digital-corp:/workspace:ro
+
+      # Script de arranque montado con permiso de ejecución
+      # (separado para poder actualizarlo sin rebuild)
+      # Ya incluido en el volumen del workspace anterior (/workspace/infra/openclaw/)
+
+    networks:
+      - hermes_net
+
+    restart: unless-stopped
+
+    # Healthcheck: verifica que el proceso openclaw siga vivo
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'openclaw' > /dev/null || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    labels:
+      # Identificación del servicio dentro del stack HERMES
+      com.sonoradigital.service: "openclaw-agent"
+      com.sonoradigital.stack: "hermes"
+      com.sonoradigital.role: "ai-agent"
+      com.sonoradigital.version: "1.0.0"
+      # Descripción legible para herramientas de monitoreo
+      com.sonoradigital.description: "Agente OpenClaw persistente — integración Telegram + HERMES AI OS"
+
+    # Sin puertos expuestos al exterior; toda comunicación es interna
+    # o vía Telegram (saliente desde el contenedor).
+    # Si en el futuro se requiere API REST de OpenClaw, agregar:
+    #   ports:
+    #     - "127.0.0.1:4000:4000"
+
+    depends_on:
+      # Espera a que la API HERMES esté sana antes de arrancar el agente
+      api:
+        condition: service_healthy
+
+# ---------------------------------------------------------------------------
+# Volúmenes adicionales (solo los nuevos; los del compose base ya existen)
+# ---------------------------------------------------------------------------
+volumes:
+  openclaw_config:
+    # Datos persistentes de configuración y memoria del agente OpenClaw
+    driver: local
+
+# ---------------------------------------------------------------------------
+# Red compartida con el stack principal
+# (declarada como external para reutilizar la red ya creada por vps.yml)
+# ---------------------------------------------------------------------------
+networks:
+  hermes_net:
+    external: true

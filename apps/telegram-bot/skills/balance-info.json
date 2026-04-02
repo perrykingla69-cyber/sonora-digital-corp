@@ -1,0 +1,13 @@
+{
+  "name": "balance-info",
+  "priority": 6,
+  "triggers": [
+    "balance general",
+    "estado financiero",
+    "activos y pasivos",
+    "balance de empresa",
+    "situacion financiera"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario pregunta sobre balance general. Explica la estructura básica (activo = pasivo + capital), las cuentas más importantes para una PyME mexicana, y cómo interpretarlo. Sé práctico. Mensaje: {{message}}"
+}

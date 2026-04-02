@@ -1,0 +1,14 @@
+{
+  "name": "fiscal-mx",
+  "version": "1.0.0",
+  "description": "Consultas fiscales mexicanas: IVA, ISR, CFDI, SAT, RESICO, cierre contable.",
+  "triggers": ["factura", "cfdi", "iva", "isr", "sat", "cierre", "fiscal", "impuesto", "declaracion"],
+  "endpoint": "http://api:8000/api/brain/ask",
+  "method": "POST",
+  "payload": {
+    "question": "{{message}}",
+    "context": "fiscal_mx",
+    "tenant_id": "{{tenant_id}}"
+  },
+  "response_field": "answer"
+}

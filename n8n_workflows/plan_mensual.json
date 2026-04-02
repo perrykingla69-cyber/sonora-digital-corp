@@ -1,0 +1,209 @@
+{
+  "_readme": {
+    "nombre": "Plan Mensual — Día 1 de cada mes",
+    "descripcion": "Se ejecuta el día 1 de cada mes a las 6:00 AM hora Hermosillo. Genera un plan mensual completo estructurado en 4 semanas (consolidar clientes, nuevas features, marketing/ventas, review/ajustes). Envía resumen por Telegram y guarda el plan completo en /tmp/plan_mes_YYYY_MM.txt",
+    "version": "1.0.0",
+    "autor": "Marco / Sonora Digital Corp",
+    "instalacion": [
+      "1. En N8N ir a Workflows > Import from JSON",
+      "2. Pegar el contenido de este archivo",
+      "3. Configurar las variables de entorno en Settings > Variables:",
+      "   - TELEGRAM_BOT_TOKEN : Token del bot de Telegram",
+      "   - TELEGRAM_CEO_CHAT_ID : Chat ID de Luis Daniel",
+      "4. Verificar que el contenedor N8N tenga acceso de escritura a /tmp/",
+      "5. Activar el workflow con el toggle ON",
+      "6. Se ejecuta automáticamente el día 1 de cada mes a las 6:00 AM"
+    ],
+    "variables_requeridas": {
+      "TELEGRAM_BOT_TOKEN": "Token del bot Telegram — obtenido en @BotFather",
+      "TELEGRAM_CEO_CHAT_ID": "Chat ID numérico de Luis Daniel en Telegram"
+    },
+    "archivos_generados": {
+      "ruta": "/tmp/plan_mes_YYYY_MM.txt",
+      "ejemplo": "/tmp/plan_mes_2026_03.txt",
+      "nota": "El archivo persiste en el contenedor N8N hasta reinicio. Para persistencia usar volumen Docker."
+    },
+    "tags": ["agenda", "luis-daniel", "personal"],
+    "timezone": "America/Hermosillo",
+    "cron": "0 6 1 * *"
+  },
+  "name": "Plan Mensual — Día 1 de cada mes",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 1 * *"
+            }
+          ]
+        },
+        "timezone": "America/Hermosillo"
+      },
+      "id": "node-schedule-mensual",
+      "name": "Schedule Trigger Día 1 del Mes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// PLAN MENSUAL MYSTIC AI OS — Luis Daniel\n// Marco / Sonora Digital Corp\n// Se ejecuta el día 1 de cada mes a las 6:00 AM\n// ============================================================\n\nconst now = new Date();\nconst anio = now.getFullYear();\nconst mes = now.getMonth(); // 0-indexed\n\nconst nombresMeses = [\n  'Enero','Febrero','Marzo','Abril','Mayo','Junio',\n  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'\n];\nconst nombreMes = nombresMeses[mes];\nconst mesFormato = String(mes + 1).padStart(2, '0');\nconst nombreArchivoTxt = `/tmp/plan_mes_${anio}_${mesFormato}.txt`;\n\n// --- Calcular días del mes y distribución de semanas ---\nconst diasEnMes = new Date(anio, mes + 1, 0).getDate();\nconst primerDiaSemana = new Date(anio, mes, 1).getDay(); // 0=domingo\n\n// --- Generar los 30 días del plan (o días reales del mes) ---\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\n\n// --- Estructura de 4 semanas ---\nconst semanas = [\n  {\n    numero: 1,\n    dias: '1-7',\n    enfoque: 'CONSOLIDAR CLIENTES ACTUALES',\n    emoji: '🤝',\n    descripcion: 'Semana de relaciones y retención. Cada cliente actual es el cimiento del crecimiento.',\n    objetivos: [\n      'Revisar el estado de todos los clientes activos de MYSTIC',\n      'Resolver cualquier issue pendiente o ticket de soporte abierto',\n      'Llamada o mensaje de check-in con cada cliente activo',\n      'Recopilar feedback sobre las últimas features lanzadas',\n      'Identificar oportunidades de upsell en clientes actuales',\n      'Actualizar documentación y materiales de soporte si es necesario',\n      'Revisar métricas de uso: ¿qué módulos usan más? ¿cuáles menos?'\n    ],\n    kpis: [\n      'NPS de clientes actuales ≥ 8',\n      'Tiempo de respuesta a tickets < 4 horas',\n      '100% de clientes contactados al menos 1 vez',\n      'Cero churn esta semana'\n    ],\n    actividades_dia: {\n      lunes:     'Auditoría completa: revisar cada cuenta de cliente en MYSTIC. Estado, uso, pagos.',\n      martes:    'Llamadas de check-in con los 3 clientes más importantes. Escucha activa.',\n      miércoles: 'Resolver todos los tickets de soporte. Cero deuda de soporte al cierre del día.',\n      jueves:    'Encuesta de satisfacción rápida (3 preguntas) a todos los clientes.',\n      viernes:   'Analizar feedback recibido. Priorizar mejoras para semana 2. Reporte de retención.',\n      sábado:    'Preparar propuestas de upsell basadas en el uso real de cada cliente.',\n      domingo:   'Descanso — reflexión sobre el estado del negocio y la relación con clientes.'\n    }\n  },\n  {\n    numero: 2,\n    dias: '8-14',\n    enfoque: 'DESARROLLO DE NUEVAS FEATURES',\n    emoji: '⚙️',\n    descripcion: 'Semana de construcción. Las features de esta semana son la ventaja competitiva del próximo mes.',\n    objetivos: [\n      'Sprint de desarrollo: implementar las 2-3 features más prioritarias del backlog',\n      'Basarse en el feedback de la semana 1 para priorizar correctamente',\n      'Refactoring de código crítico si es necesario',\n      'Mejoras de performance en el Brain IA',\n      'Testing y QA de todo lo construido antes de deploy',\n      'Deploy a staging y pruebas de integración',\n      'Documentar las nuevas features para el equipo y clientes'\n    ],\n    kpis: [\n      'Al menos 2 features nuevas completadas y testeadas',\n      'Cero bugs críticos en producción durante la semana',\n      'Cobertura de tests ≥ 70% en código nuevo',\n      'Deploy a staging exitoso antes del viernes'\n    ],\n    actividades_dia: {\n      lunes:     'Planning técnico: definir exactamente qué se construye esta semana. Estimaciones realistas.',\n      martes:    'Deep work: feature #1. 6+ horas de código sin interrupciones.',\n      miércoles: 'Deep work: feature #2. Testing unitario paralelo al desarrollo.',\n      jueves:    'Integración, QA manual y corrección de bugs encontrados.',\n      viernes:   'Deploy a staging. Demo interna de las nuevas features. Preparar release notes.',\n      sábado:    'Deploy a producción si staging aprueba. Monitoreo post-deploy.',\n      domingo:   'Descanso técnico — deja que el código repose y tú también.'\n    }\n  },\n  {\n    numero: 3,\n    dias: '15-21',\n    enfoque: 'MARKETING Y VENTAS',\n    emoji: '🚀',\n    descripcion: 'Semana de crecimiento. Llevar MYSTIC a nuevos clientes con todo lo construido en semana 2.',\n    objetivos: [\n      'Lanzar las nuevas features con comunicación a clientes actuales y prospectos',\n      'Mínimo 5 demos de MYSTIC a prospectos calificados',\n      'Crear 2 piezas de contenido (post, video, caso de éxito)',\n      'Reactivar prospectos fríos con propuesta actualizada',\n      'Objetivo: al menos 1 nuevo contrato cerrado esta semana',\n      'Actualizar el pitch con las nuevas features de semana 2',\n      'Revisar y optimizar el embudo de ventas actual'\n    ],\n    kpis: [\n      '5+ demos realizadas',\n      '1+ contrato nuevo cerrado',\n      '2+ piezas de contenido publicadas',\n      '10+ nuevos prospectos en pipeline'\n    ],\n    actividades_dia: {\n      lunes:     'Preparar pitch actualizado con nuevas features. Identificar prospectos objetivo de la semana.',\n      martes:    'Contacto masivo: emails, mensajes, llamadas en frío. Agendar demos.',\n      miércoles: 'Día de demos: 2-3 presentaciones de MYSTIC a prospectos. Cierre agresivo.',\n      jueves:    'Seguimiento post-demo. Enviar propuestas. Resolver objeciones. Más demos.',\n      viernes:   'Cerrar tratos pendientes. Publicar contenido de marketing. Reporte de ventas.',\n      sábado:    'Crear caso de éxito de un cliente actual para usar como prueba social.',\n      domingo:   'Planificar estrategia de contenido para el mes siguiente.'\n    }\n  },\n  {\n    numero: 4,\n    dias: '22-fin',\n    enfoque: 'REVIEW, AJUSTES Y PREPARACIÓN',\n    emoji: '📊',\n    descripcion: 'Semana de consolidación y visión. Analizar el mes, ajustar la estrategia y preparar el siguiente nivel.',\n    objetivos: [\n      'Review completo del mes: métricas, logros, fallos y aprendizajes',\n      'Ajustar el roadmap de MYSTIC basándose en datos reales',\n      'Cerrar todos los procesos pendientes del mes',\n      'Planificación preliminar del mes siguiente',\n      'Revisión financiera: ingresos, gastos, proyecciones',\n      'Retrospectiva personal y del equipo',\n      'Preparar comunicación mensual a clientes (newsletter o update)'\n    ],\n    kpis: [\n      'Review completo documentado',\n      'Plan del mes siguiente borradeado',\n      'Reporte financiero actualizado',\n      'Newsletter/update enviado a clientes'\n    ],\n    actividades_dia: {\n      lunes:     'Recopilar todas las métricas del mes. Construir el dashboard de review.',\n      martes:    'Análisis profundo: ¿qué funcionó? ¿qué no? ¿por qué? Documentar todo.',\n      miércoles: 'Ajustar roadmap y estrategia para el próximo mes basándose en datos.',\n      jueves:    'Revisión financiera completa. Facturas, cobros, gastos, proyecciones.',\n      viernes:   'Enviar newsletter/update a clientes. Celebrar los logros del mes.',\n      sábado:    'Planificación personal: ¿estás alineado con tu visión de vida? Ajustes.',\n      domingo:   'Preparación mental para el mes siguiente. Visualización y propósito renovado.'\n    }\n  }\n];\n\n// --- Generar texto del plan completo para archivo ---\nlet planTexto = `${'='.repeat(60)}\\n`;\nplanTexto += `PLAN MENSUAL MYSTIC AI OS — ${nombreMes.toUpperCase()} ${anio}\\n`;\nplanTexto += `Luis Daniel / Sonora Digital Corp\\n`;\nplanTexto += `Generado el: ${now.toLocaleString('es-MX', { timeZone: 'America/Hermosillo' })}\\n`;\nplanTexto += `${'='.repeat(60)}\\n\\n`;\n\nplanTexto += `VISIÓN DEL MES:\\n`;\nplanTexto += `Hacer crecer MYSTIC AI OS, retener clientes actuales,\\n`;\nplanTexto += `lanzar nuevas features y cerrar nuevos contratos.\\n\\n`;\n\nplanTexto += `MÉTRICAS OBJETIVO DEL MES:\\n`;\nplanTexto += `- Nuevos clientes: +2 mínimo\\n`;\nplanTexto += `- Retención: 100% de clientes actuales\\n`;\nplanTexto += `- Features lanzadas: 2-4 según roadmap\\n`;\nplanTexto += `- Ingresos: crecimiento vs mes anterior\\n\\n`;\n\nsemanas.forEach(semana => {\n  planTexto += `${'─'.repeat(60)}\\n`;\n  planTexto += `SEMANA ${semana.numero} (Días ${semana.dias}): ${semana.enfoque}\\n`;\n  planTexto += `${'─'.repeat(60)}\\n`;\n  planTexto += `${semana.descripcion}\\n\\n`;\n  \n  planTexto += `OBJETIVOS:\\n`;\n  semana.objetivos.forEach((obj, i) => {\n    planTexto += `  ${i+1}. ${obj}\\n`;\n  });\n  planTexto += `\\n`;\n  \n  planTexto += `KPIs:\\n`;\n  semana.kpis.forEach(kpi => {\n    planTexto += `  • ${kpi}\\n`;\n  });\n  planTexto += `\\n`;\n  \n  planTexto += `PLAN POR DÍA:\\n`;\n  Object.entries(semana.actividades_dia).forEach(([dia, actividad]) => {\n    planTexto += `  ${dia.charAt(0).toUpperCase() + dia.slice(1)}: ${actividad}\\n`;\n  });\n  planTexto += `\\n`;\n});\n\nplanTexto += `${'='.repeat(60)}\\n`;\nplanTexto += `RECORDATORIO DE VALORES:\\n`;\nplanTexto += `- Excelencia: MYSTIC hace en segundos lo que tarda horas\\n`;\nplanTexto += `- Confianza: los datos de clientes son sagrados\\n`;\nplanTexto += `- Velocidad: el mercado no espera, nosotros tampoco\\n`;\nplanTexto += `- Inteligencia: IA donde agrega valor real\\n`;\nplanTexto += `- Familia: el éxito sin familia no es éxito\\n`;\nplanTexto += `${'='.repeat(60)}\\n`;\nplanTexto += `Archivo generado por MYSTIC AI OS — N8N Automation\\n`;\n\n// --- Generar mensaje de Telegram (resumen) ---\nconst telegramMsg = `🗓 *PLAN MENSUAL — ${nombreMes.toUpperCase()} ${anio}*\n━━━━━━━━━━━━━━━━━━━━━━\n🎯 *VISIÓN DEL MES:*\nCrecer MYSTIC, retener clientes, lanzar features, cerrar contratos.\n\n━━━━━━━━━━━━━━━━━━━━━━\n${semanas.map(s => `${s.emoji} *Semana ${s.numero} (Días ${s.dias}):*\\n*${s.enfoque}*\\n${s.descripcion}\\n\\n📌 _Objetivos clave:_\\n${s.objetivos.slice(0,3).map(o => `• ${o}`).join('\\n')}\\n\\n📊 _KPIs:_\\n${s.kpis.slice(0,2).map(k => `• ${k}`).join('\\n')}`).join('\\n\\n━━━━━━━━━━━━━━━━━━━━━━\\n')}\n\n━━━━━━━━━━━━━━━━━━━━━━\n📁 *Plan completo guardado en:*\n\\`${nombreArchivoTxt}\\`\n\n🚀 _MYSTIC AI OS — ${nombreMes} ${anio} comienza AHORA_\n_¡Que sea el mejor mes del año!_`;\n\nreturn [{\n  json: {\n    telegram_msg: telegramMsg,\n    plan_completo: planTexto,\n    nombre_archivo: nombreArchivoTxt,\n    mes: nombreMes,\n    anio,\n    periodo: `${anio}_${mesFormato}`\n  }\n}];\n"
+      },
+      "id": "node-code-plan",
+      "name": "Generar Plan Mensual",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CEO_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.telegram_msg }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            },
+            {
+              "name": "disable_web_page_preview",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "node-telegram-plan",
+      "name": "Enviar Plan por Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Guardar el plan completo en archivo de texto\nconst fs = require('fs');\nconst planCompleto = $input.first().json.plan_completo;\nconst nombreArchivo = $input.first().json.nombre_archivo;\nconst mes = $input.first().json.mes;\nconst anio = $input.first().json.anio;\n\ntry {\n  fs.writeFileSync(nombreArchivo, planCompleto, 'utf8');\n  return [{\n    json: {\n      exito: true,\n      archivo: nombreArchivo,\n      mensaje: `Plan de ${mes} ${anio} guardado exitosamente en ${nombreArchivo}`,\n      tamano_bytes: Buffer.byteLength(planCompleto, 'utf8')\n    }\n  }];\n} catch (error) {\n  return [{\n    json: {\n      exito: false,\n      archivo: nombreArchivo,\n      error: error.message,\n      mensaje: `No se pudo guardar el archivo: ${error.message}. El plan fue enviado por Telegram.`\n    }\n  }];\n}\n"
+      },
+      "id": "node-code-guardar",
+      "name": "Guardar Plan en /tmp/",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CEO_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.exito ? '✅ *Plan guardado:* `' + $json.archivo + '`\\n📦 Tamaño: ' + $json.tamano_bytes + ' bytes' : '⚠️ *Advertencia:* ' + $json.mensaje }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000,
+          "continueOnFail": true
+        }
+      },
+      "id": "node-telegram-confirmacion",
+      "name": "Confirmar Guardado por Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger Día 1 del Mes": {
+      "main": [
+        [
+          {
+            "node": "Generar Plan Mensual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Plan Mensual": {
+      "main": [
+        [
+          {
+            "node": "Enviar Plan por Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Guardar Plan en /tmp/",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Plan en /tmp/": {
+      "main": [
+        [
+          {
+            "node": "Confirmar Guardado por Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "tags": [
+    { "name": "agenda" },
+    { "name": "luis-daniel" },
+    { "name": "personal" }
+  ],
+  "pinData": {}
+}

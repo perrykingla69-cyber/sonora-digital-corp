@@ -1,0 +1,17 @@
+{
+  "name": "aduanas-clasificar",
+  "version": "1.0.0",
+  "description": "Clasifica una mercancía y obtiene su fracción arancelaria, arancel y cuota.",
+  "triggers": ["clasificar", "aduanas", "fracción arancelaria", "tarifa", "pedimento"],
+  "endpoint": "http://api:8000/api/aduanas/clasificar",
+  "method": "POST",
+  "payload": {
+    "descripcion": "{{message}}",
+    "tenant_id": "{{tenant_id}}"
+  },
+  "response_field": "resultado",
+  "actions": [
+    { "label": "📦 Ver MVEs recientes", "callback": "action_mve_list" },
+    { "label": "✅ Validar MVE", "callback": "action_mve_validate" }
+  ]
+}

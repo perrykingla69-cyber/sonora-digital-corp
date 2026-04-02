@@ -1,0 +1,15 @@
+{
+  "name": "brain-ask",
+  "version": "1.0.0", 
+  "description": "Consulta libre al Brain IA (RAG 4 capas + DeepSeek local).",
+  "triggers": ["*"],
+  "priority": -1,
+  "endpoint": "http://api:8000/api/brain/ask",
+  "method": "POST",
+  "payload": {
+    "question": "{{message}}",
+    "tenant_id": "{{tenant_id}}",
+    "channel": "telegram"
+  },
+  "response_field": "answer"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "diot-preview",
+  "version": "1.0.0",
+  "description": "Genera un preview de la DIOT del mes: resumen de operaciones con terceros.",
+  "triggers": ["diot", "declaración informativa", "terceros"],
+  "endpoint": "http://api:8000/api/fiscal/diot",
+  "method": "GET",
+  "response_template": "📑 DIOT del mes — Preview:\nProveedores: {{total_proveedores}}\nOperaciones: {{total_operaciones}}\nMonto total: ${{monto_total}}\nEstado: {{estado}}"
+}

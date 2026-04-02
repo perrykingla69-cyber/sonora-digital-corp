@@ -1,0 +1,13 @@
+{
+  "name": "resico-requisitos",
+  "priority": 8,
+  "triggers": [
+    "puedo entrar a resico",
+    "requisitos resico",
+    "quien puede usar resico",
+    "soy elegible resico",
+    "entrar al resico"
+  ],
+  "method": "STATIC",
+  "response_text": "✅ *¿Puedes entrar a RESICO?*\n\n*Personas físicas — Requisitos:*\n• Ingresos anuales *máximo $3.5 millones de pesos*\n• Actividades: empresarial, profesional, arrendamiento, AGAPE\n• No pertenecer al RIF (o haberse salido antes del 2022)\n• No ser socio o accionista de persona moral con más del 10%\n• No tener ingresos por salarios superiores al 50% del total\n\n*Personas morales — Requisitos:*\n• Ingresos anuales *máximo $35 millones de pesos*\n• Solo ciertos tipos de actividades\n\n*Ventajas:*\n• Tasa de ISR: 1% a 2.5% (vs tabla progresiva hasta 35%)\n• Contabilidad simplificada\n• Sin declaración anual obligatoria\n\n💬 Cuéntame tus ingresos y actividad, te digo si conviene."
+}

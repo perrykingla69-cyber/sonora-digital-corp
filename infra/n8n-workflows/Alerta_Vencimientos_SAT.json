@@ -1,0 +1,104 @@
+{
+  "name": "Alerta Vencimientos SAT",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 10,14,16,17 * *" }]
+        }
+      },
+      "name": "Trigger Dias SAT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/sat/calendario",
+        "options": {}
+      },
+      "name": "Consultar Calendario SAT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.alertas_urgentes }}", "operation": "larger", "value2": 0 }]
+        }
+      },
+      "name": "Hay Urgentes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Consultar Calendario SAT').first().json;\nconst urgentes = data.vencimientos.filter(v => v.urgente);\nlet msg = '⚠️ *MYSTIC — Alerta SAT*\\n\\n';\nmsg += `📅 Hoy: ${data.hoy}\\n\\n`;\nurgentes.forEach(v => {\n  const emoji = v.dias_restantes === 0 ? '🔴' : v.dias_restantes <= 3 ? '🟡' : '🟢';\n  msg += `${emoji} *${v.obligacion}*\\n`;\n  msg += `   Vence: ${v.fecha} (${v.dias_restantes} días)\\n\\n`;\n});\nmsg += '👉 Entra a sonoradigitalcorp.com/panel para gestionar';\nreturn [{ json: { mensaje: msg } }];"
+      },
+      "name": "Formatear Mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 220]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "526622681111" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Nathaly",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "const err = $input.item.json;\nreturn [{ json: { numero: '526622681111', mensaje: `⚠️ Error en workflow: ${$workflow.name}\\nDetalles: ${JSON.stringify(err).slice(0,200)}` } }];"
+      },
+      "name": "Alerta Error WA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 460]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 460]
+    }
+  ],
+  "connections": {
+    "Trigger Dias SAT": { "main": [[{ "node": "Consultar Calendario SAT", "type": "main", "index": 0 }]] },
+    "Consultar Calendario SAT": { "main": [[{ "node": "Hay Urgentes?", "type": "main", "index": 0 }]] },
+    "Hay Urgentes?": {
+      "main": [
+        [{ "node": "Formatear Mensaje", "type": "main", "index": 0 }],
+        [{ "node": "Alerta Error WA", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formatear Mensaje": { "main": [[{ "node": "Enviar WA Nathaly", "type": "main", "index": 0 }]] },
+    "Alerta Error WA": { "main": [[{ "node": "Enviar WA Error", "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

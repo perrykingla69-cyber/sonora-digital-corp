@@ -1,0 +1,216 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from .contracts import MemoryDocument, MemoryFeedback, MemorySearchResult, MemoryStats
+from .stores import (
+    DocumentStore,
+    FeedbackStore,
+    JsonDocumentStore,
+    JsonFeedbackStore,
+    JsonSearchAnalyticsStore,
+    JsonVectorStore,
+    SearchAnalyticsStore,
+    VectorStore,
+)
+
+SEARCH_EVENTS_KEY = "events"
+
+
+class MemoryService:
+    def __init__(
+        self,
+        data_dir: str | Path = ".data",
+        *,
+        documents: DocumentStore | None = None,
+        feedback: FeedbackStore | None = None,
+        search_analytics: SearchAnalyticsStore | None = None,
+        vectors: VectorStore | None = None,
+    ) -> None:
+        data_dir = Path(data_dir)
+        data_dir.mkdir(parents=True, exist_ok=True)
+        self.documents = documents or JsonDocumentStore(data_dir / "v2_memory_documents.json")
+        self.feedback = feedback or JsonFeedbackStore(data_dir / "v2_memory_feedback.json")
+        self.search_analytics = search_analytics or JsonSearchAnalyticsStore(data_dir / "v2_memory_search_analytics.json")
+        self.vectors = vectors or JsonVectorStore(data_dir / "v2_memory_vectors.json")
+
+    def ingest(
+        self,
+        key: str,
+        text: str,
+        metadata: dict[str, Any] | None = None,
+        *,
+        tenant_id: str | None = None,
+        kind: str | None = None,
+    ) -> MemoryDocument:
+        clean_metadata = dict(metadata or {})
+        if tenant_id and "tenant_id" not in clean_metadata:
+            clean_metadata["tenant_id"] = tenant_id
+        if kind and "kind" not in clean_metadata:
+            clean_metadata["kind"] = kind
+
+        document = MemoryDocument(
+            key=key,
+            text=text,
+            tenant_id=tenant_id or clean_metadata.get("tenant_id"),
+            kind=kind or clean_metadata.get("kind"),
+            metadata=clean_metadata,
+        )
+        self.documents.put(key, document.model_dump())
+        self.vectors.add(key, text, metadata=document.metadata)
+        return document
+
+    def get_document(self, key: str) -> MemoryDocument | None:
+        value = self.documents.get(key)
+        if not value:
+            return None
+        return MemoryDocument(**value)
+
+    def list_documents(self, *, tenant_id: str | None = None, kind: str | None = None, source: str | None = None) -> list[MemoryDocument]:
+        docs: list[MemoryDocument] = []
+        for key in self.documents.keys():
+            value = self.documents.get(key)
+            if not value:
+                continue
+            document = MemoryDocument(**value)
+            if not self._matches_filters(document, tenant_id=tenant_id, kind=kind, source=source):
+                continue
+            docs.append(document)
+        docs.sort(key=lambda document: document.created_at, reverse=True)
+        return docs
+
+    def delete_document(self, key: str) -> bool:
+        deleted_doc = self.documents.delete(key)
+        deleted_vector = self.vectors.delete(key)
+        return deleted_doc or deleted_vector
+
+    def search(
+        self,
+        query: str,
+        limit: int = 5,
+        *,
+        tenant_id: str | None = None,
+        kind: str | None = None,
+        source: str | None = None,
+    ) -> list[MemorySearchResult]:
+        results = self.vectors.similarity_search(query, limit=max(limit * 5, limit))
+        needle = query.strip().lower()
+        filtered: list[MemorySearchResult] = []
+        for record in results:
+            document = self.get_document(record.key)
+            metadata = document.metadata if document else record.metadata
+            result = MemorySearchResult(
+                key=record.key,
+                text=record.text,
+                tenant_id=document.tenant_id if document else metadata.get("tenant_id"),
+                kind=document.kind if document else metadata.get("kind"),
+                metadata=metadata,
+                source=metadata.get("source"),
+                retrieval_mode="lexical",
+                evidence_snippet=self._build_evidence_snippet(record.text, needle),
+                score=1.0 if needle and needle in record.text.lower() else None,
+            )
+            if not self._matches_filters(result, tenant_id=tenant_id, kind=kind, source=source):
+                continue
+            filtered.append(result)
+            if len(filtered) >= limit:
+                break
+        self._record_search(query=query, tenant_id=tenant_id, kind=kind, source=source, result_count=len(filtered))
+        return filtered
+
+    def save_feedback(self, key: str, rating: int, comment: str | None = None) -> MemoryFeedback:
+        feedback = MemoryFeedback(key=key, rating=rating, comment=comment)
+        bucket = self.feedback.get(key, []) or []
+        bucket.append(feedback.model_dump())
+        self.feedback.put(key, bucket)
+        return feedback
+
+    def get_feedback(self, key: str) -> list[MemoryFeedback]:
+        bucket = self.feedback.get(key, []) or []
+        return [MemoryFeedback(**item) for item in bucket]
+
+    def stats(self, *, tenant_id: str | None = None) -> MemoryStats:
+        documents = self.list_documents(tenant_id=tenant_id)
+        doc_keys = {document.key for document in documents}
+        feedback_count = 0
+        ratings: list[int] = []
+        for key in self.feedback.keys():
+            if tenant_id and key not in doc_keys:
+                continue
+            bucket = self.feedback.get(key, []) or []
+            feedback_count += len(bucket)
+            ratings.extend(item["rating"] for item in bucket if isinstance(item, dict) and "rating" in item)
+
+        search_events = self._search_events(tenant_id=tenant_id)
+        search_queries = len(search_events)
+        searches_with_results = sum(1 for item in search_events if item.get("result_count", 0) > 0)
+        search_hit_rate = round(searches_with_results / search_queries, 2) if search_queries else None
+        feedback_coverage = round(feedback_count / len(documents), 2) if documents else None
+        avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else None
+        vectors_count = len(doc_keys)
+
+        return MemoryStats(
+            documents=len(documents),
+            feedback_items=feedback_count,
+            vectors=vectors_count,
+            search_queries=search_queries,
+            searches_with_results=searches_with_results,
+            search_hit_rate=search_hit_rate,
+            feedback_coverage=feedback_coverage,
+            avg_feedback_rating=avg_rating,
+        )
+
+    def _record_search(
+        self,
+        *,
+        query: str,
+        tenant_id: str | None,
+        kind: str | None,
+        source: str | None,
+        result_count: int,
+    ) -> None:
+        events = self.search_analytics.get(SEARCH_EVENTS_KEY, []) or []
+        events.append(
+            {
+                "query": query,
+                "tenant_id": tenant_id,
+                "kind": kind,
+                "source": source,
+                "result_count": result_count,
+            }
+        )
+        self.search_analytics.put(SEARCH_EVENTS_KEY, events)
+
+    def _search_events(self, *, tenant_id: str | None = None) -> list[dict[str, Any]]:
+        events = self.search_analytics.get(SEARCH_EVENTS_KEY, []) or []
+        if tenant_id:
+            return [event for event in events if event.get("tenant_id") == tenant_id]
+        return events
+
+    @staticmethod
+    def _matches_filters(item: MemoryDocument | MemorySearchResult, *, tenant_id: str | None, kind: str | None, source: str | None) -> bool:
+        if tenant_id and item.tenant_id != tenant_id and item.metadata.get("tenant_id") != tenant_id:
+            return False
+        if kind and item.kind != kind and item.metadata.get("kind") != kind:
+            return False
+        if source and item.metadata.get("source") != source:
+            return False
+        return True
+
+    @staticmethod
+    def _build_evidence_snippet(text: str, needle: str, radius: int = 24) -> str | None:
+        if not needle:
+            return text[: radius * 2].strip() or None
+        lower_text = text.lower()
+        start = lower_text.find(needle)
+        if start == -1:
+            return text[: radius * 2].strip() or None
+        snippet_start = max(0, start - radius)
+        snippet_end = min(len(text), start + len(needle) + radius)
+        snippet = text[snippet_start:snippet_end].strip()
+        if snippet_start > 0:
+            snippet = f"…{snippet}"
+        if snippet_end < len(text):
+            snippet = f"{snippet}…"
+        return snippet

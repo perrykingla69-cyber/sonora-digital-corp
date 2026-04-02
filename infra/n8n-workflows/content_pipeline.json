@@ -1,0 +1,422 @@
+{
+  "name": "Content Pipeline — Miguel Baena Style (Español / Finanzas PYMEs MX)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1,3,5"
+            }
+          ]
+        }
+      },
+      "id": "node-schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "notes": "Lunes, miércoles y viernes a las 9am hora de México (America/Hermosillo)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/brain/ask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"prompt\": \"Genera un guión de video corto de exactamente 60 segundos para YouTube Shorts o TikTok sobre un tema fiscal o empresarial mexicano relevante y actual para PYMEs. El estilo debe ser como Miguel Baena: directo, educativo, sin tecnicismos innecesarios, con energía y hook poderoso en los primeros 3 segundos. El guión debe incluir: HOOK (3 segundos), PROBLEMA (10 segundos), SOLUCIÓN (30 segundos), CALL TO ACTION (17 segundos). Temas posibles: declaraciones SAT, CFDI 4.0, cómo no pagar multas, nómina digital, créditos IMSS, optimización ISR legal, flujo de caja para PYMEs, facturación electrónica. Responde SOLO con el guión estructurado en español mexicano, sin explicaciones adicionales.\",\n  \"context\": \"content_creator\",\n  \"language\": \"es-MX\",\n  \"format\": \"video_script_60s\"\n}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "id": "node-brain-script",
+      "name": "Brain IA — Guión de Video 60s",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "notes": "Genera guión de video corto estilo Miguel Baena sobre tema fiscal/empresarial mexicano"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/brain/ask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"Basado en este guión de video: {{ $json.response || $json.content || $json.text || $json.result }}\\n\\nGenera exactamente 5 títulos SEO optimizados para YouTube en español mexicano. Cada título debe: (1) tener entre 50-70 caracteres, (2) incluir una palabra clave fiscal o empresarial, (3) generar curiosidad o urgencia, (4) ser clickbait honesto. Formato de respuesta: TÍTULO 1:\\nTÍTULO 2:\\nTÍTULO 3:\\nTÍTULO 4:\\nTÍTULO 5:\",\n  \"context\": \"seo_youtube\",\n  \"language\": \"es-MX\",\n  \"format\": \"title_variants\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-brain-titles",
+      "name": "Brain IA — 5 Títulos SEO YouTube",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "notes": "Genera 5 variantes de título SEO para YouTube basadas en el guión"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/brain/ask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"Basado en este guión de video: {{ $('Brain IA — Guión de Video 60s').item.json.response || $('Brain IA — Guión de Video 60s').item.json.content || $('Brain IA — Guión de Video 60s').item.json.text }}\\n\\nCrea una descripción completa para YouTube con: 1) Párrafo introductorio de 2-3 oraciones (con keyword principal), 2) Lista de 5 puntos clave cubiertos en el video, 3) Sección CTA con link a sonoradigitalcorp.com, 4) 15-20 hashtags relevantes separados por espacio (#SAT #CFDI #PYMEsMexico #ContabilidadMexico #ISR #IVA #Nomina #FinanzasPersonales #EmpresarioMexicano #FiscalMexico etc). Total 150-300 palabras. En español mexicano.\",\n  \"context\": \"youtube_description\",\n  \"language\": \"es-MX\",\n  \"format\": \"youtube_description\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-brain-youtube-desc",
+      "name": "Brain IA — Descripción YouTube + Hashtags",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "notes": "Genera descripción YouTube optimizada SEO con hashtags"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/brain/ask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"Basado en este guión de video: {{ $('Brain IA — Guión de Video 60s').item.json.response || $('Brain IA — Guión de Video 60s').item.json.content || $('Brain IA — Guión de Video 60s').item.json.text }}\\n\\nCrea un tweet poderoso Y un thread de Twitter/X de 5 tweets en español mexicano sobre el tema. TWEET ÚNICO: máximo 280 caracteres, directo, con hook fuerte, 2-3 hashtags. THREAD (5 tweets separados por ---): Tweet 1 (hook), Tweet 2 (problema), Tweet 3 (dato sorprendente), Tweet 4 (solución), Tweet 5 (CTA + link sonoradigitalcorp.com). Tono: educativo, emprendedor, sin tecnicismos.\",\n  \"context\": \"twitter_x\",\n  \"language\": \"es-MX\",\n  \"format\": \"tweet_and_thread\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-brain-twitter",
+      "name": "Brain IA — Tweet y Thread X/Twitter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300],
+      "notes": "Genera tweet individual + thread de 5 tweets sobre el tema"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/brain/ask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"Basado en este guión de video: {{ $('Brain IA — Guión de Video 60s').item.json.response || $('Brain IA — Guión de Video 60s').item.json.content || $('Brain IA — Guión de Video 60s').item.json.text }}\\n\\nRedacta un post de LinkedIn profesional en español para dueños de PYMEs mexicanas y emprendedores. Estructura: 1) Primera línea gancho (máx 2 líneas, sin emoji al inicio), 2) Cuerpo con bullet points o párrafos cortos (200-250 palabras), 3) Reflexión o pregunta al final, 4) CTA sutil hacia sonoradigitalcorp.com, 5) 5 hashtags profesionales al final. Tono: autoridad amigable, educativo, NO vendedor. Estilo Marco Polo CEO / consultor financiero.\",\n  \"context\": \"linkedin_professional\",\n  \"language\": \"es-MX\",\n  \"format\": \"linkedin_post\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-brain-linkedin",
+      "name": "Brain IA — Post LinkedIn Profesional",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300],
+      "notes": "Genera post LinkedIn de autoridad para dueños de PYMEs y emprendedores"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/brain/ask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"Basado en este guión de video: {{ $('Brain IA — Guión de Video 60s').item.json.response || $('Brain IA — Guión de Video 60s').item.json.content || $('Brain IA — Guión de Video 60s').item.json.text }}\\n\\nCrea un caption para Instagram con: 1) Hook de 1-2 líneas con emoji relevante al inicio, 2) Cuerpo de 3-4 puntos clave con emojis (150-200 palabras), 3) Pregunta para engagement en comentarios, 4) CTA claro (link en bio / DM para info), 5) 20-25 hashtags en español e inglés mezclados para máximo alcance (#SAT #CFDI #PYMEsMexico #FinanzasPersonales #EmpresasMexicanas #Contabilidad #NominaMexico #ISR #emprendedor #negocioexitoso etc.). Formato amigable, con espacios para respirar entre secciones.\",\n  \"context\": \"instagram_caption\",\n  \"language\": \"es-MX\",\n  \"format\": \"instagram_caption\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-brain-instagram",
+      "name": "Brain IA — Caption Instagram con Emojis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 300],
+      "notes": "Genera caption Instagram con emojis y hashtags optimizados para alcance"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CEO_CHAT_ID }}",
+        "text": "=🚀 *CONTENIDO LISTO PARA PUBLICAR*\n📅 *Fecha:* {{ $now.toFormat('dd/MM/yyyy HH:mm') }}\n\n---\n\n🎬 *GUIÓN VIDEO 60s (YouTube Shorts / TikTok):*\n```\n{{ $('Brain IA — Guión de Video 60s').item.json.response || $('Brain IA — Guión de Video 60s').item.json.content || $('Brain IA — Guión de Video 60s').item.json.text | truncate(800) }}\n```\n\n---\n\n📌 *5 TÍTULOS SEO YOUTUBE:*\n{{ $('Brain IA — 5 Títulos SEO YouTube').item.json.response || $('Brain IA — 5 Títulos SEO YouTube').item.json.content || $('Brain IA — 5 Títulos SEO YouTube').item.json.text | truncate(600) }}\n\n---\n\n📝 *DESCRIPCIÓN YOUTUBE + HASHTAGS:*\n{{ $('Brain IA — Descripción YouTube + Hashtags').item.json.response || $('Brain IA — Descripción YouTube + Hashtags').item.json.content || $('Brain IA — Descripción YouTube + Hashtags').item.json.text | truncate(600) }}\n\n---\n\n🐦 *TWEET + THREAD X/TWITTER:*\n{{ $('Brain IA — Tweet y Thread X/Twitter').item.json.response || $('Brain IA — Tweet y Thread X/Twitter').item.json.content || $('Brain IA — Tweet y Thread X/Twitter').item.json.text | truncate(500) }}\n\n---\n\n💼 *POST LINKEDIN:*\n{{ $('Brain IA — Post LinkedIn Profesional').item.json.response || $('Brain IA — Post LinkedIn Profesional').item.json.content || $('Brain IA — Post LinkedIn Profesional').item.json.text | truncate(500) }}\n\n---\n\n📸 *CAPTION INSTAGRAM:*\n{{ $('Brain IA — Caption Instagram con Emojis').item.json.response || $('Brain IA — Caption Instagram con Emojis').item.json.content || $('Brain IA — Caption Instagram con Emojis').item.json.text | truncate(500) }}\n\n---\n✅ *Pipeline completado automáticamente por MYSTIC AI OS*\n🌐 sonoradigitalcorp.com",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "node-telegram-notify",
+      "name": "Telegram — Notificación CEO",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1780, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-bot-credentials",
+          "name": "Telegram Bot MYSTIC"
+        }
+      },
+      "notes": "Envía todo el contenido al CEO via Telegram. Chat ID desde variable de entorno TELEGRAM_CEO_CHAT_ID"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEETS_CONTENT_LOG_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Contenido",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $now.toFormat('dd/MM/yyyy') }}",
+            "Hora": "={{ $now.toFormat('HH:mm') }}",
+            "Dia_Semana": "={{ $now.toFormat('EEEE', { locale: 'es' }) }}",
+            "Guion_Video": "={{ ($('Brain IA — Guión de Video 60s').item.json.response || $('Brain IA — Guión de Video 60s').item.json.content || $('Brain IA — Guión de Video 60s').item.json.text || '').substring(0, 500) }}",
+            "Titulo_1_YouTube": "={{ ($('Brain IA — 5 Títulos SEO YouTube').item.json.response || $('Brain IA — 5 Títulos SEO YouTube').item.json.content || '').split('\\n')[0] || '' }}",
+            "Descripcion_YouTube": "={{ ($('Brain IA — Descripción YouTube + Hashtags').item.json.response || $('Brain IA — Descripción YouTube + Hashtags').item.json.content || '').substring(0, 300) }}",
+            "Tweet": "={{ ($('Brain IA — Tweet y Thread X/Twitter').item.json.response || $('Brain IA — Tweet y Thread X/Twitter').item.json.content || '').substring(0, 280) }}",
+            "Post_LinkedIn": "={{ ($('Brain IA — Post LinkedIn Profesional').item.json.response || $('Brain IA — Post LinkedIn Profesional').item.json.content || '').substring(0, 300) }}",
+            "Caption_Instagram": "={{ ($('Brain IA — Caption Instagram con Emojis').item.json.response || $('Brain IA — Caption Instagram con Emojis').item.json.content || '').substring(0, 300) }}",
+            "Estado": "Generado — Pendiente Publicación",
+            "Publicado_YouTube": "No",
+            "Publicado_Twitter": "No",
+            "Publicado_LinkedIn": "No",
+            "Publicado_Instagram": "No",
+            "Notas": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "node-sheets-log",
+      "name": "Google Sheets — Log Contenido (Opcional)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [2000, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credentials",
+          "name": "Google Sheets SDC"
+        }
+      },
+      "notes": "OPCIONAL: Registra el contenido generado en Google Sheets para tracking. Requiere variable de entorno GOOGLE_SHEETS_CONTENT_LOG_ID con el ID del spreadsheet."
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Brain IA — Guión de Video 60s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brain IA — Guión de Video 60s": {
+      "main": [
+        [
+          {
+            "node": "Brain IA — 5 Títulos SEO YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brain IA — 5 Títulos SEO YouTube": {
+      "main": [
+        [
+          {
+            "node": "Brain IA — Descripción YouTube + Hashtags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brain IA — Descripción YouTube + Hashtags": {
+      "main": [
+        [
+          {
+            "node": "Brain IA — Tweet y Thread X/Twitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brain IA — Tweet y Thread X/Twitter": {
+      "main": [
+        [
+          {
+            "node": "Brain IA — Post LinkedIn Profesional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brain IA — Post LinkedIn Profesional": {
+      "main": [
+        [
+          {
+            "node": "Brain IA — Caption Instagram con Emojis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brain IA — Caption Instagram con Emojis": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Notificación CEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram — Notificación CEO": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets — Log Contenido (Opcional)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "",
+    "timezone": "America/Hermosillo"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z",
+      "id": "tag-content",
+      "name": "content-pipeline"
+    },
+    {
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z",
+      "id": "tag-brain",
+      "name": "brain-ia"
+    },
+    {
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z",
+      "id": "tag-sdc",
+      "name": "sonora-digital-corp"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-03-24T09:00:00.000Z",
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "sonora-digital-corp-n8n"
+  },
+  "_readme": {
+    "description": "Pipeline de contenido automático estilo Miguel Baena para Sonora Digital Corp",
+    "author": "Marco (CEO) — Sonora Digital Corp",
+    "created": "2026-03-24",
+    "schedule": "Lunes, Miércoles y Viernes a las 9am (America/Hermosillo)",
+    "env_variables_required": [
+      "TELEGRAM_CEO_CHAT_ID — Chat ID del CEO en Telegram para recibir el contenido",
+      "GOOGLE_SHEETS_CONTENT_LOG_ID — ID del Google Spreadsheet para el log (opcional)"
+    ],
+    "credentials_required": [
+      "Telegram Bot MYSTIC — Token del bot de Telegram",
+      "Google Sheets SDC — OAuth2 de Google Sheets (solo si se usa el nodo de log)"
+    ],
+    "api_base": "http://api:8000",
+    "brain_endpoint": "/api/brain/ask",
+    "content_style": "Miguel Baena — Español mexicano, negocios y finanzas, enfocado en PYMEs",
+    "outputs_per_run": [
+      "1 guión de video 60 segundos (YouTube Shorts / TikTok)",
+      "5 variantes de título SEO para YouTube",
+      "1 descripción YouTube con 15-20 hashtags",
+      "1 tweet individual + 1 thread de 5 tweets",
+      "1 post LinkedIn profesional",
+      "1 caption Instagram con emojis y 20-25 hashtags"
+    ],
+    "import_instructions": [
+      "1. En N8N, ve a Workflows > Import from file",
+      "2. Selecciona este archivo JSON",
+      "3. Configura las credenciales: Telegram Bot y Google Sheets",
+      "4. Agrega la variable de entorno TELEGRAM_CEO_CHAT_ID en Settings > Environment Variables",
+      "5. Activa el workflow",
+      "6. Prueba manualmente con el botón Test Workflow"
+    ]
+  }
+}

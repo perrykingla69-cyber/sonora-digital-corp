@@ -1,0 +1,72 @@
+{
+  "id": "b2d3f4a5-6789-01bc-def0-222333444555",
+  "name": "Pedimento Calculo WA",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "pedimento",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Webhook Pedimento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "pedimento-calc-001"
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/aduanas/pedimento",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "fraccion_arancelaria", "value": "={{ $json.body.fraccion_arancelaria }}" },
+            { "name": "valor_usd", "value": "={{ $json.body.valor_usd }}" },
+            { "name": "tipo_cambio", "value": "={{ $json.body.tipo_cambio || 17.5 }}" },
+            { "name": "peso_kg", "value": "={{ $json.body.peso_kg || 0 }}" },
+            { "name": "regimen", "value": "={{ $json.body.regimen || 'IMD' }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Calcular Pedimento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Calcular Pedimento').first().json;\nconst fmt = n => n ? n.toLocaleString('es-MX', {minimumFractionDigits:2}) : '0.00';\nlet msg = '📦 *Cálculo Pedimento MYSTIC*\\n\\n';\nmsg += `💵 Valor aduana: $${fmt(d.valor_aduana_mxn)} MXN\\n`;\nmsg += `🏛️ IGI (${d.igi_pct}%): $${fmt(d.igi_mxn)} MXN\\n`;\nmsg += `📋 DTA: $${fmt(d.dta_mxn)} MXN\\n`;\nmsg += `🧾 IVA importación: $${fmt(d.iva_mxn)} MXN\\n`;\nmsg += `──────────────────\\n`;\nmsg += `💰 *Total contribuciones: $${fmt(d.total_contribuciones)} MXN*\\n`;\nif (d.nota) msg += `\\n📌 ${d.nota}`;\nreturn [{ json: { mensaje: msg, numero: '526622681111' } }];"
+      },
+      "name": "Formatear Mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Nathaly",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Pedimento": { "main": [[{ "node": "Calcular Pedimento", "type": "main", "index": 0 }]] },
+    "Calcular Pedimento": { "main": [[{ "node": "Formatear Mensaje", "type": "main", "index": 0 }]] },
+    "Formatear Mensaje": { "main": [[{ "node": "Enviar WA Nathaly", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

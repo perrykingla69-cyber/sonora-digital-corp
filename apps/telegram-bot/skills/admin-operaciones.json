@@ -1,0 +1,10 @@
+{
+  "name": "admin-operaciones",
+  "description": "Administración de empresa, RRHH, contratos, nómina",
+  "version": "1.0.0",
+  "priority": 89,
+  "triggers": ["contratar", "contrato laboral", "finiquito", "liquidación", "prestaciones", "imss alta", "onboarding empleado", "política empresa", "reglamento interior", "administración"],
+  "method": "BRAIN",
+  "question_template": "Actúa como director de administración con expertise en legislación laboral mexicana (LFT, IMSS, INFONAVIT). Responde: {{message}}. Cita artículos de ley relevantes, montos actualizados (UMA 2026: $108.57/día) y pasos concretos a seguir.",
+  "response_field": "answer"
+}

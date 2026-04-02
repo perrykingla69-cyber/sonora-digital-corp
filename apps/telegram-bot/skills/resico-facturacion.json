@@ -1,0 +1,13 @@
+{
+  "name": "resico-facturacion",
+  "priority": 7,
+  "triggers": [
+    "facturar en resico",
+    "cfdi resico",
+    "retencion resico",
+    "uso de cfdi resico",
+    "como factura resico"
+  ],
+  "method": "STATIC",
+  "response_text": "🧾 *Facturación en RESICO*\n\n*Uso de CFDI correcto:* G01, G03, D01... (el cliente elige según su caso)\n\n*¿Te retienen ISR?*\nSí, cuando facturas a personas morales *deben retenerte el 1.25% de ISR.*\nEso no es pérdida — se acredita en tu declaración mensual.\n\n*¿Te retienen IVA?*\nSí, dos tercios del IVA cuando el cliente es persona moral.\n\n*¿Llevas contabilidad electrónica?*\nSí, aunque simplificada — ingresos y gastos con CFDI.\n\n⚠️ *RESICO no te exenta de IVA — sigues cobrando y declarando el 16%.*\n\n💡 _HERMES genera tus facturas RESICO correctamente._"
+}

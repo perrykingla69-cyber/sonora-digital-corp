@@ -1,0 +1,13 @@
+{
+  "name": "diot-info",
+  "priority": 7,
+  "triggers": [
+    "diot",
+    "declaracion informativa",
+    "operaciones con terceros",
+    "proveedores diot",
+    "llenado diot"
+  ],
+  "method": "STATIC",
+  "response_text": "📋 *DIOT — Declaración Informativa de Operaciones con Terceros*\n\n*¿Qué es?* Informa al SAT todos tus proveedores con los que tuviste operaciones de IVA en el mes.\n\n*Vencimiento:* Día *17* del mes siguiente\n\n*¿A quién aplica?*\n• Personas morales régimen general\n• Personas físicas con actividad empresarial\n• Importadores y exportadores\n\n*¿Qué incluye?*\n• RFC del proveedor\n• Tipo de operación (proveedor, arrendador, prestador de servicios)\n• Monto pagado e IVA acreditable\n\n⚠️ *Sin DIOT, el SAT puede rechazar tu IVA acreditable.*\n\n💡 _HERMES genera tu DIOT automáticamente con tus CFDIs._"
+}

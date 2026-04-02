@@ -1,0 +1,142 @@
+{
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "name": "HERMES — Briefing Matutino 5:30AM",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 11 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "node-cron-briefing",
+      "name": "Cron 5:30AM LV",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://hermes_api:8000/status",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "node-api-status",
+      "name": "GET API Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "url": "=http://hermes_api:8000/cierre/{{$now.year}}/{{$now.month}}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "node-cierre-mes",
+      "name": "GET Cierre Mes Fiscal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Frases de física cuántica y hermetismo en rotación\nconst frases = [\n  \"El observador colapsa la ola de posibilidades — tú decides qué realidad manifiestas hoy.\",\n  \"En el universo cuántico, nada está fijo hasta que lo mides. Tu intención es el instrumento.\",\n  \"Como es arriba, es abajo; como es adentro, es afuera. Tus pensamientos construyen tu empresa.\",\n  \"El principio de superposición: dos futuros existen al mismo tiempo hasta que actúas.\",\n  \"La entropía aumenta sin acción. El orden es un acto de voluntad cuántica.\",\n  \"Todo está conectado por campos no locales. Tu éxito resonará en quienes te rodean.\",\n  \"El tiempo es una ilusión útil. El único momento de poder es ahora, en este estado cuántico.\",\n  \"La mente es el molde, la realidad es la materia que llena ese molde — Hermes Trismegisto.\",\n  \"Un fotón no elige su camino solo — interactúa. Tu red de contactos es tu interferencia constructiva.\",\n  \"El vacío cuántico no está vacío: es el campo de todas las potencialidades. Úsalo.\"\n];\n\n// Selección por día de la semana (0=Dom, 1=Lun, ...) para rotación determinista\nconst fraseDelDia = frases[new Date().getDay() % frases.length];\n\n// Datos de API status (Node 1)\nconst apiData = $input.all()[0];\nlet apiStatus = 'desconocido';\ntry {\n  const statusBody = apiData.json;\n  apiStatus = statusBody.status || statusBody.estado || 'ok';\n} catch(e) {\n  apiStatus = 'sin respuesta';\n}\n\n// Datos de cierre fiscal (Node 2) — manejamos errores\nlet alertasFiscales = '• Sin alertas SAT pendientes hoy ✅';\ntry {\n  const cierreData = $('GET Cierre Mes Fiscal').all()[0];\n  if (cierreData && cierreData.json) {\n    const cierre = cierreData.json;\n    const alertas = cierre.alertas || cierre.alerts || [];\n    if (alertas.length > 0) {\n      alertasFiscales = alertas.map(a => `• ${a}`).join('\\n');\n    }\n  }\n} catch(e) {\n  alertasFiscales = '• No se pudo consultar calendario fiscal';\n}\n\n// Fecha formateada\nconst ahora = new Date();\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nconst fechaTexto = `${diasSemana[ahora.getDay()]} ${ahora.getDate()} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}`;\n\nconst mensaje = `🌅 *Buenos días Luis Daniel — HERMES 5:30 AM*\n\n📊 *Sistema:*\n• API: ${apiStatus}\n• Fecha: ${fechaTexto}\n\n🗓️ *Fiscal hoy:*\n${alertasFiscales}\n\n💡 *Física cuántica del día:*\n_${fraseDelDia}_\n\n🎯 *Top 3 de hoy — recuerda trabajar en:*\n1\\. Rotar TELEGRAM\\_TOKEN\n2\\. Conseguir primer cliente pagando\n3\\. Configurar Meta WhatsApp API`;\n\nreturn [{ json: { mensaje } }];"
+      },
+      "id": "node-build-briefing",
+      "name": "Build Briefing Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.HERMES_ADMIN_CHAT_ID }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-telegram-briefing",
+      "name": "Telegram — Enviar Briefing",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [940, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "hermes-telegram-cred",
+          "name": "HERMES Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron 5:30AM LV": {
+      "main": [
+        [
+          {
+            "node": "GET API Status",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET Cierre Mes Fiscal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET API Status": {
+      "main": [
+        [
+          {
+            "node": "Build Briefing Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Cierre Mes Fiscal": {
+      "main": [
+        [
+          {
+            "node": "Build Briefing Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Briefing Message": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Enviar Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/Hermosillo",
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": ["hermes", "briefing", "matutino", "telegram"],
+  "triggerCount": 1,
+  "updatedAt": "2026-03-27T00:00:00.000Z",
+  "versionId": "v1.0.0",
+  "active": true
+}

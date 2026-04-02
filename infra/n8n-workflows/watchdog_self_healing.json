@@ -1,0 +1,187 @@
+{
+  "name": "MYSTIC Watchdog — Self-Healing Monitor",
+  "_readme": {
+    "description": "Monitorea todos los servicios MYSTIC cada 5 min. Si algo falla: notifica Telegram + intenta reiniciar via Docker API.",
+    "env_required": [
+      "TELEGRAM_CEO_CHAT_ID — chat_id del CEO para alertas",
+      "TELEGRAM_BOT_TOKEN — token del bot de notificaciones",
+      "DOCKER_API_URL — http://host.docker.internal:2375 (requiere exponer Docker socket)",
+      "MYSTIC_API_URL — http://localhost:8000 (o http://api:8000 desde Docker)"
+    ],
+    "import": "N8N UI → Workflows → Import from file → seleccionar este JSON",
+    "cron": "Cada 5 minutos: */5 * * * *"
+  },
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Cron cada 5 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [100, 300],
+      "parameters": {
+        "rule": { "interval": [{ "field": "minutes", "minutesInterval": 5 }] }
+      }
+    },
+    {
+      "id": "2",
+      "name": "Check todos los servicios",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [320, 300],
+      "parameters": {
+        "jsCode": "const services = [\n  { name: 'API Backend',     url: 'http://api:8000/status',       container: 'hermes_api' },\n  { name: 'Telegram Bot',   url: 'http://telegram-bot:3003/health', container: 'hermes_telegram_bot' },\n  { name: 'WhatsApp',       url: 'http://wa:3001/status',          container: 'hermes_wa' },\n  { name: 'Frontend',       url: 'http://frontend:3000',           container: 'hermes_frontend' },\n  { name: 'N8N',            url: 'http://n8n:5678/healthz',        container: 'hermes_n8n' }\n];\n\nconst results = [];\nfor (const svc of services) {\n  try {\n    const res = await $http.get({ url: svc.url, timeout: 5000 });\n    results.push({ ...svc, status: 'ok', code: res.statusCode });\n  } catch (e) {\n    results.push({ ...svc, status: 'down', error: e.message.substring(0, 100) });\n  }\n}\n\nconst failed = results.filter(r => r.status === 'down');\nconst ok = results.filter(r => r.status === 'ok');\n\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    total: services.length,\n    ok: ok.length,\n    failed: failed.length,\n    services: results,\n    failedServices: failed,\n    allOk: failed.length === 0\n  }\n}];"
+      }
+    },
+    {
+      "id": "3",
+      "name": "¿Hay fallos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [560, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{ "leftValue": "={{ $json.allOk }}", "rightValue": false, "operator": { "type": "boolean", "operation": "equals" } }],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "4",
+      "name": "Alerta Telegram CEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [800, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CEO_CHAT_ID }}" },
+            { "name": "parse_mode", "value": "Markdown" },
+            {
+              "name": "text",
+              "value": "=🚨 *MYSTIC WATCHDOG ALERTA*\n\n{{ $json.failedServices.map(s => `❌ *${s.name}*\\n→ ${s.error || 'No responde'}`).join('\\n\\n') }}\n\n✅ Servicios OK: {{ $json.ok }}/{{ $json.total }}\n⏱️ {{ new Date($json.timestamp).toLocaleString('es-MX', {timeZone:'America/Hermosillo'}) }}\n\n_Intentando auto-recuperación..._"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "5",
+      "name": "Reiniciar contenedores caídos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 380],
+      "parameters": {
+        "jsCode": "// Intenta reiniciar cada servicio caído via Docker REST API\n// Requiere: docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP-LISTEN:2375,fork UNIX-CONNECT:/var/run/docker.sock\nconst failed = $json.failedServices || [];\nconst restarted = [];\nconst dockerApi = $env.DOCKER_API_URL || 'http://host.docker.internal:2375';\n\nfor (const svc of failed) {\n  if (!svc.container) continue;\n  try {\n    await $http.post({\n      url: `${dockerApi}/containers/${svc.container}/restart`,\n      headers: { 'Content-Type': 'application/json' }\n    });\n    restarted.push(svc.name);\n    await new Promise(r => setTimeout(r, 3000)); // espera 3s entre reinicios\n  } catch (e) {\n    restarted.push(`${svc.name} (restart fallido: ${e.message.substring(0,50)})`);\n  }\n}\n\nreturn [{ json: { restarted, failedServices: failed, timestamp: new Date().toISOString() } }];"
+      }
+    },
+    {
+      "id": "6",
+      "name": "Esperar 30s y verificar",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1040, 380],
+      "parameters": { "amount": 30, "unit": "seconds" }
+    },
+    {
+      "id": "7",
+      "name": "Re-check servicios caídos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 380],
+      "parameters": {
+        "jsCode": "const prevFailed = $('Reiniciar contenedores caídos').first().json.failedServices || [];\nconst restarted = $('Reiniciar contenedores caídos').first().json.restarted || [];\nconst recovered = [];\nconst stillDown = [];\n\nfor (const svc of prevFailed) {\n  try {\n    const res = await $http.get({ url: svc.url, timeout: 8000 });\n    recovered.push(svc.name);\n  } catch (e) {\n    stillDown.push({ ...svc, error: e.message.substring(0,100) });\n  }\n}\n\nreturn [{ json: { recovered, stillDown, restarted, timestamp: new Date().toISOString() } }];"
+      }
+    },
+    {
+      "id": "8",
+      "name": "¿Recuperado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1520, 380],
+      "parameters": {
+        "conditions": {
+          "conditions": [{ "leftValue": "={{ $json.stillDown.length }}", "rightValue": 0, "operator": { "type": "number", "operation": "gt" } }],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "9",
+      "name": "Alerta crítica — sin recuperación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1760, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CEO_CHAT_ID }}" },
+            { "name": "parse_mode", "value": "Markdown" },
+            {
+              "name": "text",
+              "value": "=🔴 *MYSTIC CRÍTICO — Auto-recuperación FALLIDA*\n\n{{ $json.stillDown.map(s => `💀 *${s.name}*: ${s.error}`).join('\\n') }}\n\n✅ Recuperados: {{ $json.recovered.join(', ') || 'ninguno' }}\n🔧 Reiniciados: {{ $json.restarted.join(', ') || 'ninguno' }}\n\n⚠️ *Intervención manual requerida*\nSSH: `ssh vps`\nLogs: `docker logs <container> --tail 50`\n\n⏱️ {{ new Date($json.timestamp).toLocaleString('es-MX', {timeZone:'America/Hermosillo'}) }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "10",
+      "name": "Confirmar recuperación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1760, 480],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CEO_CHAT_ID }}" },
+            { "name": "parse_mode", "value": "Markdown" },
+            {
+              "name": "text",
+              "value": "=✅ *MYSTIC Watchdog — Auto-recuperación exitosa*\n\n🔄 Servicios reiniciados y respondiendo:\n{{ $json.recovered.map(s => `✅ ${s}`).join('\\n') }}\n\n⏱️ {{ new Date($json.timestamp).toLocaleString('es-MX', {timeZone:'America/Hermosillo'}) }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "11",
+      "name": "Todo OK — sin acción",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [800, 500],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Cron cada 5 min": { "main": [[{ "node": "Check todos los servicios", "type": "main", "index": 0 }]] },
+    "Check todos los servicios": { "main": [[{ "node": "¿Hay fallos?", "type": "main", "index": 0 }]] },
+    "¿Hay fallos?": {
+      "main": [
+        [{ "node": "Alerta Telegram CEO", "type": "main", "index": 0 }, { "node": "Reiniciar contenedores caídos", "type": "main", "index": 0 }],
+        [{ "node": "Todo OK — sin acción", "type": "main", "index": 0 }]
+      ]
+    },
+    "Reiniciar contenedores caídos": { "main": [[{ "node": "Esperar 30s y verificar", "type": "main", "index": 0 }]] },
+    "Esperar 30s y verificar": { "main": [[{ "node": "Re-check servicios caídos", "type": "main", "index": 0 }]] },
+    "Re-check servicios caídos": { "main": [[{ "node": "¿Recuperado?", "type": "main", "index": 0 }]] },
+    "¿Recuperado?": {
+      "main": [
+        [{ "node": "Alerta crítica — sin recuperación", "type": "main", "index": 0 }],
+        [{ "node": "Confirmar recuperación", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "callerPolicy": "workflowsFromSameOwner" },
+  "staticData": null,
+  "tags": [{ "name": "watchdog" }, { "name": "self-healing" }, { "name": "mystic" }]
+}

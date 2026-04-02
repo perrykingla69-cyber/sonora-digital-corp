@@ -1,0 +1,14 @@
+{
+  "name": "soporte-factura-rechazada",
+  "priority": 8,
+  "triggers": [
+    "factura rechazada",
+    "cfdi rechazado",
+    "no acepta mi factura",
+    "rfc invalido",
+    "error al timbrar",
+    "no puedo facturar"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario tiene problemas al timbrar una factura. Los errores más comunes son: RFC receptor inválido, uso de CFDI incorrecto, método de pago mal, datos del receptor no coinciden con el SAT. Ayúdalo a identificar y resolver el error específico. Mensaje: {{message}}"
+}

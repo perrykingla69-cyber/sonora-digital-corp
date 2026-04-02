@@ -1,0 +1,13 @@
+{
+  "name": "mve-info",
+  "priority": 7,
+  "triggers": [
+    "mve",
+    "modulo de verificacion",
+    "verificacion de existencia",
+    "existencias fisicas",
+    "inventario aduanas"
+  ],
+  "method": "STATIC",
+  "response_text": "🚢 *MVE — Módulo de Verificación de Existencia*\n\nObligatorio para importadores que deben verificar que la mercancía importada existe físicamente en sus instalaciones.\n\n*¿A quién aplica?*\n• Empresas IMMEX (maquiladoras)\n• Importadores con pedimentos bajo ciertas claves\n• Comercializadoras con mercancía de terceros\n\n*¿Qué se verifica?*\n• Existencia física vs pedimento declarado\n• Coincidencia de descripción y cantidad\n• Documentación de origen y tránsito\n\n⚠️ *Discrepancias = multa + posible embargo de mercancía*\n\n💡 _HERMES integra tu inventario con el módulo MVE._"
+}

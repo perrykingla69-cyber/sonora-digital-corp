@@ -1,0 +1,38 @@
+version: '3.9'
+
+# Override para servicios avanzados v2
+services:
+  api:
+    environment:
+      - ENABLE_V2_MODULES=true
+      - AGENT_SWARM_ENABLED=true
+      - PREDICTIVE_ENGINE_ENABLED=true
+    volumes:
+      - ../packages/agent-swarm-v2:/app/packages/agent-swarm-v2:ro
+      - ../backend/app/fiscal_reasoning:/app/app/fiscal_reasoning:ro
+      - ../backend/app/document_intelligence:/app/app/document_intelligence:ro
+      - ../backend/app/predictive:/app/app/predictive:ro
+      - ../backend/app/omnichannel:/app/app/omnichannel:ro
+      - ../backend/app/mcp_tools_v2:/app/app/mcp_tools_v2:ro
+
+  content-factory:
+    build:
+      context: ../scripts/ai-content-factory
+      dockerfile: Dockerfile
+    container_name: hermes_content_factory
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - API_BASE_URL=http://api:8000
+      - SCHEDULE_INTERVAL=3600  # Generar contenido cada hora
+    depends_on:
+      - api
+      - ollama
+    networks:
+      - hermes_net
+    restart: unless-stopped
+    profiles:
+      - content
+
+networks:
+  hermes_net:
+    driver: bridge

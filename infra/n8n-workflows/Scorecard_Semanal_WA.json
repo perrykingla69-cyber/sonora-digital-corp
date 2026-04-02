@@ -1,0 +1,88 @@
+{
+  "id": "c3e4a5b6-7890-12cd-ef01-333444555666",
+  "name": "Scorecard Semanal WA",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1" }]
+        }
+      },
+      "name": "Trigger Lunes 9am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/fiscal/scorecard/FME080820LC2",
+        "options": {}
+      },
+      "name": "Obtener Scorecard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Obtener Scorecard').first().json;\nconst semaforo = d.kpis?.salud === 'verde' ? '🟢' : d.kpis?.salud === 'amarillo' ? '🟡' : '🔴';\nconst fmt = n => n ? n.toLocaleString('es-MX', {minimumFractionDigits:2}) : '0.00';\nlet msg = `📊 *Scorecard Semanal — Fourgea*\\n`;\nmsg += `📅 ${d.periodo || new Date().toISOString().slice(0,7)}\\n\\n`;\nmsg += `${semaforo} Salud financiera: *${(d.kpis?.salud || 'N/A').toUpperCase()}*\\n\\n`;\nmsg += `📈 Margen bruto: ${d.margen_bruto_pct?.toFixed(1) || 'N/A'}%\\n`;\nmsg += `⏱️ Días prom. pago: ${d.dias_promedio_pago?.toFixed(0) || 'N/A'} días\\n`;\nmsg += `🧾 IVA generado: $${fmt(d.iva_generado_mes)} MXN\\n`;\nmsg += `📋 Facturas pendientes: ${d.facturas_pendientes || 0} ($${fmt(d.monto_pendiente)})\\n`;\nif (d.alertas?.length) {\n  msg += `\\n⚠️ Alertas:\\n`;\n  d.alertas.forEach(a => { msg += `• ${a}\\n`; });\n}\nmsg += '\\n👉 sonoradigitalcorp.com/panel';\nreturn [{ json: { mensaje: msg, numero: '526622681111' } }];"
+      },
+      "name": "Formatear Scorecard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Nathaly",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const err = $input.item.json;\nreturn [{ json: { numero: '526622681111', mensaje: `⚠️ Error en workflow: ${$workflow.name}\\nDetalles: ${JSON.stringify(err).slice(0,200)}` } }];"
+      },
+      "name": "Alerta Error WA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 480]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 480]
+    }
+  ],
+  "connections": {
+    "Trigger Lunes 9am": { "main": [[{ "node": "Obtener Scorecard", "type": "main", "index": 0 }]] },
+    "Obtener Scorecard": { "main": [[{ "node": "Formatear Scorecard", "type": "main", "index": 0 }]] },
+    "Formatear Scorecard": { "main": [[{ "node": "Enviar WA Nathaly", "type": "main", "index": 0 }]] },
+    "Alerta Error WA": { "main": [[{ "node": "Enviar WA Error", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

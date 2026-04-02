@@ -1,0 +1,10 @@
+{
+  "name": "hermes-ia-explica",
+  "description": "Explica conceptos de IA, automatización y tecnología en lenguaje simple",
+  "version": "1.0.0",
+  "priority": 78,
+  "triggers": ["qué es ia", "que es ia", "inteligencia artificial", "automatizar", "bot", "cómo funciona hermes", "como funciona hermes", "qué puede hacer la ia", "que puede hacer la ia", "n8n", "workflow"],
+  "method": "BRAIN",
+  "question_template": "Actúa como divulgador de tecnología para empresarios no técnicos. Explica de forma muy simple, con analogías cotidianas: {{message}}. Conecta siempre con el beneficio práctico para una PYME mexicana. Sin tecnicismos innecesarios.",
+  "response_field": "answer"
+}

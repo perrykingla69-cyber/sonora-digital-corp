@@ -1,0 +1,90 @@
+{
+  "id": "b8c9d0e1-f2a3-4b5c-6d7e-8f9a0b1c2d3e",
+  "name": "Metricas Diarias WA",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 7 * * *" }]
+        }
+      },
+      "name": "Trigger 7am Diario",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/metrics",
+        "method": "GET",
+        "options": {}
+      },
+      "name": "GET Metricas Brain IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.item.json;\nconst total = d.total_consultas || 0;\nconst toolCount = d.tool_use_count || 0;\nconst ragCount = d.rag_ollama_count || 0;\nconst avgMs = d.latencia_promedio_ms || 0;\nconst topTool = d.top_tool || 'N/A';\nconst toolPct = total > 0 ? Math.round((toolCount / total) * 100) : 0;\nconst ragPct = total > 0 ? Math.round((ragCount / total) * 100) : 0;\nconst fecha = new Date().toLocaleDateString('es-MX', {\n  timeZone: 'America/Hermosillo',\n  day: '2-digit', month: '2-digit', year: 'numeric'\n});\nconst msg =\n  `📊 *Métricas del Brain IA — ${fecha}*\\n\\n` +\n  `🧠 Total consultas: ${total}\\n` +\n  `✅ Tool Use: ${toolCount} (${toolPct}%)\\n` +\n  `📚 RAG+Ollama: ${ragCount} (${ragPct}%)\\n` +\n  `⚡ Latencia prom: ${avgMs}ms\\n\\n` +\n  `🔝 Tool más usada: ${topTool}\\n\\n` +\n  `👉 sonoradigitalcorp.com/panel`;\nreturn [{ json: { mensaje: msg, numero: '526622681111' } }];"
+      },
+      "name": "Formatear Metricas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Metricas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const err = $input.item.json;\nreturn [{ json: { numero: '526622681111', mensaje: `⚠️ Error en workflow: ${$workflow.name}\\nDetalles: ${JSON.stringify(err).slice(0,200)}` } }];"
+      },
+      "name": "Alerta Error WA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 480]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/wa/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "numero", "value": "={{ $json.numero }}" },
+            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar WA Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 480]
+    }
+  ],
+  "connections": {
+    "Trigger 7am Diario": { "main": [[{ "node": "GET Metricas Brain IA", "type": "main", "index": 0 }]] },
+    "GET Metricas Brain IA": { "main": [[{ "node": "Formatear Metricas", "type": "main", "index": 0 }]] },
+    "Formatear Metricas": { "main": [[{ "node": "Enviar WA Metricas", "type": "main", "index": 0 }]] },
+    "Alerta Error WA": { "main": [[{ "node": "Enviar WA Error", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

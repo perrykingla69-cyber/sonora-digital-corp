@@ -1,0 +1,79 @@
+name: Deploy — VPS Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Forzar rebuild de contenedores'
+        required: false
+        default: 'false'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pull latest & rebuild
+        run: |
+          set -e
+          cd /home/mystic/sonora-digital-corp
+
+          echo "==> Pull latest"
+          git fetch origin
+          git reset --hard origin/main
+          git clean -fd
+
+          cd infra
+
+          # Detectar qué cambió para rebuild selectivo
+          CHANGED=$(git -C /home/mystic/sonora-digital-corp diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")
+
+          DC="docker compose -f docker-compose.vps.yml --env-file .env.vps --project-name mystic"
+
+          echo "==> Rebuild API"
+          $DC build api --no-cache
+
+          # Rebuild frontend solo si cambió algo en frontend/
+          if echo "$CHANGED" | grep -q "^frontend/" || echo "$CHANGED" | grep -q "all" || [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+            echo "==> Rebuild Frontend"
+            $DC build frontend --no-cache
+          else
+            echo "==> Frontend sin cambios, skip rebuild"
+          fi
+
+          # Rebuild bot solo si cambió bot/
+          if echo "$CHANGED" | grep -q "^bot/" || [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+            echo "==> Rebuild Bot"
+            $DC build bot --no-cache
+          else
+            echo "==> Bot sin cambios, skip rebuild"
+          fi
+
+          echo "==> Levantar todos los servicios"
+          $DC up -d --remove-orphans
+
+          echo "==> Verify health"
+          sleep 10
+          STATUS=$(python3 -c "import urllib.request; r=urllib.request.urlopen('http://localhost:8000/status'); print(r.read().decode())" 2>/dev/null)
+          echo "API Status: $STATUS"
+          echo "$STATUS" | grep -q '"api":"ok"' && echo "✅ DEPLOY OK" || (echo "❌ HEALTH CHECK FAILED" && exit 1)
+
+      - name: Notify Telegram
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          ICON=$([[ "$STATUS" == "success" ]] && echo "✅" || echo "❌")
+          MSG="${ICON} Deploy ${STATUS} — sonora-digital-corp @ ${{ github.sha }}"
+          python3 -c "
+          import urllib.request, json
+          data = json.dumps({'chat_id': '${{ secrets.TELEGRAM_CHAT_ID }}', 'text': '$MSG'}).encode()
+          req = urllib.request.Request('https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage', data=data, headers={'Content-Type': 'application/json'})
+          urllib.request.urlopen(req)
+          print('Telegram notified')
+          " 2>/dev/null || echo "Telegram notification skipped"

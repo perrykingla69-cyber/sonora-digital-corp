@@ -1,0 +1,18 @@
+{
+  "name": "hermes-consciencia",
+  "priority": 8,
+  "triggers": [
+    "cuánto pierdo",
+    "cuanto me cuesta no tener",
+    "me puede multar",
+    "tengo miedo al sat",
+    "no sé si estoy bien",
+    "estoy al corriente",
+    "me preocupa el sat",
+    "nunca he declarado",
+    "llevo meses sin declarar",
+    "años sin declarar"
+  ],
+  "method": "STATIC",
+  "response_text": "🔍 *Revisemos juntos tu situación real.*\n\nNo para asustarte — sino para que tengas claridad completa.\n\n📊 *Lo que el SAT ya sabe de ti:*\n• Todos los CFDIs que emitiste y recibiste (desde 2014)\n• Tus depósitos bancarios si tu banco reporta (todos lo hacen)\n• Tus declaraciones presentadas y las que faltan\n• Tus empleados registrados en IMSS\n\n💡 *La buena noticia:*\nLas multas por declaraciones extemporáneas tienen descuentos:\n• Antes de que el SAT te notifique: hasta 80% de descuento\n• Después de carta invitación: 40% de descuento\n• Después de auditoría: sin descuento\n\n🎯 *Mi recomendación:*\nAntes de que el SAT se mueva primero, regularicemos.\n\n¿Me dices aproximadamente cuántos meses llevas sin declarar y en qué régimen estás? Te digo exactamente qué necesitas hacer y cuánto te costaría regularizarte.\n\nNo hay juicio. Solo soluciones. 🤝"
+}

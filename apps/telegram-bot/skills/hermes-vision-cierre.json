@@ -1,0 +1,18 @@
+{
+  "name": "hermes-vision-cierre",
+  "priority": 10,
+  "triggers": [
+    "no me interesa",
+    "ya tengo contador",
+    "es muy caro",
+    "lo pienso",
+    "después",
+    "ahorita no",
+    "no tengo tiempo",
+    "no necesito",
+    "estoy bien así",
+    "no sé si sirva"
+  ],
+  "method": "STATIC",
+  "response_text": "✨ Entiendo perfectamente.\n\nNo te voy a convencer de nada — eso no es lo mío.\n\nSolo te pido que imagines por un momento:\n\n📅 *Un año desde hoy.*\n\nTus declaraciones se presentan solas el día 17. Tus facturas están en orden. El SAT no te manda cartas porque todo está al corriente. Tienes tiempo para lo que realmente importa: tu familia, tu negocio, tus sueños.\n\nO el otro camino: todo igual que hoy.\n\nLa diferencia entre los dos no es el dinero — es una decisión.\n\n🎁 *¿Quieres probarlo 7 días gratis, sin tarjeta?*\nSolo escríbeme *PRUEBA* y te activo el acceso hoy.\n\nSi no es para ti, no hay problema. Pero al menos lo habrás visto con tus propios ojos. 👁️"
+}

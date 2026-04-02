@@ -1,0 +1,19 @@
+{
+  "name": "aduanas-pedimento",
+  "priority": 7,
+  "triggers": [
+    "pedimento",
+    "pedimento aduanal",
+    "fraccion arancelaria",
+    "clasificacion arancelaria",
+    "tigie",
+    "como importo"
+  ],
+  "method": "POST",
+  "endpoint": "http://api:8000/api/aduanas/clasificar",
+  "payload": {
+    "pregunta": "{{message}}",
+    "tenant_id": "{{tenant_id}}"
+  },
+  "response_field": "clasificacion"
+}

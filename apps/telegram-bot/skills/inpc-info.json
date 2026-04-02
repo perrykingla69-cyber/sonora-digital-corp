@@ -1,0 +1,14 @@
+{
+  "name": "inpc-info",
+  "priority": 5,
+  "triggers": [
+    "inpc",
+    "inflacion",
+    "indice de precios",
+    "actualizacion fiscal",
+    "como actualizo",
+    "factor de actualizacion"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario pregunta sobre el INPC para cálculos fiscales. Explica qué es el INPC, cómo se usa para actualizar deudas fiscales, créditos y deducciones, y dónde consultar los valores históricos. Incluye la fórmula básica de actualización. Mensaje: {{message}}"
+}

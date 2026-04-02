@@ -1,0 +1,14 @@
+{
+  "name": "facturacion-honorarios",
+  "priority": 7,
+  "triggers": [
+    "honorarios",
+    "factura de servicios",
+    "persona fisica servicios",
+    "como facturo mis servicios",
+    "facturo honorarios",
+    "profesionista"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario es una persona física que presta servicios profesionales (honorarios) y necesita saber cómo facturar correctamente. Explica: régimen (actividad empresarial o RESICO), CFDI de ingreso con clave de producto correcta (84111500 para servicios profesionales), IVA que aplica, y retenciones cuando el cliente es persona moral. Mensaje: {{message}}"
+}

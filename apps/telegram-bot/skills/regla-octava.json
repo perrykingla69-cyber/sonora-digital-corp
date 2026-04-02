@@ -1,0 +1,13 @@
+{
+  "name": "regla-octava",
+  "priority": 5,
+  "triggers": [
+    "regla octava",
+    "octava regla",
+    "clasificacion arancelaria duda",
+    "mercancia nueva",
+    "fraccion desconocida"
+  ],
+  "method": "BRAIN",
+  "question_template": "El usuario tiene dudas sobre clasificación arancelaria de una mercancía específica. Explica cómo aplicar las Reglas Generales de Interpretación del Sistema Armonizado (RGISA), especialmente para mercancías que no tienen fracción obvia. Ayuda con el proceso. Mensaje: {{message}}"
+}

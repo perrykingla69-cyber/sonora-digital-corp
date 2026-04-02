@@ -1,0 +1,10 @@
+{
+  "name": "finanzas-personal",
+  "description": "Finanzas personales y planificación patrimonial para empresario",
+  "version": "1.0.0",
+  "priority": 80,
+  "triggers": ["finanzas personales", "inversión", "inversion", "retiro", "afore", "seguro de vida", "patrimonio", "dividendos personales", "cómo ahorrar", "como ahorrar", "planificación financiera"],
+  "method": "BRAIN",
+  "question_template": "Actúa como asesor financiero personal para empresario mexicano. Considera el contexto fiscal mexicano (AFORE, seguros, régimen fiscal del empresario). Responde: {{message}}. Da recomendaciones concretas, sin jerga compleja.",
+  "response_field": "answer"
+}

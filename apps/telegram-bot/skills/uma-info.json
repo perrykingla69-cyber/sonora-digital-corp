@@ -1,0 +1,13 @@
+{
+  "name": "uma-info",
+  "priority": 5,
+  "triggers": [
+    "uma",
+    "unidad de medida",
+    "valor uma",
+    "uma 2025",
+    "multa en umas"
+  ],
+  "method": "STATIC",
+  "response_text": "📏 *UMA — Unidad de Medida y Actualización*\n\n*Valor 2025:* $113.14 MXN diarios / $3,439.26 mensual / $41,271.12 anual\n\n*¿Para qué sirve?*\n• Base para calcular multas del SAT, IMSS, INFONAVIT\n• Topes de aportaciones y prestaciones laborales\n• Cálculo de aguinaldo mínimo (15 días)\n• Límite de vales de despensa deducibles (40% de la UMA mensual)\n\n*Se actualiza en febrero de cada año por el INEGI.*\n\n💡 _HERMES actualiza automáticamente los cálculos cuando cambia la UMA._"
+}

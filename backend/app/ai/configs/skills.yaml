@@ -1,0 +1,25 @@
+skills:
+  - name: web_search
+    module: skills.web_search
+    entrypoint: run
+    description: Search the web for information
+
+  - name: analysis
+    module: skills.analysis
+    entrypoint: run
+    description: Analyze data and generate insights
+
+  - name: filesystem
+    module: skills.filesystem
+    entrypoint: run
+    description: Read and write files
+
+  - name: github
+    module: skills.github
+    entrypoint: run
+    description: Interact with GitHub repositories
+
+  - name: shell
+    module: skills.shell
+    entrypoint: run
+    description: Execute shell commands

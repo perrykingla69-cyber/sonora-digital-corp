@@ -1,0 +1,14 @@
+{
+  "name": "iva-info",
+  "priority": 8,
+  "triggers": [
+    "iva",
+    "iva mensual",
+    "impuesto al valor agregado",
+    "iva acreditable",
+    "iva trasladado",
+    "como calculo el iva"
+  ],
+  "method": "STATIC",
+  "response_text": "💰 *IVA — Impuesto al Valor Agregado*\n\n*Tasas vigentes en México:*\n• *16%* — Tasa general (mayoría de productos y servicios)\n• *8%* — Zona fronteriza (franja de 20 km)\n• *0%* — Alimentos básicos, medicinas, libros, exportaciones\n• *Exento* — Servicios educativos, médicos, financieros\n\n*¿Cómo funciona?*\n```\nIVA a pagar = IVA Trasladado (cobrado) - IVA Acreditable (pagado)\n```\n\n*Si el acreditable > trasladado → Saldo a favor* (puedes acreditarlo o pedir devolución)\n\n💡 _HERMES concilia tu IVA automáticamente cada mes._"
+}

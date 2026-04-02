@@ -1,0 +1,14 @@
+{
+  "name": "declaracion-mensual-info",
+  "priority": 8,
+  "triggers": [
+    "declaracion mensual",
+    "declaracion provisional",
+    "cuando declaro",
+    "dia 17",
+    "fecha declaracion",
+    "declarar impuestos"
+  ],
+  "method": "STATIC",
+  "response_text": "📅 *Declaración Mensual — Fechas y Obligaciones*\n\n*¿Cuándo?* A más tardar el *día 17* de cada mes (período anterior)\n\n*¿Qué se presenta?*\n• ISR provisional (a cuenta del anual)\n• IVA mensual definitivo\n• IEPS (si aplica a tu giro)\n• Retenciones de IVA e ISR (si eres retenedor)\n\n*¿Quién debe presentar?*\n• Personas físicas con actividad empresarial o profesional\n• Personas morales (régimen general)\n• RESICO: también día 17\n\n⚠️ *Un día tarde = recargos automáticos del 0.75% mensual + actualización.*\n\n💡 _HERMES presenta tus declaraciones automáticamente._"
+}

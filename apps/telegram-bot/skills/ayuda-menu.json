@@ -1,0 +1,18 @@
+{
+  "name": "ayuda-menu",
+  "priority": 3,
+  "triggers": [
+    "ayuda",
+    "help",
+    "que puedes hacer",
+    "comandos",
+    "menu",
+    "opciones",
+    "hola",
+    "buenos dias",
+    "buenas tardes",
+    "buenas noches"
+  ],
+  "method": "STATIC",
+  "response_text": "👋 *Hola, soy HERMES*\n\nTu asistente fiscal y contable inteligente. Puedo ayudarte con:\n\n🧾 *Facturación* — CFDIs, cancelaciones, carta porte\n📅 *Declaraciones* — ISR, IVA, DIOT, anual\n👥 *Nómina* — Cálculo, IMSS, INFONAVIT, PTU\n🚛 *Aduanas* — Pedimentos, MVE, clasificación\n📊 *Contabilidad* — Cierre, balance, conciliación\n💰 *RESICO* — Tarifas, requisitos, facturación\n💎 *Planes HERMES* — Precios y demo\n\nSolo escríbeme tu pregunta en lenguaje natural.\n\n📱 _sonoradigitalcorp.com_"
+}
