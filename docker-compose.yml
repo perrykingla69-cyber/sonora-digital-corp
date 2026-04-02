@@ -222,7 +222,8 @@ services:
       test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
       interval: 15s
       timeout: 5s
-      retries: 3
+      retries: 5
+      start_period: 20s
 
   # ── CAPA 4: AGENTES IA ───────────────────────────────────
   hermes-agent:
@@ -269,6 +270,9 @@ services:
       AGENT_NAME: MYSTIC
       AGENT_ROLE: shadow_analyst
       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN_MYSTIC}
+      SYSTEM_EMAIL: ${CEO_EMAIL}
+      SYSTEM_PASSWORD: ${CEO_PASSWORD}
+      SYSTEM_TENANT: ${CEO_TENANT_SLUG}
     networks:
       - hermes_net
     depends_on:

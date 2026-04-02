@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     EVOLUTION_API_KEY: str
 
     # Seguridad
-    ALLOWED_HOSTS: List[str] = ["sonoradigitalcorp.com", "www.sonoradigitalcorp.com", "localhost"]
+    ALLOWED_HOSTS: List[str] = ["sonoradigitalcorp.com", "www.sonoradigitalcorp.com", "localhost", "hermes-api", "127.0.0.1", "*"]
     CORS_ORIGINS: List[str] = ["https://sonoradigitalcorp.com"]
 
     class Config:
