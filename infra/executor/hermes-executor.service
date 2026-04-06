@@ -8,7 +8,9 @@ Type=simple
 User=root
 WorkingDirectory=/home/mystic/hermes-os
 EnvironmentFile=/home/mystic/hermes-os/.env
-ExecStart=/usr/bin/python3 -m uvicorn infra.executor.executor:app --host 127.0.0.1 --port 9001 --log-level warning
+Environment=OPENCODE_BIN=/root/.opencode/bin/opencode
+Environment=PATH=/root/.opencode/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/local/bin/uvicorn infra.executor.executor:app --host 127.0.0.1 --port 9001 --log-level warning
 Restart=always
 RestartSec=5
 StandardOutput=journal

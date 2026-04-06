@@ -50,7 +50,7 @@ async def shadow_scan_loop():
     while True:
         try:
             token = await get_system_token()
-            async with httpx.AsyncClient(timeout=60) as client:
+            async with httpx.AsyncClient(timeout=120) as client:
                 # Analizar estado general del sistema
                 r = await client.post(
                     f"{API_URL}/api/v1/agents/mystic/analyze",

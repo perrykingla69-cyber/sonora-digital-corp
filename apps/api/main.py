@@ -15,7 +15,8 @@ import time
 from app.core.config import settings
 from app.core.database import engine, init_db
 from app.core.redis import redis_client
-from app.api.v1 import auth, tenants, users, conversations, documents, webhooks, agents
+from app.api.v1 import auth, tenants, users, conversations, documents, webhooks, agents, content, payments
+from app.webhooks import heygen as heygen_wh, fal as fal_wh
 
 
 @asynccontextmanager
@@ -84,6 +85,10 @@ app.include_router(conversations.router, prefix=f"{PREFIX}/conversations", tags=
 app.include_router(documents.router,     prefix=f"{PREFIX}/documents",     tags=["Documents"])
 app.include_router(webhooks.router,      prefix=f"{PREFIX}/webhooks",      tags=["Webhooks"])
 app.include_router(agents.router,        prefix=f"{PREFIX}/agents",        tags=["Agents"])
+app.include_router(content.router,       prefix=f"{PREFIX}/content",       tags=["Content"])
+app.include_router(payments.router,      prefix=f"{PREFIX}/payments",      tags=["Payments"])
+app.include_router(heygen_wh.router,     prefix="/webhooks",               tags=["Webhooks"])
+app.include_router(fal_wh.router,        prefix="/webhooks",               tags=["Webhooks"])
 
 
 @app.get("/health", include_in_schema=False)

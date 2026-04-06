@@ -1,0 +1,3 @@
+{
+  "/(app)/contador/page": "app/(app)/contador/page.js"
+}

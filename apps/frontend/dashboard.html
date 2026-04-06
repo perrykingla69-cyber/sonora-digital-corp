@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{FULL_NAME}} — HERMES OS</title>
+  <meta name="description" content="Panel de {{FULL_NAME}} en HERMES OS · Sonora Digital Corp" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #05050f; --bg2: #0d0d1f; --bg3: #12122a;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --primary: #7c3aed; --primary2: #9f67ff; --cyan: #06b6d4;
+      --green: #10b981; --amber: #f59e0b; --red: #ef4444;
+      --text: #f0f0ff; --muted: #8b8ba7;
+      --plan-color: {{PLAN_COLOR}};
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.6; min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      height: 60px; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(5,5,15,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1rem;
+      text-decoration: none; color: var(--text);
+    }
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      border-radius: 7px; display: flex; align-items: center;
+      justify-content: center; font-size: 14px;
+    }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .plan-badge {
+      padding: 4px 12px; border-radius: 99px;
+      background: color-mix(in srgb, var(--plan-color) 15%, transparent);
+      border: 1px solid color-mix(in srgb, var(--plan-color) 40%, transparent);
+      color: var(--plan-color);
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    /* ── PROFILE HEADER ── */
+    .profile-header {
+      display: flex; align-items: center; gap: 24px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px;
+      margin-bottom: 24px;
+      position: relative; overflow: hidden;
+    }
+    .profile-header::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--plan-color), var(--cyan));
+    }
+    .avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; font-weight: 800; flex-shrink: 0;
+    }
+    .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .profile-info { flex: 1; }
+    .profile-name { font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+    .profile-slug { font-size: 0.8rem; color: var(--muted); }
+    .profile-meta {
+      display: flex; gap: 16px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .meta-item { font-size: 0.8rem; color: var(--muted); }
+    .meta-item strong { color: var(--text); }
+
+    /* ── LEVEL RING ── */
+    .level-section {
+      text-align: center; min-width: 120px;
+    }
+    .level-ring {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 3px solid var(--plan-color);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      margin: 0 auto 8px;
+      background: color-mix(in srgb, var(--plan-color) 10%, transparent);
+    }
+    .level-ring .level-num { font-size: 1.4rem; font-weight: 800; color: var(--plan-color); }
+    .level-ring .level-icon { font-size: 1rem; }
+    .level-name { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+
+    /* ── SCORE BAR ── */
+    .score-row {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg3); border-radius: 12px;
+      padding: 14px 20px; margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+    .score-label { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+    .score-bar-wrap { flex: 1; background: rgba(255,255,255,0.06); border-radius: 99px; height: 8px; overflow: hidden; }
+    .score-bar { height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      transition: width 1s ease;
+    }
+    .score-val { font-size: 0.9rem; font-weight: 700; white-space: nowrap; }
+
+    /* ── STATS GRID ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px;
+      transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-icon { font-size: 1.5rem; margin-bottom: 10px; }
+    .stat-val { font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; }
+    .stat-val.purple { color: var(--primary2); }
+    .stat-val.cyan   { color: var(--cyan); }
+    .stat-val.green  { color: var(--green); }
+    .stat-val.amber  { color: var(--amber); }
+    .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── PLAN CARD ── */
+    .plan-card {
+      background: var(--bg2);
+      border: 1px solid color-mix(in srgb, var(--plan-color) 30%, transparent);
+      border-radius: 16px; padding: 24px;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg,
+        color-mix(in srgb, var(--plan-color) 8%, var(--bg2)),
+        var(--bg2)
+      );
+    }
+    .plan-card-title { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .plan-features { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 12px; }
+    .plan-feat { font-size: 0.85rem; color: var(--muted); }
+    .plan-feat span { color: var(--text); font-weight: 600; }
+    .upgrade-btn {
+      margin-top: 16px; padding: 10px 20px;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 0.875rem; font-weight: 700; cursor: pointer;
+      text-decoration: none; display: inline-block;
+      box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+      transition: all 0.2s;
+    }
+    .upgrade-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(124,58,237,0.4); }
+
+    /* ── TOKENS CARD ── */
+    .tokens-section {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-bottom: 24px;
+    }
+    .tokens-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px;
+    }
+    .tokens-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 16px; }
+    .tokens-balance {
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -2px;
+      background: linear-gradient(135deg, var(--amber), #f97316);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .tokens-sub { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .token-pkgs { display: flex; flex-direction: column; gap: 8px; }
+    .pkg-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg3); border-radius: 10px; padding: 10px 14px;
+      border: 1px solid var(--border); cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .pkg-row:hover { border-color: rgba(124,58,237,0.4); }
+    .pkg-row.promo { border-color: rgba(245,158,11,0.4); }
+    .pkg-name { font-size: 0.85rem; font-weight: 600; }
+    .pkg-tokens { font-size: 0.78rem; color: var(--muted); }
+    .pkg-price { font-size: 0.85rem; font-weight: 700; color: var(--primary2); }
+    .pkg-badge {
+      font-size: 0.65rem; font-weight: 700; padding: 2px 6px;
+      border-radius: 4px; background: rgba(245,158,11,0.2);
+      color: var(--amber); margin-left: 6px;
+    }
+
+    /* ── BADGES ── */
+    .badges-section { margin-bottom: 24px; }
+    .badges-section h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .badges-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+    .badge-chip {
+      padding: 8px 16px; border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      font-size: 0.82rem; display: flex; align-items: center; gap: 6px;
+    }
+    .badge-chip.earned { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.08); color: var(--green); }
+    .badge-chip.locked { opacity: 0.4; }
+
+    /* ── CONTENT CTA ── */
+    .content-cta {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px;
+      margin-bottom: 24px;
+      text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .content-cta::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--cyan), transparent);
+    }
+    .content-cta h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .content-cta p { font-size: 0.875rem; color: var(--muted); margin-bottom: 20px; }
+    .content-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .content-btn {
+      padding: 10px 20px; border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+      transition: all 0.2s;
+    }
+    .content-btn:hover { border-color: var(--primary); background: rgba(124,58,237,0.08); }
+    .content-btn .cost { font-size: 0.75rem; color: var(--amber); }
+
+    /* ── FOOTER ── */
+    .dash-footer {
+      text-align: center; padding: 32px 0;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--muted);
+    }
+    .dash-footer a { color: var(--primary2); text-decoration: none; }
+
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .tokens-section { grid-template-columns: 1fr; }
+      .profile-header { flex-direction: column; text-align: center; }
+      .level-section { order: -1; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="logo-icon">⚡</span>
+    HERMES OS
+  </a>
+  <div class="nav-right">
+    <span class="plan-badge">{{PLAN_LABEL}}</span>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Perfil -->
+  <div class="profile-header">
+    <div class="avatar">
+      {{#if AVATAR_URL}}
+      <img src="{{AVATAR_URL}}" alt="{{FULL_NAME}}" />
+      {{else}}
+      {{INITIALS}}
+      {{/if}}
+    </div>
+    <div class="profile-info">
+      <div class="profile-name">{{FULL_NAME}}</div>
+      <div class="profile-slug">sonoradigitalcorp.com/user/{{SLUG}}</div>
+      <div class="profile-meta">
+        <div class="meta-item">Miembro desde <strong>{{MEMBER_SINCE}}</strong></div>
+        <div class="meta-item">Plan <strong>{{PLAN_LABEL}}</strong></div>
+      </div>
+    </div>
+    <div class="level-section">
+      <div class="level-ring">
+        <span class="level-icon">{{LEVEL_ICON}}</span>
+        <span class="level-num">{{LEVEL}}</span>
+      </div>
+      <div class="level-name">{{LEVEL_NAME}}</div>
+    </div>
+  </div>
+
+  <!-- Score -->
+  <div class="score-row">
+    <span class="score-label">Score HERMES</span>
+    <div class="score-bar-wrap">
+      <div class="score-bar" style="width: min({{SCORE}}%, 100%)"></div>
+    </div>
+    <span class="score-val">{{SCORE}} pts</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">💬</div>
+      <div class="stat-val purple">{{CONVERSATIONS}}</div>
+      <div class="stat-label">Conversaciones</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🖼️</div>
+      <div class="stat-val cyan">{{ASSETS}}</div>
+      <div class="stat-label">Contenidos creados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-val amber">{{TOKENS}}</div>
+      <div class="stat-label">Tokens disponibles</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">{{LEVEL_ICON}}</div>
+      <div class="stat-val green">{{LEVEL}}</div>
+      <div class="stat-label">Nivel {{LEVEL_NAME}}</div>
+    </div>
+  </div>
+
+  <!-- Plan actual -->
+  <div class="plan-card">
+    <div class="plan-card-title">Tu plan actual</div>
+    <div style="font-size:1.2rem;font-weight:800;color:var(--plan-color)">{{PLAN_LABEL}}</div>
+    <div class="plan-features">
+      <div class="plan-feat">Mensajes: <span>ilimitados</span></div>
+      <div class="plan-feat">Canales: <span>Telegram</span></div>
+      <div class="plan-feat">Agentes: <span>HERMES</span></div>
+      <div class="plan-feat">RAG docs: <span>50</span></div>
+    </div>
+    <a href="/#pricing" class="upgrade-btn">⬆️ Subir a Pro →</a>
+  </div>
+
+  <!-- Tokens + Paquetes -->
+  <div class="tokens-section">
+    <div class="tokens-card">
+      <h3>⚡ Mis tokens</h3>
+      <div class="tokens-balance">{{TOKENS}}</div>
+      <div class="tokens-sub">tokens disponibles</div>
+      <div style="margin-top:16px;font-size:0.8rem;color:var(--muted)">
+        Usa tus tokens para generar imágenes, videos y contenido para redes sociales con un clic.
+      </div>
+    </div>
+    <div class="tokens-card">
+      <h3>🛒 Paquetes de tokens</h3>
+      <div class="token-pkgs">
+        <div class="pkg-row" onclick="alert('Próximamente — pago en línea')">
+          <div><div class="pkg-name">Starter Pack</div><div class="pkg-tokens">500 tokens</div></div>
+          <div class="pkg-price">$49 MXN</div>
+        </div>
+        <div class="pkg-row" onclick="alert('Próximamente — pago en línea')">
+          <div>
+            <div class="pkg-name">Pro Pack <span class="pkg-badge">POPULAR</span></div>
+            <div class="pkg-tokens">2,000 tokens</div>
+          </div>
+          <div class="pkg-price">$149 MXN</div>
+        </div>
+        <div class="pkg-row promo" onclick="alert('Próximamente — pago en línea')">
+          <div>
+            <div class="pkg-name">Mega Pack <span class="pkg-badge">MEJOR PRECIO</span></div>
+            <div class="pkg-tokens">15,000 tokens</div>
+          </div>
+          <div class="pkg-price">$699 MXN</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Badges -->
+  <div class="badges-section">
+    <h3>Insignias</h3>
+    <div class="badges-grid">
+      <div class="badge-chip earned">✅ Cuenta creada</div>
+      <div class="badge-chip earned">💬 Primera conversación</div>
+      <div class="badge-chip {{#if_gt ASSETS 0}}earned{{else}}locked{{/if_gt}}">🖼️ Primer contenido</div>
+      <div class="badge-chip {{#if_gt CONVERSATIONS 9}}earned{{else}}locked{{/if_gt}}">🔥 10 conversaciones</div>
+      <div class="badge-chip locked">💎 Plan Pro</div>
+      <div class="badge-chip locked">🚀 100 contenidos</div>
+    </div>
+  </div>
+
+  <!-- Crear contenido -->
+  <div class="content-cta">
+    <h3>✨ Crea contenido para tus redes</h3>
+    <p>Describe tu idea — HERMES genera el contenido listo para publicar. Cada generación consume tokens de tu saldo.</p>
+
+    <!-- Input de tema -->
+    <div style="display:flex;gap:10px;margin-bottom:16px;max-width:600px;margin-left:auto;margin-right:auto;">
+      <input id="content-topic" type="text" placeholder="Ej: promoción de fin de semana, menú especial..."
+        style="flex:1;padding:11px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);
+               background:rgba(255,255,255,0.05);color:#f0f0ff;font-size:0.875rem;font-family:inherit;outline:none;" />
+    </div>
+
+    <div class="content-btns">
+      <button class="content-btn" onclick="generateContent('instagram_image')" id="btn-instagram">
+        🖼️ Imagen Instagram
+        <span class="cost">10 tokens</span>
+      </button>
+      <button class="content-btn" onclick="generateContent('facebook_post')" id="btn-facebook">
+        📱 Post Facebook
+        <span class="cost">5 tokens</span>
+      </button>
+      <button class="content-btn" onclick="generateContent('video_short')" id="btn-video">
+        🎬 Video corto
+        <span class="cost">50 tokens</span>
+      </button>
+      <button class="content-btn" onclick="generateContent('caption')" id="btn-caption">
+        ✍️ Caption + hashtags
+        <span class="cost">3 tokens</span>
+      </button>
+    </div>
+
+    <!-- Resultado generación -->
+    <div id="content-result" style="display:none;margin-top:20px;text-align:left;
+         background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+         border-radius:12px;padding:20px;max-width:600px;margin-left:auto;margin-right:auto;">
+      <div id="content-result-inner"></div>
+    </div>
+  </div>
+
+  <!-- Modal compra tokens -->
+  <div id="token-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);
+       z-index:200;align-items:center;justify-content:center;">
+    <div style="background:#0d0d1f;border:1px solid rgba(124,58,237,0.4);border-radius:20px;
+                padding:32px;max-width:420px;width:90%;position:relative;">
+      <button onclick="closeModal()" style="position:absolute;top:16px;right:16px;background:none;
+              border:none;color:#8b8ba7;font-size:1.2rem;cursor:pointer;">✕</button>
+      <h3 style="margin-bottom:6px;">⚡ Comprar tokens</h3>
+      <p style="font-size:0.85rem;color:#8b8ba7;margin-bottom:20px;">Selecciona un paquete para continuar.</p>
+      <div id="modal-pkgs" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="dash-footer">
+    <p>HERMES OS · <a href="/">Sonora Digital Corp</a> · Hecho en México 🇲🇽</p>
+  </div>
+
+</div>
+
+<script>
+const API = '/api'  // proxied via nginx → hermes-api:8000
+
+// ── Auth token (viene del bot vía ?token=xxx) ─────────────────
+const params = new URLSearchParams(location.search)
+if (params.get('token')) {
+  localStorage.setItem('hermes_token', params.get('token'))
+  history.replaceState({}, '', location.pathname)
+}
+const AUTH_TOKEN = localStorage.getItem('hermes_token') || ''
+
+// ── Paquetes de tokens dinámicos ──────────────────────────────
+async function loadPackages() {
+  try {
+    const r = await fetch('/api/v1/content/packages')
+    const pkgs = await r.json()
+    const container = document.getElementById('token-pkgs-list')
+    if (container) {
+      container.innerHTML = pkgs.map(p => `
+        <div class="pkg-row${p.is_promo ? ' promo' : ''}" onclick="buyPackage('${p.id}')">
+          <div>
+            <div class="pkg-name">${p.name}${p.badge ? `<span class="pkg-badge">${p.badge}</span>` : ''}</div>
+            <div class="pkg-tokens">${Number(p.tokens).toLocaleString('es-MX')} tokens</div>
+          </div>
+          <div class="pkg-price">$${Number(p.price_mxn).toFixed(0)} MXN</div>
+        </div>
+      `).join('')
+    }
+    return pkgs
+  } catch { return [] }
+}
+
+// ── Generar contenido ─────────────────────────────────────────
+async function generateContent(type) {
+  if (!AUTH_TOKEN) {
+    showResult('error', '⚠️ Necesitas iniciar sesión desde Telegram primero.\nEscribe /start en @sonora_digital_bot')
+    return
+  }
+  const topic = document.getElementById('content-topic').value.trim()
+  if (!topic) {
+    document.getElementById('content-topic').focus()
+    document.getElementById('content-topic').style.borderColor = '#ef4444'
+    setTimeout(() => document.getElementById('content-topic').style.borderColor = 'rgba(255,255,255,0.1)', 2000)
+    return
+  }
+
+  const btn = document.getElementById(`btn-${type.split('_')[0] === 'instagram' ? 'instagram' : type.split('_')[0] === 'facebook' ? 'facebook' : type.split('_')[0] === 'video' ? 'video' : 'caption'}`)
+  const originalText = btn.innerHTML
+  btn.disabled = true
+  btn.style.opacity = '0.6'
+  btn.innerHTML = '⏳ Generando...'
+  showResult('loading', '⏳ HERMES está generando tu contenido...')
+
+  try {
+    const r = await fetch('/api/v1/content/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${AUTH_TOKEN}`,
+      },
+      body: JSON.stringify({
+        content_type: type,
+        topic,
+        business_type: '{{BUSINESS_TYPE}}' || 'general',
+      }),
+    })
+
+    const data = await r.json()
+
+    if (r.status === 402) {
+      // Sin tokens → abrir modal de compra
+      btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = originalText
+      showResult('error', `❌ ${data.detail}`)
+      setTimeout(openTokenModal, 800)
+      return
+    }
+
+    if (!r.ok) {
+      throw new Error(data.detail || 'Error desconocido')
+    }
+
+    // Actualizar saldo en UI
+    const tokEl = document.querySelector('.tokens-balance')
+    if (tokEl) tokEl.textContent = Number(data.tokens_remaining).toLocaleString('es-MX')
+
+    if (data.status === 'ready' && data.result) {
+      // Caption/texto — mostrar inmediatamente
+      showResult('success', data.result, true)
+    } else {
+      // Imagen/video async
+      showResult('processing',
+        `✅ ¡Enviado a procesar!\n\nTe notificaremos por Telegram cuando esté listo.\n\n` +
+        `Asset ID: ${data.asset_id.slice(0,8)}...\n` +
+        `Tokens gastados: ${data.tokens_spent}`
+      )
+    }
+  } catch (e) {
+    showResult('error', `❌ Error: ${e.message}`)
+  } finally {
+    btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = originalText
+  }
+}
+
+function showResult(type, text, copyable = false) {
+  const box = document.getElementById('content-result')
+  const inner = document.getElementById('content-result-inner')
+  box.style.display = 'block'
+  const colors = { success: '#10b981', error: '#ef4444', loading: '#8b8ba7', processing: '#06b6d4' }
+  const color = colors[type] || '#f0f0ff'
+  inner.innerHTML = `
+    <div style="color:${color};font-size:0.875rem;white-space:pre-wrap;line-height:1.7">${escHtml(text)}</div>
+    ${copyable ? `<button onclick="copyText(\`${escHtml(text)}\`)"
+      style="margin-top:12px;padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);
+             background:rgba(255,255,255,0.05);color:#f0f0ff;cursor:pointer;font-size:0.8rem;">
+      📋 Copiar</button>` : ''}
+  `
+}
+
+function copyText(t) {
+  navigator.clipboard.writeText(t).then(() => {
+    const btn = event.target; btn.textContent = '✅ Copiado!';
+    setTimeout(() => btn.textContent = '📋 Copiar', 2000)
+  })
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+// ── Modal paquetes ────────────────────────────────────────────
+async function openTokenModal() {
+  const modal = document.getElementById('token-modal')
+  modal.style.display = 'flex'
+  const pkgs = await loadPackages()
+  const container = document.getElementById('modal-pkgs')
+  container.innerHTML = pkgs.map(p => `
+    <div class="pkg-row${p.is_promo ? ' promo' : ''}" onclick="buyPackage('${p.id}')"
+         style="cursor:pointer;">
+      <div>
+        <div class="pkg-name">${p.name}${p.badge ? `<span class="pkg-badge">${p.badge}</span>` : ''}</div>
+        <div class="pkg-tokens">${Number(p.tokens).toLocaleString('es-MX')} tokens</div>
+      </div>
+      <div class="pkg-price">$${Number(p.price_mxn).toFixed(0)} MXN</div>
+    </div>
+  `).join('')
+}
+
+function closeModal() {
+  document.getElementById('token-modal').style.display = 'none'
+}
+
+async function buyPackage(packageId) {
+  if (!AUTH_TOKEN) {
+    alert('Necesitas iniciar sesión desde Telegram primero.')
+    return
+  }
+  try {
+    const r = await fetch('/api/v1/payments/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${AUTH_TOKEN}` },
+      body: JSON.stringify({ package_id: packageId }),
+    })
+    const data = await r.json()
+    if (!r.ok) throw new Error(data.detail || 'Error al crear el pago')
+    closeModal()
+    window.open(data.init_point, '_blank')
+  } catch (e) {
+    alert(`Error: ${e.message}`)
+  }
+}
+
+// Conectar botones de paquetes estáticos al modal
+document.querySelectorAll('.pkg-row').forEach(el => {
+  el.style.cursor = 'pointer'
+  el.addEventListener('click', openTokenModal)
+})
+</script>
+</body>
+</html>

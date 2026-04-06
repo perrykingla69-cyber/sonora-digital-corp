@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,86271,t=>{"use strict";t.i(43476),t.i(71645);let o=Error("Cannot find module '@tanstack/react-table'");throw o.code="MODULE_NOT_FOUND",o}]);
