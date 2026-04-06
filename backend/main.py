@@ -148,6 +148,11 @@ def _audit(db: Session, accion: str, usuario=None, tabla=None, datos=None):
 #  HEALTH
 # ═══════════════════════════════════════════════
 
+
+
+@app.get("/status", tags=["Sistema"], include_in_schema=False)
+async def status_check():
+    return {"status": "ok", "version": "2.0.0", "service": "hermes-api"}
 @app.get("/health", tags=["Sistema"])
 async def health(db: Session = Depends(get_db)):
     try:

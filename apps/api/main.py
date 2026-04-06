@@ -95,6 +95,11 @@ app.include_router(fal_wh.router,        prefix="/webhooks",               tags=
 async def health():
     return {"status": "ok", "service": "hermes-api"}
 
+@app.get("/status", include_in_schema=False)
+async def status_check():
+    return {"status": "ok", "version": "1.0.0", "service": "hermes-api"}
+
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, workers=2)
