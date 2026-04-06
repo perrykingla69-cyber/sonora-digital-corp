@@ -9,9 +9,14 @@ from uuid import UUID
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+import hashlib
+import json
 
 from app.core.config import settings
 from app.core.rag import search_context
+from app.core.redis import redis_client
+
+CACHE_TTL = 3600  # 1 hora para respuestas frecuentes
 
 HERMES_SYSTEM = """Eres HERMES, el agente orquestador de Sonora Digital Corp.
 
@@ -42,10 +47,10 @@ class HermesAgent:
         self.tenant_id = tenant_id
         self.db = db
         self.client = AsyncOpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=settings.OPENROUTER_API_KEY,
+            base_url=f"{settings.OLLAMA_URL}/v1",
+            api_key="ollama",
         )
-        self.model = settings.HERMES_MODEL
+        self.model = settings.HERMES_MODEL  # default: llama3:latest (ver .env)
 
     async def _get_conversation_history(self, conversation_id: UUID) -> list:
         result = await self.db.execute(
@@ -95,6 +100,10 @@ class HermesAgent:
             },
         )
 
+    def _cache_key(self, message: str) -> str:
+        h = hashlib.md5(f"{self.tenant_id}:{message.strip().lower()}".encode()).hexdigest()
+        return f"hermes:cache:{h}"
+
     async def chat(
         self,
         message: str,
@@ -102,6 +111,13 @@ class HermesAgent:
         user_id: UUID,
         channel: str = "api",
     ) -> dict:
+        # Cache hit: preguntas frecuentes (sin historial activo)
+        if not conversation_id:
+            cached = await redis_client.get(self._cache_key(message))
+            if cached:
+                data = json.loads(cached)
+                return {**data, "cached": True}
+
         conv_id = await self._ensure_conversation(conversation_id, user_id, channel)
         history = await self._get_conversation_history(conv_id)
 
@@ -124,12 +140,21 @@ class HermesAgent:
 
         await self._save_messages(conv_id, message, reply, tokens)
 
-        return {
+        result = {
             "agent": "hermes",
             "response": reply,
             "conversation_id": conv_id,
             "tokens_used": tokens,
         }
+
+        # Guardar en cache si es pregunta nueva sin conversación previa
+        if not conversation_id:
+            await redis_client.setex(
+                self._cache_key(message), CACHE_TTL,
+                json.dumps({"agent": "hermes", "response": reply, "tokens_used": tokens})
+            )
+
+        return result
 
     async def log_interaction(self, user_id: UUID, conversation_id: UUID):
         await self.db.execute(

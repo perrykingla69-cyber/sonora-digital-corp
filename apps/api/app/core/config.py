@@ -24,12 +24,12 @@ class Settings(BaseSettings):
     # Encryption (para datos sensibles en DB)
     ENCRYPTION_KEY: str
 
-    # OpenRouter (acceso a Gemini, GLM, Claude, GPT, etc.)
-    OPENROUTER_API_KEY: str
-    # HERMES: orquestador — rápido y barato
-    HERMES_MODEL: str = "google/gemini-2.0-flash-001"
-    # MYSTIC: analista — mejor razonamiento
-    MYSTIC_MODEL: str = "thudm/glm-z1-rumination:free"
+    # OpenRouter (legacy — ya no se usa para HERMES/MYSTIC)
+    OPENROUTER_API_KEY: str = ""
+    # HERMES: orquestador — llama3 local via Ollama
+    HERMES_MODEL: str = "llama3:latest"
+    # MYSTIC: analista — mistral local via Ollama (razonamiento estructurado)
+    MYSTIC_MODEL: str = "mistral:latest"
 
     # Qdrant RAG
     QDRANT_HOST: str = "qdrant"
@@ -42,6 +42,23 @@ class Settings(BaseSettings):
     # Evolution API
     EVOLUTION_URL: str = "http://evolution:8080"
     EVOLUTION_API_KEY: str
+
+    # Telegram (tokens por bot)
+    TELEGRAM_TOKEN_CEO: str = ""
+    TELEGRAM_TOKEN_HERMES: str = ""
+    TELEGRAM_TOKEN_PUBLIC: str = ""
+    TELEGRAM_TOKEN_MYSTIC: str = ""
+
+    # HeyGen
+    HEYGEN_API_KEY: str = ""
+    HEYGEN_WEBHOOK_SECRET: str = ""
+
+    # fal.ai
+    FAL_API_KEY: str = ""
+    FAL_WEBHOOK_SECRET: str = ""
+
+    # MercadoPago
+    MP_ACCESS_TOKEN: str = ""
 
     # Seguridad
     ALLOWED_HOSTS: List[str] = ["sonoradigitalcorp.com", "www.sonoradigitalcorp.com", "localhost", "hermes-api", "127.0.0.1", "*"]

@@ -5,13 +5,21 @@
     {
       "parameters": {
         "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "0 7 * * 1" }]
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1"
+            }
+          ]
         }
       },
       "name": "Trigger Lunes 7am",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -20,16 +28,27 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "dias", "value": "7" },
-            { "name": "include_qa", "value": "false" }
+            {
+              "name": "dias",
+              "value": "7"
+            },
+            {
+              "name": "include_qa",
+              "value": "false"
+            }
           ]
         },
-        "options": { "timeout": 120000 }
+        "options": {
+          "timeout": 120000
+        }
       },
       "name": "Ejecutar Seed DOF",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
@@ -38,7 +57,10 @@
       "name": "Formatear Reporte",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
@@ -46,8 +68,14 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "numero", "value": "={{ $json.numero }}" },
-            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+            {
+              "name": "numero",
+              "value": "={{ $json.numero }}"
+            },
+            {
+              "name": "mensaje",
+              "value": "={{ $json.mensaje }}"
+            }
           ]
         },
         "options": {}
@@ -55,7 +83,10 @@
       "name": "Notificar WA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [900, 300]
+      "position": [
+        900,
+        300
+      ]
     },
     {
       "parameters": {
@@ -64,7 +95,10 @@
       "name": "Error Handler",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 480]
+      "position": [
+        680,
+        480
+      ]
     },
     {
       "parameters": {
@@ -73,8 +107,14 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "numero", "value": "={{ $json.numero }}" },
-            { "name": "mensaje", "value": "={{ $json.mensaje }}" }
+            {
+              "name": "numero",
+              "value": "={{ $json.numero }}"
+            },
+            {
+              "name": "mensaje",
+              "value": "={{ $json.mensaje }}"
+            }
           ]
         },
         "options": {}
@@ -82,15 +122,60 @@
       "name": "Notificar Error WA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [900, 480]
+      "position": [
+        900,
+        480
+      ]
     }
   ],
   "connections": {
-    "Trigger Lunes 7am": { "main": [[{ "node": "Ejecutar Seed DOF", "type": "main", "index": 0 }]] },
-    "Ejecutar Seed DOF": { "main": [[{ "node": "Formatear Reporte", "type": "main", "index": 0 }]] },
-    "Formatear Reporte": { "main": [[{ "node": "Notificar WA", "type": "main", "index": 0 }]] },
-    "Error Handler": { "main": [[{ "node": "Notificar Error WA", "type": "main", "index": 0 }]] }
+    "Trigger Lunes 7am": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar Seed DOF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar Seed DOF": {
+      "main": [
+        [
+          {
+            "node": "Formatear Reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Reporte": {
+      "main": [
+        [
+          {
+            "node": "Notificar WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Handler": {
+      "main": [
+        [
+          {
+            "node": "Notificar Error WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "active": false,
-  "settings": { "executionOrder": "v1" }
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
 }

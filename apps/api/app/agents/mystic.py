@@ -50,10 +50,10 @@ class MysticAgent:
         self.tenant_id = tenant_id
         self.db = db
         self.client = AsyncOpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=settings.OPENROUTER_API_KEY,
+            base_url=f"{settings.OLLAMA_URL}/v1",
+            api_key="ollama",
         )
-        self.model = settings.MYSTIC_MODEL
+        self.model = settings.MYSTIC_MODEL  # mistral:latest local
 
     async def _get_tenant_context(self) -> str:
         """Obtiene contexto del tenant para análisis contextualizado."""
