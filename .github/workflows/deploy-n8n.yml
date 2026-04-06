@@ -16,9 +16,9 @@ jobs:
         run: |
           for f in infra/n8n-workflows/*.json; do
             echo "Importando: $f"
-            docker exec mystic_n8n n8n import:workflow --input=/data/$(basename $f) 2>/dev/null || \
-            docker cp "$f" mystic_n8n:/tmp/$(basename $f) && \
-            docker exec mystic_n8n n8n import:workflow --input=/tmp/$(basename $f)
+            docker exec hermes_n8n n8n import:workflow --input=/data/$(basename $f) 2>/dev/null || \
+            docker cp "$f" hermes_n8n:/tmp/$(basename $f) && \
+            docker exec hermes_n8n n8n import:workflow --input=/tmp/$(basename $f)
             echo "✓ $(basename $f)"
           done
           echo "✅ Todos los workflows importados"
