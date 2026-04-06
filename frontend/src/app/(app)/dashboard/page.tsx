@@ -7,13 +7,49 @@ import {
   FileText, TrendingUp, DollarSign, AlertTriangle, CheckCircle,
   ExternalLink, Brain, Zap, Shield, Clock, ChevronRight,
   RefreshCw, MessageCircle, GraduationCap, Star, CheckSquare,
-  ArrowRight, Info,
+  ArrowRight, Info, Bot,
 } from 'lucide-react'
 import Link from 'next/link'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell,
+} from 'recharts'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const mxn = (v: number) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(v)
+
+// ── Datos de tendencia mensual (se reemplaza con /dashboard/trends cuando exista) ──
+const TREND_DATA = [
+  { mes: 'Ene', ingresos: 42000, gastos: 28500, utilidad: 13500 },
+  { mes: 'Feb', ingresos: 48500, gastos: 32400, utilidad: 16100 },
+  { mes: 'Mar', ingresos: 52300, gastos: 34800, utilidad: 17500 },
+  { mes: 'Abr', ingresos: 18700, gastos: 12100, utilidad: 6600  },
+]
+
+const PIE_DATA = [
+  { name: 'Facturas pagadas', value: 68 },
+  { name: 'Por cobrar',       value: 22 },
+  { name: 'Canceladas',       value: 10 },
+]
+
+const CHART_COLORS = { ingresos: '#C8A84B', gastos: '#9CA3AF', utilidad: '#2D6A4F' }
+const PIE_COLORS   = ['#2D6A4F', '#C8A84B', '#D1D5DB']
+
+// Tooltip personalizado sovereign
+function SovereignTooltip({ active, payload, label }: { active?: boolean; payload?: {name: string; value: number; color: string}[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="glass rounded-xl px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-sovereign-text mb-1">{label}</p>
+      {payload.map(p => (
+        <p key={p.name} style={{ color: p.color }}>
+          {p.name}: {mxn(p.value)}
+        </p>
+      ))}
+    </div>
+  )
+}
 
 // ── Links oficiales ────────────────────────────────────────────────────────────
 const OFFICIAL_LINKS = [
@@ -155,6 +191,98 @@ export default function DashboardPage() {
             <p className="text-xs text-sovereign-muted mt-0.5">{kpi.sub}</p>
           </div>
         ))}
+      </div>
+
+      {/* ── Gráficas: tendencia mensual + distribución ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Bar chart — Ingresos vs Gastos vs Utilidad */}
+        <div className="lg:col-span-2 glass rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-semibold text-sovereign-text text-sm">Tendencia Financiera 2026</p>
+            <span className="text-xs text-sovereign-muted">Ingresos · Gastos · Utilidad</span>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={TREND_DATA} barGap={4}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(200,168,75,0.12)" vertical={false} />
+              <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+              <YAxis
+                tick={{ fontSize: 10, fill: '#9CA3AF' }}
+                axisLine={false} tickLine={false}
+                tickFormatter={v => `$${(v/1000).toFixed(0)}k`}
+              />
+              <Tooltip content={<SovereignTooltip />} />
+              <Bar dataKey="ingresos" name="Ingresos" fill={CHART_COLORS.ingresos} radius={[4,4,0,0]} />
+              <Bar dataKey="gastos"   name="Gastos"   fill={CHART_COLORS.gastos}   radius={[4,4,0,0]} />
+              <Bar dataKey="utilidad" name="Utilidad" fill={CHART_COLORS.utilidad} radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="flex items-center gap-4 mt-3 justify-center">
+            {Object.entries(CHART_COLORS).map(([key, color]) => (
+              <div key={key} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }} />
+                <span className="text-xs text-sovereign-muted capitalize">{key}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Pie chart — distribución facturas */}
+        <div className="glass rounded-2xl p-5">
+          <p className="font-semibold text-sovereign-text text-sm mb-4">Estado de Facturas</p>
+          <ResponsiveContainer width="100%" height={160}>
+            <PieChart>
+              <Pie
+                data={PIE_DATA}
+                cx="50%" cy="50%"
+                innerRadius={48} outerRadius={70}
+                paddingAngle={4}
+                dataKey="value"
+              >
+                {PIE_DATA.map((_, i) => (
+                  <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{ backgroundColor: 'rgba(255,255,255,0.95)', border: '1px solid rgba(200,168,75,0.2)', borderRadius: '12px', fontSize: 11 }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="space-y-1.5 mt-2">
+            {PIE_DATA.map((d, i) => (
+              <div key={d.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
+                  <span className="text-xs text-sovereign-muted">{d.name}</span>
+                </div>
+                <span className="text-xs font-semibold text-sovereign-text">{d.value}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Acceso rápido a Agentes ── */}
+      <div className="glass rounded-2xl p-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Bot size={15} className="text-sovereign-gold" />
+            <span className="text-sm font-semibold text-sovereign-text">Agentes IA activos</span>
+          </div>
+          {[
+            { name: 'HERMES', color: 'bg-amber-100 text-amber-700' },
+            { name: 'MYSTIC', color: 'bg-purple-100 text-purple-700' },
+            { name: 'ClawBot', color: 'bg-sky-100 text-sky-700' },
+            { name: 'AutoSeeder', color: 'bg-green-100 text-green-700' },
+          ].map(a => (
+            <span key={a.name} className={`text-xs px-2.5 py-1 rounded-full font-medium ${a.color}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-current inline-block mr-1 opacity-60" />
+              {a.name}
+            </span>
+          ))}
+          <Link href="/agents" className="ml-auto text-xs text-sovereign-muted hover:text-sovereign-gold flex items-center gap-1 transition-colors">
+            Ver panel completo <ArrowRight size={11} />
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

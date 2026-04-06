@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Calculator,
   Package, CheckSquare, LogOut, Zap,
-  MessageCircle, Send, Brain, ShieldCheck, CreditCard, Receipt, BookUser, Building2, Menu, GraduationCap, UserCheck,
+  MessageCircle, Send, Brain, ShieldCheck, CreditCard, Receipt, BookUser, Building2, Menu, GraduationCap, UserCheck, Bot,
 } from 'lucide-react'
 import { logout, getUser } from '@/lib/auth'
 import clsx from 'clsx'
@@ -47,6 +47,7 @@ const NAV_ADMIN_PANEL = [
 
 const NAV_CANALES = [
   { href: '/brain',      icon: Brain,             label: 'Brain IA' },
+  { href: '/agents',     icon: Bot,               label: 'Agentes IA' },
   { href: '/whatsapp',   icon: MessageCircle,     label: 'WhatsApp' },
   { href: '/telegram',   icon: Send,              label: 'Telegram' },
   { href: '/academy',    icon: GraduationCap,     label: 'Academy' },
