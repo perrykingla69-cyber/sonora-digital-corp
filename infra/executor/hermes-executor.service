@@ -1,0 +1,18 @@
+[Unit]
+Description=HERMES Executor — OpenClaw→Claude Code bridge
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/mystic/hermes-os
+EnvironmentFile=/home/mystic/hermes-os/.env
+ExecStart=/usr/bin/python3 -m uvicorn infra.executor.executor:app --host 127.0.0.1 --port 9001 --log-level warning
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

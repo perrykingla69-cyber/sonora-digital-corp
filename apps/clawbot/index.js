@@ -154,14 +154,47 @@ ceoBot.command('start', async (ctx) => {
 
 ceoBot.command('status', async (ctx) => {
   try {
-    const res = await axios.get(`${API}/health`)
-    const msg = `✅ *Sistema operativo*\n\n` +
-      `• API: ${res.status === 200 ? '🟢' : '🔴'}\n` +
-      `• Tiempo: ${new Date().toLocaleString('es-MX')}`
+    const [api, exec] = await Promise.all([
+      axios.get(`${API}/health`).catch(() => null),
+      axios.get('http://host.docker.internal:9001/health').catch(() => null),
+    ])
+    const msg =
+      `⚡ *HERMES OS — Estado*\n\n` +
+      `• API:      ${api?.status === 200 ? '🟢 OK' : '🔴 Caído'}\n` +
+      `• Executor: ${exec?.data?.ok ? `🟢 OK (opencode: ${exec.data.opencode ? '✓' : '✗'})` : '🔴 Caído'}\n` +
+      `• Hora:     ${new Date().toLocaleString('es-MX')}`
     await ctx.reply(msg, { parse_mode: 'Markdown' })
   } catch {
-    await ctx.reply('🔴 API no responde')
+    await ctx.reply('🔴 Error al obtener estado')
   }
+})
+
+// /code [tarea] → delega a Claude Code via executor en host
+ceoBot.command('code', async (ctx) => {
+  const task = ctx.message.text.replace(/^\/code\s*/i, '').trim()
+  if (!task) {
+    await ctx.reply(
+      `⚡ *Claude Code — Uso:*\n\n` +
+      `/code [descripción de la tarea]\n\n` +
+      `Ejemplos:\n` +
+      `• \`/code fix Bad Gateway en hermes_agent\`\n` +
+      `• \`/code analiza logs de hermes_api y dime qué falla\`\n` +
+      `• \`/code agrega endpoint /api/v1/stats\``,
+      { parse_mode: 'Markdown' }
+    )
+    return
+  }
+  await ctx.reply(`⚡ *Delegando a Claude Code:*\n\n\`${task.slice(0, 120)}\`\n\n_Te aviso cuando termine_ 🤖`, { parse_mode: 'Markdown' })
+  try {
+    await axios.post('http://host.docker.internal:9001/run', { task }, { timeout: 5000 })
+  } catch {
+    await ctx.reply('⚠️ Executor offline. Instálalo:\n`systemctl start hermes-executor`', { parse_mode: 'Markdown' })
+  }
+})
+
+// /deploy → trigger manual de GitHub Actions (push vacío)
+ceoBot.command('deploy', async (ctx) => {
+  await ctx.reply('🚀 *Deploy manual*\n\nUsa GitHub Actions directamente:\ngithub.com/perrykingla69-cyber/sonora-digital-corp/actions', { parse_mode: 'Markdown' })
 })
 
 ceoBot.command('mystic', async (ctx) => {
