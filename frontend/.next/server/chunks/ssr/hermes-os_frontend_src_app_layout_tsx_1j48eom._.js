@@ -1,3 +1,0 @@
-module.exports=[72141,a=>{"use strict";var b=a.i(7997);a.s(["default",0,function({children:a}){return(0,b.jsxs)("html",{lang:"es",children:[(0,b.jsxs)("head",{children:[(0,b.jsx)("link",{rel:"manifest",href:"/manifest.json"}),(0,b.jsx)("meta",{name:"theme-color",content:"#D4AF37"}),(0,b.jsx)("meta",{name:"apple-mobile-web-app-capable",content:"yes"}),(0,b.jsx)("meta",{name:"apple-mobile-web-app-status-bar-style",content:"black-translucent"})]}),(0,b.jsx)("body",{children:a})]})},"metadata",0,{title:"Hermes — Sonora Digital Corp",description:"AI OS Contable"}])},93629,a=>{a.n(a.i(72141))}];
-
-//# sourceMappingURL=hermes-os_frontend_src_app_layout_tsx_1j48eom._.js.map
