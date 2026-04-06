@@ -102,7 +102,11 @@ Responde en JSON exacto:
         m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
         if m:
             raw = m.group(1)
-    return json.loads(raw)
+    result = json.loads(raw)
+    # LLM a veces devuelve lista en vez de dict — tomar primer elemento
+    if isinstance(result, list):
+        result = result[0]
+    return result
 
 
 # ── Generador de imagen ───────────────────────────────────────
