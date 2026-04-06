@@ -30,7 +30,7 @@ async def run_task(task: str):
     await telegram(f"⚡ *Claude Code ejecutando:*\n`{task[:120]}`")
     try:
         proc = subprocess.run(
-            [OPENCODE, "run", "--print", "-p", task],
+            [OPENCODE, "run", task],
             capture_output=True, text=True,
             timeout=TIMEOUT, cwd=WORKSPACE,
         )
@@ -65,7 +65,7 @@ async def run_sync(body: dict):
         return {"error": "campo 'task' requerido"}
     try:
         proc = subprocess.run(
-            [OPENCODE, "run", "--print", "-p", task],
+            [OPENCODE, "run", task],
             capture_output=True, text=True, timeout=60, cwd=WORKSPACE,
         )
         return {"ok": True, "output": (proc.stdout or proc.stderr or "")[-2000:]}
