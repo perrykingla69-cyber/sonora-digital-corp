@@ -348,6 +348,9 @@ services:
       TIKTOK_ACCESS_TOKEN: ${TIKTOK_ACCESS_TOKEN:-}
       TELEGRAM_TOKEN_CEO: ${TELEGRAM_TOKEN_CEO}
       CEO_CHAT_ID: ${CEO_CHAT_ID}
+      OLLAMA_URL: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - hermes_net
     depends_on:

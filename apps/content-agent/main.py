@@ -21,7 +21,7 @@ logger = logging.getLogger("content-agent")
 
 app = FastAPI(title="Content Agent", version="1.0.0")
 
-OPENROUTER_KEY   = os.environ["OPENROUTER_API_KEY"]
+OPENROUTER_KEY   = os.environ.get("OPENROUTER_API_KEY", "")
 FAL_KEY          = os.environ.get("FAL_API_KEY", "")
 RESEND_KEY       = os.environ.get("RESEND_API_KEY", "")
 DB_URL           = os.environ["DATABASE_URL"].replace("postgresql+asyncpg", "postgresql")
@@ -31,12 +31,21 @@ META_PAGE_ID     = os.environ.get("META_PAGE_ID", "")
 TIKTOK_TOKEN     = os.environ.get("TIKTOK_ACCESS_TOKEN", "")
 CEO_TELEGRAM     = os.environ.get("TELEGRAM_TOKEN_CEO", "")
 CEO_CHAT_ID      = os.environ.get("CEO_CHAT_ID", "")
+OLLAMA_URL       = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434")
 
-llm = AsyncOpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_KEY,
-)
-CONTENT_MODEL = "google/gemini-2.0-flash-001"
+# Prioridad: Ollama local (gratis) → OpenRouter (si hay key)
+if OPENROUTER_KEY:
+    llm = AsyncOpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=OPENROUTER_KEY,
+    )
+    CONTENT_MODEL = "google/gemini-2.0-flash-001"
+else:
+    llm = AsyncOpenAI(
+        base_url=f"{OLLAMA_URL}/v1",
+        api_key="ollama",
+    )
+    CONTENT_MODEL = "llama3:latest"
 
 
 # ── Notificar CEO ─────────────────────────────────────────────
@@ -81,24 +90,34 @@ Responde en JSON exacto:
   "cta": "llamada a la acción específica"
 }}"""
 
-    r = await llm.chat.completions.create(
-        model=CONTENT_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        response_format={"type": "json_object"},
-    )
-    return json.loads(r.choices[0].message.content)
+    kwargs = {"model": CONTENT_MODEL, "messages": [{"role": "user", "content": prompt}]}
+    # response_format solo con OpenRouter; Ollama lo soporta en versiones recientes
+    if OPENROUTER_KEY:
+        kwargs["response_format"] = {"type": "json_object"}
+    r = await llm.chat.completions.create(**kwargs)
+    raw = r.choices[0].message.content
+    # Extraer JSON aunque venga rodeado de markdown ```json ... ```
+    if "```" in raw:
+        import re
+        m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
+        if m:
+            raw = m.group(1)
+    return json.loads(raw)
 
 
 # ── Generador de imagen ───────────────────────────────────────
-async def generate_image(prompt: str) -> Optional[str]:
+async def generate_image(prompt: str, model: str = "nanobanana") -> Optional[str]:
     """
-    Genera imagen. Prioridad:
-    1. Fal.ai FLUX (si FAL_API_KEY configurada) — calidad profesional
-    2. Pollinations.ai (gratis, sin key) — para pruebas
+    Genera imagen gratis con Pollinations.ai.
+    Modelos disponibles: flux, nanobanana, nanobanana-pro, seedream, kontext, turbo
+    Fallback a Fal.ai solo si FAL_API_KEY configurada y Pollinations falla.
     """
+    url = await _generate_pollinations(prompt, model=model)
+    if url:
+        return url
     if FAL_KEY:
         return await _generate_fal(prompt)
-    return await _generate_pollinations(prompt)
+    return None
 
 
 async def _generate_fal(prompt: str) -> Optional[str]:
@@ -122,22 +141,25 @@ async def _generate_fal(prompt: str) -> Optional[str]:
         return await _generate_pollinations(prompt)
 
 
-async def _generate_pollinations(prompt: str) -> Optional[str]:
-    """Pollinations.ai — 100% gratis, sin API key, 1080x1080."""
+async def _generate_pollinations(prompt: str, model: str = "nanobanana") -> Optional[str]:
+    """
+    Pollinations.ai — 100% gratis, sin API key, 1080x1080.
+    Modelos: nanobanana, nanobanana-pro, flux, seedream, kontext, turbo
+    """
     try:
         from urllib.parse import quote
-        # Agregar estilo comercial al prompt
         enhanced = f"{prompt}, professional commercial photography, high quality, vibrant colors, 4k"
         encoded = quote(enhanced)
-        url = f"https://image.pollinations.ai/prompt/{encoded}?width=1080&height=1080&nologo=true&enhance=true"
-
-        # Verificar que la URL responde (Pollinations genera on-demand)
-        async with httpx.AsyncClient(timeout=60) as c:
+        url = (
+            f"https://image.pollinations.ai/prompt/{encoded}"
+            f"?model={model}&width=1080&height=1080&nologo=true&enhance=true"
+        )
+        # HEAD request para confirmar disponibilidad (Pollinations genera on-demand)
+        async with httpx.AsyncClient(timeout=90, follow_redirects=True) as c:
             r = await c.head(url)
-            if r.status_code in (200, 301, 302):
+            if r.status_code == 200:
                 return url
-
-        return url  # Retornar URL de todas formas — se genera al accederse
+        return url  # Retornar URL igualmente — se genera al ser accedida
     except Exception as e:
         logger.error(f"Pollinations error: {e}")
         return None
@@ -405,7 +427,8 @@ async def health():
     return {
         "status": "ok",
         "agent": "content-agent",
-        "image_engine": "fal.ai" if FAL_KEY else "pollinations.ai (gratis)",
+        "llm_engine": f"openrouter/{CONTENT_MODEL}" if OPENROUTER_KEY else f"ollama/{CONTENT_MODEL}",
+        "image_engine": "pollinations.ai/nanobanana (gratis)" + (" + fal.ai backup" if FAL_KEY else ""),
         "email_engine": "resend" if RESEND_KEY else "no configurado",
         "social_meta": "activo" if META_TOKEN else "sin configurar",
     }
