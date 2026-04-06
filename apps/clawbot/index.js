@@ -12,8 +12,7 @@ import Redis from 'ioredis'
 import express from 'express'
 import { createHmac } from 'crypto'
 import { readdirSync, readFileSync } from 'fs'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { join } from 'path'
 import 'dotenv/config'
 
 const redis = new Redis(process.env.REDIS_URL)
@@ -26,8 +25,7 @@ app.use(express.json())
 
 /** Carga todos los skills JSON al startup */
 function loadSkills() {
-  const __dir = dirname(fileURLToPath(import.meta.url))
-  const skillsPath = join(__dir, '..', 'telegram-bot', 'skills')
+  const skillsPath = process.env.SKILLS_PATH || '/app/skills'
   const skills = []
   try {
     for (const file of readdirSync(skillsPath).filter(f => f.endsWith('.json'))) {

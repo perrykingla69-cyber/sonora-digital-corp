@@ -204,9 +204,12 @@ services:
       ENVIRONMENT: production
       EVOLUTION_URL: http://evolution:8080
       EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      HERMES_MODEL: ${HERMES_MODEL:-google/gemini-2.0-flash-001}
-      MYSTIC_MODEL: ${MYSTIC_MODEL:-thudm/glm-z1-rumination:free}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      HERMES_MODEL: ${HERMES_MODEL:-llama3:latest}
+      MYSTIC_MODEL: ${MYSTIC_MODEL:-mistral:latest}
+      OLLAMA_URL: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - hermes_net
     depends_on:
@@ -304,6 +307,12 @@ services:
       TELEGRAM_TOKEN_CEO: ${TELEGRAM_TOKEN_CEO}
       TELEGRAM_TOKEN_PUBLIC: ${TELEGRAM_TOKEN_PUBLIC}
       CEO_CHAT_ID: ${CEO_CHAT_ID}
+      SKILLS_PATH: /app/skills
+      OLLAMA_URL: http://host.docker.internal:11434
+    volumes:
+      - ./apps/telegram-bot/skills:/app/skills:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - hermes_net
     depends_on:
