@@ -46,8 +46,8 @@ mem_search "agent/rag"      → estado del seeder
 
 ## Nota sobre duplicados
 El repo tiene directorios legacy/paralelos. Los activos son:
-- ✅ `backend/` — API activa (no `apps/api/`)
+- ✅ `apps/api/` — API activa en prod (root docker-compose.yml)
 - ✅ `apps/clawbot/` — ClawBot activo (no `clawbot/`)
 - ✅ `frontend/` — Frontend activo (no `apps/frontend/`)
 - ✅ `apps/hermes/` + `apps/mystic/` — Agentes IA activos
-- ⚠️ `apps/api/`, `apps/telegram-bot/`, `whatsapp/` — revisar si deprecated
+- ⚠️ `backend/`, `apps/telegram-bot/`, `whatsapp/`, `clawbot/` — legacy/deprecated
