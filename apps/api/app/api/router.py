@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from . import alertas, auth, contactos, dashboard, empleados, facturas, leads, memory, ops, tenants
+from .v1 import agents
 
 api_router = APIRouter()
 api_router.include_router(ops.router)
@@ -14,3 +15,6 @@ api_router.include_router(leads.router)
 api_router.include_router(alertas.router)
 
 api_router.include_router(memory.router)
+
+# V1 API with /api/v1 prefix
+api_router.include_router(agents.router, prefix="/api/v1/agents", tags=["agents"])
