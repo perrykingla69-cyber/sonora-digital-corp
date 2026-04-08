@@ -288,6 +288,40 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── SOLUCIONES ESPECIALIZADAS ────────────────────────────────────── */}
+      <section className="relative z-10 py-20 px-4 max-w-5xl mx-auto border-t border-white/5">
+        <div className="text-center mb-12">
+          <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-3">Para tu industria</p>
+          <h2 className="text-3xl sm:text-4xl font-black">HERMES especializado</h2>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-6">
+          <Link href="/contadores" className="group bg-gradient-to-br from-blue-900/20 to-blue-800/10 border border-blue-400/20 hover:border-blue-400/50 rounded-2xl p-8 transition">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4 group-hover:bg-blue-500/30 transition">
+              <FileText className="w-6 h-6 text-blue-400" />
+            </div>
+            <h3 className="font-black text-lg mb-2 text-blue-300 group-hover:text-blue-200 transition">Para Contadores</h3>
+            <p className="text-white/60 text-sm leading-relaxed group-hover:text-white/80 transition">
+              Normatividad MX, alertas fiscales, reportes DIOT/RESICO automáticos. Reduce 30% tiempo administrativo.
+            </p>
+            <div className="mt-4 text-blue-400 font-semibold text-sm flex items-center gap-2 group-hover:translate-x-1 transition">
+              Ver solución <ArrowRight className="w-4 h-4" />
+            </div>
+          </Link>
+          <Link href="/artistas" className="group bg-gradient-to-br from-purple-900/20 to-purple-800/10 border border-purple-400/20 hover:border-purple-400/50 rounded-2xl p-8 transition">
+            <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4 group-hover:bg-purple-500/30 transition">
+              <Sparkles className="w-6 h-6 text-purple-400" />
+            </div>
+            <h3 className="font-black text-lg mb-2 text-purple-300 group-hover:text-purple-200 transition">Para Creadores</h3>
+            <p className="text-white/60 text-sm leading-relaxed group-hover:text-white/80 transition">
+              Distribución en 50+ plataformas, regalías en tiempo real, promoción automática. De demo a Spotify en 48h.
+            </p>
+            <div className="mt-4 text-purple-400 font-semibold text-sm flex items-center gap-2 group-hover:translate-x-1 transition">
+              Ver solución <ArrowRight className="w-4 h-4" />
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="relative z-10 text-center py-10 px-4 border-t border-white/5">
         <div className="flex items-center justify-center gap-2 mb-3">
