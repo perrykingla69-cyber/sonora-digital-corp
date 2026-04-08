@@ -1,0 +1,14 @@
+.git
+.gitignore
+README.md
+node_modules
+npm-debug.log
+yarn-error.log
+.env.example
+.DS_Store
+src
+public
+tsconfig.json
+next.config.js
+tailwind.config.js
+postcss.config.js
