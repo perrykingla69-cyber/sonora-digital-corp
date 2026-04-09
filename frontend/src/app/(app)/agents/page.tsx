@@ -118,7 +118,10 @@ export default function AgentsPage() {
     } catch {
       const now = new Date().toLocaleTimeString()
       setAgentStatuses(prev => Object.fromEntries(
-        AGENTS.map(a => [a.id, { ...(prev[a.id] || {}), online: false, lastCheck: now }])
+        AGENTS.map(a => {
+          const existing = prev[a.id] || {}
+          return [a.id, { ...existing, online: false, lastCheck: now, latency: existing.latency }]
+        })
       ))
     } finally {
       setLoading(false)
