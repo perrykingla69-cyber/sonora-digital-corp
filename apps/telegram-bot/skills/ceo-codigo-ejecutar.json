@@ -1,0 +1,12 @@
+{
+  "name": "ceo-codigo-ejecutar",
+  "description": "Ejecuta comandos/scripts en VPS vía Executor (puerto 9001)",
+  "triggers": ["ejecutar", "run", "script", "comando", "bash", "python", "código"],
+  "priority": 90,
+  "method": "POST",
+  "endpoint": "http://host.docker.internal:9001/run",
+  "payload": {
+    "command": "{{message}}"
+  },
+  "response_template": "✅ Resultado:\n```\n{{stdout}}\n```\n{{stderr}}"
+}

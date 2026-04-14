@@ -1,0 +1,12 @@
+{
+  "name": "ceo-datos-negocio",
+  "description": "Análisis rápido: tenants activos, ingresos, tickets, proyecciones",
+  "triggers": ["datos", "análisis", "ingresos", "tenants", "métricas", "analytics", "números"],
+  "priority": 95,
+  "method": "POST",
+  "endpoint": "http://hermes-api:8000/api/v1/analytics/summary",
+  "payload": {
+    "period": "month"
+  },
+  "response_template": "📊 Datos del mes:\n├─ Tenants activos: {{active_tenants}}\n├─ Ingresos: ${{revenue}}\n├─ Tickets resueltos: {{tickets_resolved}}\n├─ Tasa de satisfacción: {{satisfaction}}%\n└─ Proyección mes: ${{projection}}"
+}

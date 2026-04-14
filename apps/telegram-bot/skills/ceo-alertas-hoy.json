@@ -1,0 +1,10 @@
+{
+  "name": "ceo-alertas-hoy",
+  "description": "Alertas críticas de hoy: errores, tenants down, intentos de ataque",
+  "triggers": ["alertas", "qué pasó", "problemas", "errores", "incidentes", "crítico"],
+  "priority": 85,
+  "method": "GET",
+  "endpoint": "http://hermes-api:8000/api/v1/alerts/critical?limit=10",
+  "response_field": "alerts",
+  "response_template": "🚨 Alertas de hoy:\n{{#each this}}├─ [{{severity}}] {{message}} ({{timestamp}})\n{{/each}}\nTotal: {{length}} alertas"
+}

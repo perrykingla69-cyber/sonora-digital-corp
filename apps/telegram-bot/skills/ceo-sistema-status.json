@@ -1,0 +1,10 @@
+{
+  "name": "ceo-sistema-status",
+  "description": "Estado completo del sistema HERMES: APIs, containers, BD, cache, agents",
+  "triggers": ["status", "sistema", "salud", "health", "que tal", "todo bien", "cómo vamos"],
+  "priority": 100,
+  "method": "GET",
+  "endpoint": "http://hermes-api:8000/api/v1/status",
+  "response_field": "data",
+  "response_template": "🎯 HERMES Status:\n├─ API: {{api_status}}\n├─ DB: {{db_status}}\n├─ Redis: {{redis_status}}\n├─ Agents: {{agents_status}}\n└─ Uptime: {{uptime}}"
+}

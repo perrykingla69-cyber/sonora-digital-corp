@@ -1,0 +1,12 @@
+{
+  "name": "ceo-reporte-rapido",
+  "description": "Genera reporte ejecutivo: 1 página de métricas clave, tendencias, recomendaciones",
+  "triggers": ["reporte", "resumen", "ejecutivo", "semana", "mes", "trimestre"],
+  "priority": 80,
+  "method": "POST",
+  "endpoint": "http://hermes-api:8000/api/v1/reports/executive",
+  "payload": {
+    "period": "month"
+  },
+  "response_template": "📄 REPORTE EJECUTIVO:\n\n📈 KPIs:\n{{kpis}}\n\n⚠️ Riesgos:\n{{risks}}\n\n✨ Oportunidades:\n{{opportunities}}\n\n🎯 Recomendaciones:\n{{recommendations}}"
+}

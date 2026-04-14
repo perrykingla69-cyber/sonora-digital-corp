@@ -1,0 +1,8 @@
+{
+  "name": "ceo-dashboard",
+  "description": "Link al dashboard CEO personalizado con overview de 6 tenants, health check, alerts, chat",
+  "triggers": ["dashboard", "panel", "board", "mi panel", "overview"],
+  "priority": 75,
+  "method": "STATIC",
+  "response_text": "🎛️ Tu Dashboard CEO:\nhttps://sonoradigitalcorp.com/dashboard/ceo\n\nQué ves:\n├─ Overview de 6 tenants (salud, ingresos, tickets)\n├─ Health check en tiempo real\n├─ Últimas 10 alertas críticas\n├─ Chat con HERMES (LLM)\n└─ Acceso a todos los reportes\n\nContraseña rotada el 2026-04-13. ¿Necesitas reset?"
+}
