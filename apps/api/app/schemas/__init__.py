@@ -1,4 +1,5 @@
 from .alertas import AlertaConfigUpdate
+from .agents import HermesChatRequest, HermesChatResponse, MysticAnalyzeRequest, MysticAnalyzeResponse, AlertItem
 from .dashboard import DashboardResponse
 from .leads import LeadCreate, LeadUpdate
 from .legacy import (
@@ -18,9 +19,14 @@ from .legacy import (
 
 __all__ = [
     "AlertaConfigUpdate",
+    "AlertItem",
     "DashboardResponse",
+    "HermesChatRequest",
+    "HermesChatResponse",
     "LeadCreate",
     "LeadUpdate",
+    "MysticAnalyzeRequest",
+    "MysticAnalyzeResponse",
     "ContactoCreate",
     "ContactoResponse",
     "EmpleadoCreate",

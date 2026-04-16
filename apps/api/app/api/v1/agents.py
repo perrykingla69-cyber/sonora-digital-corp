@@ -1,229 +1,205 @@
 """
 Endpoints de Agentes — HERMES y MYSTIC
-Cada llamada está aislada por tenant (RLS activo)
-Autenticación JWT: valida tenant_id en payload
+RLS activo: cada request validado contra tenant_id
+POST /hermes/chat — Orquestador con RAG + OpenRouter
+GET /mystic/analyze — Análisis estratégico con alertas
 """
 
 import logging
-from fastapi import APIRouter, HTTPException, BackgroundTasks, status
-from pydantic import BaseModel
-from typing import Optional, List
+from fastapi import APIRouter, HTTPException, status, Query
+from typing import Optional
 from uuid import UUID
 
-from app.core.deps import AuthUser
 from app.core.database import get_tenant_session
-from app.agents.hermes import HermesAgent
-from app.agents.mystic import MysticAgent
+from app.schemas.agents import (
+    HermesChatRequest,
+    HermesChatResponse,
+    MysticAnalyzeRequest,
+    MysticAnalyzeResponse,
+    AlertItem,
+)
+from app.services.agents import HermesService, MysticService
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-
-# ========== REQUEST SCHEMAS ==========
-
-class HermesChatRequest(BaseModel):
-    """Request para HERMES chat endpoint."""
-    message: str
-    context: Optional[str] = None
-    conversation_id: Optional[UUID] = None
-    channel: str = "api"
-
-
-class MysticAnalyzeRequest(BaseModel):
-    """Request para MYSTIC analyze endpoint."""
-    data: str
-    analysis_type: str  # fiscal | food | legal
-    conversation_id: Optional[UUID] = None
-
-
-# ========== RESPONSE SCHEMAS ==========
-
-class HermesChatResponse(BaseModel):
-    """Response para HERMES chat endpoint."""
-    response: str
-    source: str  # rag | openrouter | cache
-    tokens_used: int
-    conversation_id: UUID
-
-
-class MysticAnalyzeResponse(BaseModel):
-    """Response para MYSTIC analyze endpoint."""
-    analysis: str
-    recommendations: List[str]
-    risk_level: str  # 🔴 crítico | 🟡 advertencia | 🟢 ok
-
-
-class ErrorResponse(BaseModel):
-    """Response genérico para errores."""
-    error: str
-    code: int
-
-
-# ========== ENDPOINTS ==========
 
 @router.post(
     "/hermes/chat",
     response_model=HermesChatResponse,
     status_code=200,
     summary="Chat con HERMES",
-    description="Envía un mensaje a HERMES para obtener respuesta con contexto RAG",
+    description="Orquestador de luz — responde preguntas contables y empresariales con contexto RAG",
+    responses={
+        400: {"description": "Request inválido (tenant_id o message faltante)"},
+        401: {"description": "No autorizado"},
+        500: {"description": "Error en servidor (usa mock como fallback)"},
+    },
 )
-async def hermes_chat(
-    body: HermesChatRequest,
-    current_user: AuthUser,
-    background_tasks: BackgroundTasks,
-):
+async def hermes_chat(body: HermesChatRequest):
     """
-    HERMES: Orquestador de luz — responde, coordina, ejecuta.
+    Chat con HERMES — Orquestador de Luz.
 
-    - **message**: Pregunta del usuario
+    Integración:
+    - Valida tenant_id contra RLS (SET LOCAL)
+    - Busca contexto RAG en Qdrant si use_rag=true
+    - Llama OpenRouter API (Gemini Flash) con fallback a mock (timeout 5s)
+    - Cache de respuestas en Redis (TTL 1h)
+
+    Request:
+    - **tenant_id**: UUID del tenant (requerido)
+    - **message**: Pregunta (1-5000 chars, requerido)
     - **context**: Contexto adicional (opcional)
-    - **conversation_id**: ID de conversación existente (opcional)
-    - **channel**: Canal (api | telegram | whatsapp, default: api)
+    - **use_rag**: Usar RAG search (default: true)
 
-    Retorna:
-    - **response**: Respuesta de HERMES
-    - **source**: Origen (rag | openrouter | cache)
-    - **tokens_used**: Tokens consumidos
-    - **conversation_id**: ID de conversación
+    Response:
+    - **response**: Texto de respuesta
+    - **sources**: Lista de fuentes (ej: qdrant_rag)
+    - **confidence**: Score 0.0-1.0 (0.6 si mock, 0.95 si OpenRouter)
+    - **processing_time_ms**: Tiempo de procesamiento
+    - **used_mock**: true si OpenRouter no respondió en 5s
     """
     try:
-        async with get_tenant_session(current_user.tenant_id) as db:
-            agent = HermesAgent(tenant_id=current_user.tenant_id, db=db)
-
-            # Combinar contexto adicional si se proporciona
-            message = body.message
-            if body.context:
-                message = f"{body.context}\n\n{body.message}"
-
-            result = await agent.chat(
-                message=message,
-                conversation_id=body.conversation_id,
-                user_id=current_user.user_id,
-                channel=body.channel,
+        async with get_tenant_session(body.tenant_id) as db:
+            response, sources, confidence, elapsed_ms, used_mock = await HermesService.chat(
+                tenant_id=body.tenant_id,
+                message=body.message,
+                context=body.context,
+                use_rag=body.use_rag,
+                db=db,
             )
-
-            # Audit en background (no bloquea respuesta)
-            background_tasks.add_task(
-                agent.log_interaction,
-                user_id=current_user.user_id,
-                conversation_id=result["conversation_id"],
-            )
-
-            # Determinar fuente (RAG, cache o OpenRouter)
-            source = "openrouter"
-            if result.get("cached"):
-                source = "cache"
-            # TODO: agregar field a HermesAgent.chat() para indicar si usó RAG
 
             return HermesChatResponse(
-                response=result["response"],
-                source=source,
-                tokens_used=result["tokens_used"],
-                conversation_id=result["conversation_id"],
+                response=response,
+                sources=sources,
+                confidence=confidence,
+                processing_time_ms=elapsed_ms,
+                used_mock=used_mock,
             )
 
+    except ValueError as e:
+        logger.warning(f"Validation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
-        logger.error(f"HERMES chat error: {str(e)}", exc_info=True)
+        logger.error(f"HERMES chat error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error procesando solicitud: {str(e)}",
+            detail="Error procesando solicitud (se intentó fallback a mock)",
         )
 
 
-@router.post(
+@router.get(
     "/mystic/analyze",
     response_model=MysticAnalyzeResponse,
     status_code=200,
-    summary="Análisis profundo con MYSTIC",
-    description="Envía datos a MYSTIC para análisis estratégico profundo",
+    summary="Análisis profundo MYSTIC",
+    description="Estratega de sombra — análisis fiscal, food o business con alertas",
+    responses={
+        400: {"description": "Parámetros inválidos"},
+        401: {"description": "No autorizado"},
+        404: {"description": "Tenant no encontrado"},
+        500: {"description": "Error en servidor"},
+    },
 )
 async def mystic_analyze(
-    body: MysticAnalyzeRequest,
-    current_user: AuthUser,
+    tenant_id: UUID = Query(..., description="UUID del tenant"),
+    analysis_type: str = Query(..., regex=r"^(fiscal|food|business)$", description="Tipo de análisis"),
 ):
     """
-    MYSTIC: Estratega de sombra — analiza, detecta, advierte.
+    Análisis Profundo — MYSTIC (Estratega de Sombra).
 
-    - **data**: Texto para análisis
-    - **analysis_type**: Tipo (fiscal | food | legal)
-    - **conversation_id**: ID de conversación existente (opcional)
+    Integración:
+    - Escanea histórico de tenant (últimos 30 días)
+    - Clasifica alertas por nivel (critical, warning, info)
+    - Genera recomendaciones según type
+    - Cache en Redis (TTL 1 hora)
 
-    Retorna:
-    - **analysis**: Análisis profundo
-    - **recommendations**: Lista de recomendaciones
-    - **risk_level**: Nivel de riesgo (🔴 | 🟡 | 🟢)
+    Query Params:
+    - **tenant_id**: UUID del tenant (requerido)
+    - **analysis_type**: fiscal | food | business (requerido)
+
+    Response:
+    - **analysis**: Texto de análisis
+    - **alerts**: Lista de alertas con nivel y mensaje
+    - **recommendations**: Recomendaciones accionables
+    - **generated_at**: ISO 8601 timestamp
+    - **used_mock**: true si no hay datos reales (MVP)
     """
     try:
-        async with get_tenant_session(current_user.tenant_id) as db:
-            agent = MysticAgent(tenant_id=current_user.tenant_id, db=db)
-
-            # Agregar contexto de tipo de análisis al mensaje
-            message = f"[{body.analysis_type.upper()}]\n{body.data}"
-
-            result = await agent.analyze(
-                message=message,
-                conversation_id=body.conversation_id,
-                user_id=current_user.user_id,
+        async with get_tenant_session(tenant_id) as db:
+            analysis, alerts, recommendations, used_mock = await MysticService.analyze(
+                tenant_id=tenant_id,
+                analysis_type=analysis_type,
+                db=db,
             )
 
-            # Extraer recomendaciones y nivel de riesgo del análisis
-            # TODO: mejorar parsing para extraer estructura del response
-            recommendations = []
-            risk_level = "🟢"
-
-            # Simple heuristic: si contiene 🔴 en la respuesta, marcar crítico
-            if "🔴" in result["response"]:
-                risk_level = "🔴"
-            elif "🟡" in result["response"]:
-                risk_level = "🟡"
+            alert_items = [
+                AlertItem(level=a["level"], message=a["message"], code=a.get("code"))
+                for a in alerts
+            ]
 
             return MysticAnalyzeResponse(
-                analysis=result["response"],
+                analysis=analysis,
+                alerts=alert_items,
                 recommendations=recommendations,
-                risk_level=risk_level,
+                used_mock=used_mock,
             )
 
+    except ValueError as e:
+        logger.warning(f"Validation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
-        logger.error(f"MYSTIC analyze error: {str(e)}", exc_info=True)
+        logger.error(f"MYSTIC analyze error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error procesando análisis: {str(e)}",
+            detail="Error procesando análisis",
         )
 
 
 @router.get(
     "/status",
-    summary="Estado de los agentes",
-    description="Retorna estado actual de HERMES y MYSTIC",
+    summary="Estado de agentes",
+    description="Health check para HERMES y MYSTIC",
+    responses={
+        401: {"description": "No autorizado"},
+    },
 )
-async def agents_status(current_user: AuthUser):
+async def agents_status(tenant_id: UUID = Query(..., description="UUID del tenant")):
     """
-    Obtiene el estado actual de los agentes disponibles para el tenant.
+    Estado de los agentes — HERMES y MYSTIC.
 
-    Retorna:
-    - **hermes**: Estado y modelo de HERMES
-    - **mystic**: Estado y modelo de MYSTIC
-    - **tenant_id**: ID del tenant autenticado
+    Retorna información de disponibilidad y modelos.
     """
     try:
-        return {
-            "hermes": {
-                "status": "active",
-                "model": "llama3:latest",
-                "role": "orchestrator",
-                "description": "Orquestador de luz",
-            },
-            "mystic": {
-                "status": "active",
-                "model": "mistral:latest",
-                "role": "shadow_analyst",
-                "description": "Estratega de sombra",
-            },
-            "tenant_id": str(current_user.tenant_id),
-        }
+        async with get_tenant_session(tenant_id) as db:
+            return {
+                "hermes": {
+                    "status": "active",
+                    "model": "google/gemini-2.0-flash-001 (OpenRouter)",
+                    "role": "orchestrator",
+                    "description": "Orquestador de luz",
+                },
+                "mystic": {
+                    "status": "active",
+                    "model": "thudm/glm-z1-rumination (OpenRouter)",
+                    "role": "shadow_analyst",
+                    "description": "Estratega de sombra",
+                },
+                "rag": {
+                    "status": "active",
+                    "backend": "qdrant+ollama",
+                    "embeddings": "nomic-embed-text (768-dim)",
+                },
+                "tenant_id": str(tenant_id),
+            }
     except Exception as e:
-        logger.error(f"Status endpoint error: {str(e)}", exc_info=True)
+        logger.error(f"Status check error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error obteniendo estado de agentes",

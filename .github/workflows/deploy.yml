@@ -1,84 +1,297 @@
-name: Deploy — VPS Production
+name: Deploy — Vercel + VPS + Notify
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DEPLOYMENT_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+
 jobs:
-  deploy:
+  # ============================================
+  # Deploy to Vercel (mission-control frontend)
+  # ============================================
+  deploy-vercel:
+    name: Deploy Vercel
     runs-on: ubuntu-latest
-    environment: production
+    timeout-minutes: 15
+    outputs:
+      vercel_url: ${{ steps.deploy.outputs.preview_url || steps.deploy.outputs.deployment_url }}
+      vercel_status: ${{ job.status }}
 
     steps:
-      - name: Deploy al VPS via SSH
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Deploy to Vercel
+        id: deploy
+        uses: vercel/action@v8
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          production: true
+          github-comment: false
+          github-deployment: true
+          github-deployment-environment: Production
+
+      - name: Test Vercel deployment
+        run: |
+          VERCEL_URL="${{ steps.deploy.outputs.preview_url || steps.deploy.outputs.deployment_url }}"
+          echo "Vercel URL: $VERCEL_URL"
+          sleep 5
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$VERCEL_URL" || echo "000")
+          if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "301" ] && [ "$HTTP_CODE" != "302" ]; then
+            echo "❌ Vercel health check failed: HTTP $HTTP_CODE"
+            exit 1
+          fi
+          echo "✅ Vercel health check passed: HTTP $HTTP_CODE"
+
+  # ============================================
+  # Deploy to VPS (FastAPI + Docker services)
+  # ============================================
+  deploy-vps:
+    name: Deploy VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      vps_status: ${{ job.status }}
+      vps_health: ${{ steps.health.outputs.status }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed services
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "api=true" >> $GITHUB_OUTPUT
+            echo "clawbot=true" >> $GITHUB_OUTPUT
+            echo "hermes=true" >> $GITHUB_OUTPUT
+            echo "mystic=true" >> $GITHUB_OUTPUT
+            echo "content=true" >> $GITHUB_OUTPUT
+          else
+            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")
+            [ -z "$(echo "$CHANGED" | grep -v '^$')" ] && CHANGED="all"
+            echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+            echo "api=$(echo "$CHANGED" | grep -qE 'apps/api/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
+            echo "clawbot=$(echo "$CHANGED" | grep -qE 'apps/clawbot/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
+            echo "hermes=$(echo "$CHANGED" | grep -qE 'apps/hermes/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
+            echo "mystic=$(echo "$CHANGED" | grep -qE 'apps/mystic/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
+            echo "content=$(echo "$CHANGED" | grep -qE 'apps/content-agent/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to VPS
+        id: vps-deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: root
+          username: ${{ secrets.VPS_SSH_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           timeout: 300s
+          command_timeout: 300s
           script: |
             set -e
-            cd /home/mystic/hermes-os
 
-            echo "==> Pull latest"
-            git fetch origin main
+            REPO_PATH="/home/mystic/hermes-os"
+            TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
+            echo "════════════════════════════════════════"
+            echo "🚀 HERMES OS Deploy — $TIMESTAMP"
+            echo "════════════════════════════════════════"
+
+            cd "$REPO_PATH"
+
+            # Fetch latest
+            echo "[1/5] Fetching latest from origin..."
+            git fetch origin main --quiet
             git reset --hard origin/main
 
-            echo "==> Detectar cambios"
-            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")
-            echo "Archivos cambiados: $CHANGED"
+            # Show commit
+            COMMIT_SHA=$(git rev-parse --short HEAD)
+            COMMIT_MSG=$(git log -1 --pretty=format:"%s" || echo "No commit message")
+            echo "      Commit: $COMMIT_SHA — $COMMIT_MSG"
 
-            echo "==> Rebuild servicios afectados"
+            # Detect changes
+            echo "[2/5] Detecting changes..."
+            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")
+            echo "      $CHANGED"
+
+            # Rebuild services
+            echo "[3/5] Rebuilding affected services..."
+
+            API_REBUILD=0
+            CLAWBOT_REBUILD=0
+            HERMES_REBUILD=0
+            MYSTIC_REBUILD=0
+            CONTENT_REBUILD=0
+
             if echo "$CHANGED" | grep -qE "apps/api/|all"; then
-              echo "  -> Rebuild hermes-api"
-              docker compose build hermes-api
-              docker compose up -d --force-recreate hermes-api
+              echo "      → hermes-api"
+              API_REBUILD=1
             fi
 
             if echo "$CHANGED" | grep -qE "apps/clawbot/|all"; then
-              echo "  -> Rebuild clawbot"
-              docker compose build clawbot
-              docker compose up -d --force-recreate clawbot
+              echo "      → clawbot"
+              CLAWBOT_REBUILD=1
             fi
 
             if echo "$CHANGED" | grep -qE "apps/hermes/|all"; then
-              echo "  -> Rebuild hermes-agent"
-              docker compose build hermes-agent
-              docker compose up -d --force-recreate hermes-agent
+              echo "      → hermes-agent"
+              HERMES_REBUILD=1
             fi
 
             if echo "$CHANGED" | grep -qE "apps/mystic/|all"; then
-              echo "  -> Rebuild mystic-agent"
-              docker compose build mystic-agent
-              docker compose up -d --force-recreate mystic-agent
+              echo "      → mystic-agent"
+              MYSTIC_REBUILD=1
             fi
 
             if echo "$CHANGED" | grep -qE "apps/content-agent/|all"; then
-              echo "  -> Rebuild content-agent"
-              docker compose build content-agent
-              docker compose up -d --force-recreate content-agent
+              echo "      → content-agent"
+              CONTENT_REBUILD=1
             fi
 
-            if echo "$CHANGED" | grep -q "docker-compose.yml"; then
-              echo "  -> docker-compose cambio, up -d general"
-              docker compose up -d
+            # Build and deploy
+            echo "[4/5] Running docker compose up..."
+            docker compose --env-file infra/.env up -d --build || { echo "❌ docker compose failed"; exit 1; }
+
+            # Health checks
+            echo "[5/5] Health checks..."
+            sleep 5
+
+            ATTEMPTS=0
+            MAX_ATTEMPTS=3
+            API_HEALTHY=0
+
+            while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+              ATTEMPTS=$((ATTEMPTS + 1))
+              echo "      Attempt $ATTEMPTS/$MAX_ATTEMPTS..."
+
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://hermes-api:8000/health 2>/dev/null || echo "000")
+              if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "204" ]; then
+                echo "      ✅ hermes-api health: HTTP $HTTP_CODE"
+                API_HEALTHY=1
+                break
+              else
+                echo "      ⏳ hermes-api health: HTTP $HTTP_CODE (retrying...)"
+                sleep 5
+              fi
+            done
+
+            if [ $API_HEALTHY -eq 0 ]; then
+              echo "❌ Health check failed after $MAX_ATTEMPTS attempts"
+              exit 1
             fi
 
-            echo "==> Estado final"
-            docker ps --format "table {{.Names}}\t{{.Status}}"
+            # Show final status
+            echo ""
+            echo "════════════════════════════════════════"
+            echo "✅ Deploy successful"
+            echo "════════════════════════════════════════"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-      - name: Notificar CEO via Telegram
-        if: always()
-        env:
-          STATUS: ${{ job.status }}
-          TOKEN: ${{ secrets.TELEGRAM_TOKEN_CEO }}
-          CHAT_ID: ${{ secrets.CEO_CHAT_ID }}
-          COMMIT: ${{ github.event.head_commit.message }}
-          SHA: ${{ github.sha }}
+      - name: VPS Health Check
+        id: health
+        if: success()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_SSH_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 60s
+          script: |
+            REPO_PATH="/home/mystic/hermes-os"
+            cd "$REPO_PATH"
+
+            echo "Running health checks..."
+            HEALTH_OK=1
+
+            # Check API
+            API_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://hermes-api:8000/health 2>/dev/null || echo "000")
+            if [ "$API_CODE" = "200" ] || [ "$API_CODE" = "204" ]; then
+              echo "✅ hermes-api: OK"
+            else
+              echo "❌ hermes-api: HTTP $API_CODE"
+              HEALTH_OK=0
+            fi
+
+            # Check Docker
+            DOCKER_HEALTHY=$(docker ps -q | wc -l)
+            echo "✅ Docker containers running: $DOCKER_HEALTHY"
+
+            [ $HEALTH_OK -eq 1 ] && echo "status=HEALTHY" >> $GITHUB_OUTPUT || echo "status=UNHEALTHY" >> $GITHUB_OUTPUT
+
+  # ============================================
+  # Notify Telegram
+  # ============================================
+  notify:
+    name: Notify Telegram
+    runs-on: ubuntu-latest
+    needs: [deploy-vercel, deploy-vps]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: Prepare notification
+        id: notify
         run: |
-          EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "🔴")
-          MSG="${EMOJI} Deploy ${STATUS} en HERMES OS%0A%0ACommit: ${SHA:0:7}%0A${COMMIT}%0A%0A$(date -u '+%Y-%m-%d %H:%M UTC')"
-          curl -s "https://api.telegram.org/bot${TOKEN}/sendMessage" \
-            -d "chat_id=${CHAT_ID}&text=${MSG}" > /dev/null
+          VERCEL_STATUS="${{ needs.deploy-vercel.outputs.vercel_status }}"
+          VPS_STATUS="${{ needs.deploy-vps.outputs.vps_status }}"
+          VPS_HEALTH="${{ needs.deploy-vps.outputs.vps_health }}"
+
+          # Overall status
+          if [ "$VERCEL_STATUS" = "success" ] && [ "$VPS_STATUS" = "success" ]; then
+            OVERALL="✅ SUCCESS"
+            EMOJI="✅"
+          else
+            OVERALL="❌ FAILED"
+            EMOJI="🔴"
+          fi
+
+          # Format message
+          VERCEL_EMOJI=$([ "$VERCEL_STATUS" = "success" ] && echo "✅" || echo "❌")
+          VPS_EMOJI=$([ "$VPS_STATUS" = "success" ] && echo "✅" || echo "❌")
+
+          MSG="$EMOJI *HERMES OS Deploy*%0A"
+          MSG="${MSG}%0A*Resultado:* $OVERALL%0A"
+          MSG="${MSG}Vercel: $VERCEL_EMOJI $VERCEL_STATUS%0A"
+          MSG="${MSG}VPS: $VPS_EMOJI $VPS_STATUS"
+
+          if [ -n "$VPS_HEALTH" ] && [ "$VPS_HEALTH" != "UNHEALTHY" ]; then
+            MSG="${MSG} ($VPS_HEALTH)"
+          fi
+
+          MSG="${MSG}%0A%0A*Detalles:*%0A"
+          MSG="${MSG}Commit: \`${{ github.sha }}\`%0A"
+          MSG="${MSG}Rama: ${{ github.ref_name }}%0A"
+          MSG="${MSG}Actor: @${{ github.actor }}%0A"
+          MSG="${MSG}Timestamp: $(date -u '+%Y-%m-%d %H:%M UTC')%0A"
+          MSG="${MSG}%0A[Ver en GitHub](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+
+          echo "message=$MSG" >> $GITHUB_OUTPUT
+          echo "status=$OVERALL" >> $GITHUB_OUTPUT
+
+      - name: Send Telegram notification
+        uses: appleboy/telegram-action@v0.1.1
+        with:
+          to: ${{ secrets.CEO_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN_CEO }}
+          message: ${{ steps.notify.outputs.message }}
+          format: markdown
+
+      - name: Fallback cURL notification
+        if: failure()
+        run: |
+          MSG="Deploy workflow completed.%0AVercel: ${{ needs.deploy-vercel.outputs.vercel_status }}%0AVPS: ${{ needs.deploy-vps.outputs.vps_status }}"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN_CEO }}/sendMessage" \
+            -d "chat_id=${{ secrets.CEO_CHAT_ID }}&text=$MSG&parse_mode=HTML" > /dev/null || true
