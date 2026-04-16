@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd apps/mission-control && npm install && npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "apps/mission-control/.next",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "@next_public_api_url"
+  }
+}

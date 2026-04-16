@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=Courier+Prime:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Root variables */
+:root {
+  --primary: #0F0F0F;
+  --accent: #00D9FF;
+  --secondary: #6D28D9;
+  --light: #F5F5F5;
+  --dark-bg: #1A1A1A;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0F0F0F;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00D9FF;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00a8cc;
+}
+
+/* Global body styles */
+body {
+  @apply bg-primary-dark text-light font-sans;
+  overflow-x: hidden;
+}
+
+/* Selection color */
+::selection {
+  @apply bg-accent text-primary-dark;
+}
+
+/* Link defaults */
+a {
+  @apply transition-colors duration-300;
+}
+
+/* Button base styles */
+button {
+  @apply transition-all duration-300;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  @apply bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent;
+}
+
+/* Glow effect utility */
+.glow-effect {
+  @apply shadow-glow hover:shadow-glow-lg transition-shadow;
+}
+
+/* Blur glass effect */
+.glass-effect {
+  @apply backdrop-blur-md bg-primary-dark/30 border border-accent/10;
+}

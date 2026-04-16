@@ -235,6 +235,100 @@ services:
       - hermes_net
     restart: unless-stopped
 
+  # ========== FASE 2 — DASHBOARD ==========
+
+  dashboard:
+    build:
+      context: ../apps/dashboard
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://sonoradigitalcorp.com/api}
+        NEXT_PUBLIC_DASHBOARD_URL: ${NEXT_PUBLIC_DASHBOARD_URL:-https://sonoradigitalcorp.com/dashboard}
+    container_name: sonora-dashboard
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://sonoradigitalcorp.com/api}
+      NEXT_PUBLIC_DASHBOARD_URL: ${NEXT_PUBLIC_DASHBOARD_URL:-https://sonoradigitalcorp.com/dashboard}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - hermes_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ========== FASE 2 — AGENT FACTORY ==========
+
+  agent-factory:
+    build:
+      context: ../apps/agent-factory
+      dockerfile: Dockerfile
+    container_name: sonora-agent-factory
+    ports:
+      - "127.0.0.1:8001:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../agents/factories:/app/factories:ro
+      - ../agents/shared:/app/shared:ro
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-mystic_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-mystic_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      AGENT_FACTORY_DOCKER_SOCKET: /var/run/docker.sock
+      AGENT_FACTORY_MAX_CONCURRENT: ${AGENT_FACTORY_MAX_CONCURRENT:-5}
+      DOMAIN: ${DOMAIN:-sonoradigitalcorp.com}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hermes_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ========== FASE 2 — CLAWBOT (ACTUALIZADO) ==========
+
+  clawbot:
+    build:
+      context: ../apps/clawbot
+      dockerfile: Dockerfile
+    container_name: sonora-clawbot
+    ports:
+      - "127.0.0.1:3004:3003"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mystic_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-mystic_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/2
+      TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-https://sonoradigitalcorp.com/webhook/telegram}
+      CLAWBOT_API_PORT: 3003
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hermes_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   postgres_data:
   redis_data:

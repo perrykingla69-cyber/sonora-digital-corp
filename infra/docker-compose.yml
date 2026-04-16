@@ -209,6 +209,51 @@ services:
       - hermes_network
     restart: unless-stopped
 
+  # ========== FASE 1 — SAAS PLATFORM ==========
+
+  dashboard:
+    build:
+      context: ../apps/dashboard
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://sonoradigitalcorp.com/api}
+    container_name: hermes_dashboard
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://sonoradigitalcorp.com/api}
+    networks:
+      - hermes_network
+    restart: unless-stopped
+    labels:
+      prometheus-job: dashboard
+
+  agent-factory:
+    build:
+      context: ../apps/agent-factory
+      dockerfile: Dockerfile
+    container_name: hermes_agent_factory
+    environment:
+      DATABASE_URL: postgresql+asyncpg://mystic:${DB_PASSWORD:-mystic_secure_2026}@postgres:5432/mystic_unified
+      REDIS_URL: redis://redis:6379
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      DOMAIN: ${DOMAIN:-sonoradigitalcorp.com}
+      FACTORIES_DIR: /app/factories
+      AGENT_FACTORY_MAX_CONCURRENT: ${AGENT_FACTORY_MAX_CONCURRENT:-5}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../agents/factories:/app/factories:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hermes_network
+    restart: unless-stopped
+    labels:
+      prometheus-job: agent-factory
+
   # ========== BACKUP AUTOMÁTICO ==========
 
   backup:

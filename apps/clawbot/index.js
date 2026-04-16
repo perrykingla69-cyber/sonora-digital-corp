@@ -14,6 +14,7 @@ import { createHmac } from 'crypto'
 import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 import 'dotenv/config'
+import { registerBotFactoryRoutes } from './bot-factory.js'
 
 const redis = new Redis(process.env.REDIS_URL)
 const API = process.env.API_URL
@@ -529,6 +530,9 @@ async function main() {
     mysticBot.launch()
     console.log('🤖 Bots en modo polling (desarrollo)')
   }
+
+  // Registrar rutas Bot Factory
+  registerBotFactoryRoutes(app, redis)
 
   app.listen(3003, () => console.log('🌐 ClawBot gateway :3003'))
   console.log('☀️  HERMES | 🌑 MYSTIC | 🤖 ClawBot — Online')

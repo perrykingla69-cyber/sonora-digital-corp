@@ -1,0 +1,23 @@
+{
+  "name": "hermes-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HERMES OS - Plataforma SaaS Multi-Tenant para PYMEs",
+  "type": "module",
+  "pnpm": {
+    "workspaces": [
+      "apps/*",
+      "packages/*"
+    ]
+  },
+  "scripts": {
+    "dev": "pnpm --filter ./apps/frontend dev",
+    "build": "pnpm --filter ./apps/frontend build",
+    "check": "pnpm --filter ./apps/frontend check",
+    "format": "prettier --write .",
+    "test": "pnpm --filter ./apps/frontend test"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  }
+}

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HERMES OS — Mission Control</title>
+<style>
+:root {
+  --bg: #0a0c10;
+  --surface: #0f1318;
+  --card: #141920;
+  --border: #1e2530;
+  --accent: #00d4ff;
+  --accent2: #7c3aed;
+  --accent3: #10b981;
+  --warn: #f59e0b;
+  --red: #ef4444;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --glow: 0 0 20px rgba(0,212,255,.15);
+  --glow2: 0 0 20px rgba(124,58,237,.2);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;font-size:13px;min-height:100vh;overflow-x:hidden}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;animation:pulse-logo 3s ease-in-out infinite}
+@keyframes pulse-logo{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.4)}50%{box-shadow:0 0 0 8px rgba(0,212,255,0)}}
+.logo-text{font-size:16px;font-weight:bold;letter-spacing:2px;color:var(--accent)}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:1px}
+.status-bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.status-pill{display:flex;align-items:center;gap:5px;font-size:10px;padding:3px 8px;border-radius:20px;border:1px solid var(--border)}
+.status-pill.online{border-color:var(--accent3);color:var(--accent3)}
+.status-pill.warn{border-color:var(--warn);color:var(--warn)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.time{font-size:11px;color:var(--muted)}
+
+/* GRID */
+.grid{display:grid;gap:12px;padding:12px;grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.grid{grid-template-columns:1fr}}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.5}
+.card.accent2::before{background:linear-gradient(90deg,transparent,var(--accent2),transparent)}
+.card.accent3::before{background:linear-gradient(90deg,transparent,var(--accent3),transparent)}
+.card.warn::before{background:linear-gradient(90deg,transparent,var(--warn),transparent)}
+.card-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.card-value{font-size:28px;font-weight:bold;color:var(--accent);line-height:1}
+.card.accent2 .card-value{color:var(--accent2)}
+.card.accent3 .card-value{color:var(--accent3)}
+.card.warn .card-value{color:var(--warn)}
+.card-sub{font-size:10px;color:var(--muted);margin-top:4px}
+.card-delta{font-size:10px;color:var(--accent3);margin-top:2px}
+
+/* FLOW SECTION */
+.section{padding:0 12px 12px}
+.section-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-left:4px}
+
+/* FLOW DIAGRAM */
+.flow-container{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;overflow-x:auto}
+.flow{display:flex;align-items:center;justify-content:flex-start;gap:0;min-width:600px}
+.flow-node{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+.flow-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;position:relative;cursor:default;transition:all .3s}
+.flow-box:hover{transform:translateY(-2px)}
+.flow-icon{font-size:20px;display:block}
+.flow-name{font-size:11px;font-weight:bold;color:var(--text);margin-top:2px}
+.flow-role{font-size:9px;color:var(--muted)}
+.flow-box.telegram{border-color:rgba(0,212,255,.4);background:rgba(0,212,255,.05)}
+.flow-box.clawbot{border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.05)}
+.flow-box.hermes{border-color:var(--accent);background:rgba(0,212,255,.08);box-shadow:var(--glow)}
+.flow-box.sub{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.05)}
+.flow-box.result{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.05)}
+.flow-arrow{display:flex;flex-direction:column;align-items:center;padding:0 4px;flex-shrink:0}
+.arrow-line{height:2px;width:40px;background:linear-gradient(90deg,var(--border),var(--accent));position:relative;overflow:hidden}
+.arrow-line::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,212,255,.8),transparent);animation:flow-anim 2s ease-in-out infinite}
+@keyframes flow-anim{0%{left:-100%}100%{left:100%}}
+.arrow-head{font-size:10px;color:var(--accent);margin-left:2px}
+.arrow-label{font-size:8px;color:var(--muted);white-space:nowrap}
+
+/* SUBAGENTES BRANCH */
+.sub-branch{display:flex;flex-direction:column;gap:6px}
+
+/* BOTTOM GRID */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.bottom-grid{grid-template-columns:1fr}}
+
+/* TELEGRAM MOCK */
+.tg-window{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;height:400px}
+.tg-header{background:var(--surface);padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.tg-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:14px}
+.tg-info h3{font-size:13px;font-weight:bold;color:var(--text)}
+.tg-info span{font-size:10px;color:var(--accent3)}
+.tg-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.tg-messages::-webkit-scrollbar{width:4px}
+.tg-messages::-webkit-scrollbar-track{background:transparent}
+.tg-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.msg{max-width:80%;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.5;animation:msg-appear .3s ease-out}
+@keyframes msg-appear{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);align-self:flex-end;color:var(--text)}
+.msg.bot{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);align-self:flex-start;color:var(--text)}
+.msg.system{background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);align-self:center;font-size:10px;color:var(--accent3);text-align:center;max-width:90%}
+.msg-meta{font-size:9px;color:var(--muted);margin-top:3px}
+.msg-source{font-size:9px;color:var(--accent);font-style:italic}
+.typing-indicator{display:flex;gap:4px;align-items:center;padding:6px 10px}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:typing 1.2s ease-in-out infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes typing{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+.tg-input{padding:10px 12px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center}
+.tg-input-field{flex:1;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 12px;color:var(--muted);font-size:11px;font-family:inherit}
+.tg-send{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+
+/* AGENT LOG */
+.log-window{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;height:400px;display:flex;flex-direction:column}
+.log-header{background:var(--surface);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.log-title{font-size:11px;font-weight:bold;letter-spacing:1px}
+.log-badge{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--accent)}
+.log-body{flex:1;overflow-y:auto;padding:10px;font-size:11px;line-height:1.8}
+.log-body::-webkit-scrollbar{width:4px}
+.log-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.log-line{animation:log-appear .3s ease-out}
+@keyframes log-appear{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.log-ts{color:var(--muted)}
+.log-agent{font-weight:bold}
+.log-agent.hermes{color:var(--accent)}
+.log-agent.mystic{color:var(--accent2)}
+.log-agent.clawbot{color:#60a5fa}
+.log-agent.seeder{color:var(--accent3)}
+.log-agent.rag{color:var(--warn)}
+.log-msg{color:var(--text)}
+.log-ok{color:var(--accent3)}
+.log-warn{color:var(--warn)}
+.log-err{color:var(--red)}
+
+/* DECISION TREE */
+.tree-container{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.tree-root{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.tree-node{position:relative;padding-left:20px}
+.tree-node::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:var(--border)}
+.tree-node:last-child::before{height:14px}
+.tree-item{display:flex;align-items:center;gap:8px;padding:5px 0}
+.tree-item::before{content:'├─';color:var(--border);font-size:11px;margin-left:-20px;white-space:pre}
+.tree-node:last-child>.tree-item::before{content:'└─'}
+.tree-label{font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid var(--border)}
+.tree-label.decision{border-color:rgba(0,212,255,.4);color:var(--accent);background:rgba(0,212,255,.05)}
+.tree-label.action{border-color:rgba(16,185,129,.4);color:var(--accent3);background:rgba(16,185,129,.05)}
+.tree-label.rag{border-color:rgba(245,158,11,.4);color:var(--warn);background:rgba(245,158,11,.05)}
+.tree-label.delegate{border-color:rgba(124,58,237,.4);color:var(--accent2);background:rgba(124,58,237,.05)}
+.tree-active .tree-label{animation:tree-pulse .8s ease-in-out infinite alternate}
+@keyframes tree-pulse{from{opacity:.6}to{opacity:1;box-shadow:0 0 8px currentColor}}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+@media(max-width:500px){.stats-row{grid-template-columns:1fr}}
+.stat-mini{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.stat-mini-val{font-size:20px;font-weight:bold;color:var(--accent)}
+.stat-mini-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+/* SPARKLINE */
+.sparkline-container{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+.spark-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+canvas{width:100%!important;height:60px!important}
+
+/* NICHE PILLS */
+.niche-grid{display:flex;flex-wrap:wrap;gap:6px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
+.niche-pill{font-size:10px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;gap:5px;transition:all .3s}
+.niche-pill.active{border-color:var(--accent3);color:var(--accent3);background:rgba(16,185,129,.08)}
+.niche-dot{width:5px;height:5px;border-radius:50%;background:var(--muted)}
+.niche-pill.active .niche-dot{background:var(--accent3);animation:blink 1.5s infinite}
+
+/* FOOTER */
+footer{text-align:center;padding:16px;color:var(--muted);font-size:10px;letter-spacing:2px;border-top:1px solid var(--border)}
+footer span{color:var(--accent)}
+
+/* PULSE RING */
+.pulse-ring{position:relative;display:inline-block}
+.pulse-ring::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--accent);animation:ring 2s ease-out infinite;opacity:0}
+@keyframes ring{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.4);opacity:0}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon pulse-ring">H</div>
+    <div>
+      <div class="logo-text">HERMES OS</div>
+      <div class="logo-sub">Sonora Digital Corp — Mission Control</div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-pill online"><div class="dot"></div> 9 servicios LIVE</div>
+    <div class="status-pill online"><div class="dot"></div> RAG ACTIVO</div>
+    <div class="status-pill warn"><div class="dot"></div> 2 pendientes</div>
+    <div class="time" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<!-- KPI GRID -->
+<div class="grid" style="margin-top:0">
+  <div class="card">
+    <div class="card-label">Skills Cargados</div>
+    <div class="card-value" id="cnt-skills">0</div>
+    <div class="card-sub">Habilidades activas en HERMES</div>
+    <div class="card-delta">▲ +3 esta semana</div>
+  </div>
+  <div class="card accent2">
+    <div class="card-label">Tenants Activos</div>
+    <div class="card-value" id="cnt-tenants">0</div>
+    <div class="card-sub">PYMEs conectadas</div>
+    <div class="card-delta">▲ +1 hoy</div>
+  </div>
+  <div class="card accent3">
+    <div class="card-label">Tareas Ejecutadas</div>
+    <div class="card-value" id="cnt-tasks">0</div>
+    <div class="card-sub">Últimas 24 horas</div>
+    <div class="card-delta">▲ Promedio 847/día</div>
+  </div>
+  <div class="card warn">
+    <div class="card-label">Tiempo Respuesta</div>
+    <div class="card-value" id="cnt-ms">0<span style="font-size:14px">ms</span></div>
+    <div class="card-sub">P95 latencia HERMES</div>
+    <div class="card-delta">▼ -12ms vs ayer</div>
+  </div>
+</div>
+
+<!-- FLOW DIAGRAM -->
+<div class="section">
+  <div class="section-title">⟳ Flujo de Orquestación — Tiempo Real</div>
+  <div class="flow-container">
+    <div class="flow">
+      <div class="flow-node">
+        <div class="flow-box telegram">
+          <span class="flow-icon">✈</span>
+          <div class="flow-name">Telegram</div>
+          <div class="flow-role">4 bots CEO/Público</div>
+        </div>
+      </div>
+      <div class="flow-arrow">
+        <div style="display:flex;align-items:center">
+          <div class="arrow-line"></div>
+          <div class="arrow-head">▶</div>
+        </div>
+        <div class="arrow-label">webhook</div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-box clawbot">
+          <span class="flow-icon">🔀</span>
+          <div class="flow-name">ClawBot</div>
+          <div class="flow-role">Gateway + Dedup Redis</div>
+        </div>
+      </div>
+      <div class="flow-arrow">
+        <div style="display:flex;align-items:center">
+          <div class="arrow-line"></div>
+          <div class="arrow-head">▶</div>
+        </div>
+        <div class="arrow-label">route</div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-box hermes">
+          <span class="flow-icon">⚡</span>
+          <div class="flow-name">HERMES</div>
+          <div class="flow-role">Orquestador · Gemini Flash</div>
+        </div>
+      </div>
+      <div class="flow-arrow">
+        <div style="display:flex;align-items:center">
+          <div class="arrow-line"></div>
+          <div class="arrow-head">▶</div>
+        </div>
+        <div class="arrow-label">delegate</div>
+      </div>
+      <div class="flow-node">
+        <div class="sub-branch">
+          <div class="flow-box sub" style="padding:6px 10px">
+            <div class="flow-name" style="font-size:10px">🔍 RAG Qdrant</div>
+            <div class="flow-role">Híbrido dense+BM25</div>
+          </div>
+          <div class="flow-box sub" style="padding:6px 10px">
+            <div class="flow-name" style="font-size:10px">📋 Fiscal Agent</div>
+            <div class="flow-role">NOM · SAT · IMSS</div>
+          </div>
+          <div class="flow-box sub" style="padding:6px 10px">
+            <div class="flow-name" style="font-size:10px">🌑 MYSTIC Shadow</div>
+            <div class="flow-role">GLM Z1 · Análisis CEO</div>
+          </div>
+          <div class="flow-box sub" style="padding:6px 10px">
+            <div class="flow-name" style="font-size:10px">🌱 AutoSeeder</div>
+            <div class="flow-role">Nomic · por nicho</div>
+          </div>
+        </div>
+      </div>
+      <div class="flow-arrow">
+        <div style="display:flex;align-items:center">
+          <div class="arrow-line"></div>
+          <div class="arrow-head">▶</div>
+        </div>
+        <div class="arrow-label">respuesta</div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-box result">
+          <span class="flow-icon">✓</span>
+          <div class="flow-name">Resultado</div>
+          <div class="flow-role">Con fuente citada</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DECISION TREE -->
+<div class="section">
+  <div class="section-title">⬡ Árbol de Decisión HERMES — Activo</div>
+  <div class="tree-container">
+    <div style="font-size:11px;color:var(--accent);margin-bottom:10px">📥 Mensaje recibido: "¿Cuál es el límite de horas extras según la LFT?"</div>
+    <div class="tree-root">
+      <div class="tree-item"><span class="tree-label decision">¿Tiene contexto tenant?</span></div>
+      <div class="tree-node">
+        <div class="tree-item"><span class="tree-label action">✓ Sí → cargar tenant_id</span></div>
+      </div>
+      <div class="tree-node">
+        <div class="tree-item tree-active"><span class="tree-label rag">→ RAG Search: "horas extras LFT"</span></div>
+        <div class="tree-node">
+          <div class="tree-item"><span class="tree-label action">Qdrant dense: score 0.94</span></div>
+        </div>
+        <div class="tree-node">
+          <div class="tree-item"><span class="tree-label action">BM25 sparse: match "Art. 67 LFT"</span></div>
+        </div>
+      </div>
+      <div class="tree-node">
+        <div class="tree-item"><span class="tree-label decision">¿Score > 0.8?</span></div>
+        <div class="tree-node">
+          <div class="tree-item"><span class="tree-label action">✓ Sí → usar RAG chunk</span></div>
+        </div>
+        <div class="tree-node">
+          <div class="tree-item"><span class="tree-label delegate">→ Citar fuente (Art. 67 LFT, 2024)</span></div>
+        </div>
+      </div>
+      <div class="tree-node">
+        <div class="tree-item"><span class="tree-label action">✓ Responder → HERMES → Telegram</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS + NICHES -->
+<div class="section">
+  <div class="section-title">◎ Nichos Seeded en Qdrant</div>
+  <div class="niche-grid" id="niches"></div>
+</div>
+
+<!-- SPARKLINE -->
+<div class="section">
+  <div class="sparkline-container">
+    <div class="spark-label">Tareas por hora — últimas 24h</div>
+    <canvas id="spark" height="60"></canvas>
+  </div>
+</div>
+
+<!-- BOTTOM: TELEGRAM MOCK + LOG -->
+<div class="section">
+  <div class="section-title">◈ Consola en Vivo</div>
+  <div class="bottom-grid">
+
+    <!-- TELEGRAM MOCK -->
+    <div class="tg-window">
+      <div class="tg-header">
+        <div class="tg-avatar">H</div>
+        <div class="tg-info">
+          <h3>HERMES CEO Bot</h3>
+          <span>● en línea — Solo Luis Daniel</span>
+        </div>
+      </div>
+      <div class="tg-messages" id="tg-msgs"></div>
+      <div class="tg-input">
+        <input class="tg-input-field" placeholder="Escribe un mensaje..." readonly>
+        <button class="tg-send">▶</button>
+      </div>
+    </div>
+
+    <!-- AGENT LOG -->
+    <div class="log-window">
+      <div class="log-header">
+        <div class="log-title">HERMES AGENT LOG</div>
+        <div class="log-badge" id="log-count">0 eventos</div>
+      </div>
+      <div class="log-body" id="agent-log"></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  HERMES OS · <span>Sonora Digital Corp</span> · Monterrey, México · Bot-First · 24/7
+</footer>
+
+<script>
+// ─── CLOCK ───────────────────────────────────────────────
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    n.toLocaleTimeString('es-MX',{hour12:false});
+}
+setInterval(updateClock,1000);updateClock();
+
+// ─── COUNTERS ANIMATE ────────────────────────────────────
+function animateCount(id,target,duration,suffix=''){
+  const el=document.getElementById(id);
+  let start=0,step=target/60,t=duration/60;
+  const timer=setInterval(()=>{
+    start+=step;
+    if(start>=target){start=target;clearInterval(timer);}
+    el.innerHTML=Math.round(start)+(suffix?`<span style="font-size:14px">${suffix}</span>`:'');
+  },t);
+}
+animateCount('cnt-skills',81,1200);
+animateCount('cnt-tenants',7,800);
+animateCount('cnt-tasks',1243,1500);
+animateCount('cnt-ms',340,900,'ms');
+
+// ─── NICHES ──────────────────────────────────────────────
+const niches=[
+  {n:'pastelero',a:true},{n:'restaurante',a:true},{n:'proveedor_alimentos',a:true},
+  {n:'contador',a:true},{n:'abogado',a:true},{n:'bombero',a:false},
+  {n:'medico',a:true},{n:'constructor',a:false},{n:'general',a:true}
+];
+const ng=document.getElementById('niches');
+niches.forEach(x=>{
+  const d=document.createElement('div');
+  d.className='niche-pill'+(x.a?' active':'');
+  d.innerHTML=`<span class="niche-dot"></span>${x.n}`;
+  ng.appendChild(d);
+});
+
+// ─── SPARKLINE ───────────────────────────────────────────
+(function(){
+  const c=document.getElementById('spark');
+  const ctx=c.getContext('2d');
+  c.width=c.parentElement.offsetWidth-28;
+  c.height=60;
+  const data=Array.from({length:24},()=>Math.floor(Math.random()*80+20));
+  const max=Math.max(...data);
+  const pts=data.map((v,i)=>({
+    x:(i/(data.length-1))*(c.width),
+    y:c.height-4-(v/max)*(c.height-8)
+  }));
+  // gradient fill
+  const grad=ctx.createLinearGradient(0,0,0,c.height);
+  grad.addColorStop(0,'rgba(0,212,255,.3)');
+  grad.addColorStop(1,'rgba(0,212,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,c.height);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,c.height);
+  ctx.closePath();
+  ctx.fillStyle=grad;
+  ctx.fill();
+  // line
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle='rgba(0,212,255,.8)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  // dots
+  pts.forEach((p,i)=>{
+    if(i%4===0){
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,3,0,Math.PI*2);
+      ctx.fillStyle='#00d4ff';
+      ctx.fill();
+    }
+  });
+})();
+
+// ─── TELEGRAM MOCK CONVERSATION ──────────────────────────
+const msgs=[
+  {t:'user', text:'/status'},
+  {t:'system', text:'◎ Conectando con HERMES API...'},
+  {t:'bot', text:'⚡ <b>HERMES OS — Estado del Sistema</b>\n\n✅ hermes-api: HEALTHY\n✅ postgres: HEALTHY\n✅ qdrant: HEALTHY\n✅ redis: HEALTHY\n✅ evolution: HEALTHY\n✅ ollama: HEALTHY\n✅ clawbot: HEALTHY\n\n📊 Skills: 81 | Tenants: 7 | Uptime: 99.8%', src:'Sistema'},
+  {t:'user', text:'¿Cuántas horas extras permite la LFT?'},
+  {t:'system', text:'⟳ RAG Search → Qdrant → chunk recuperado'},
+  {t:'bot', text:'📋 Según el <b>Art. 67 LFT</b>, las horas extras no pueden exceder <b>3 horas diarias</b> ni <b>9 horas semanales</b>.\n\nLas primeras 9 horas extras semanales se pagan al <b>doble</b>; las subsiguientes al <b>triple</b>.\n\n<i>(Fuente: LFT Art. 67-68, 2024)</i>', src:'RAG: LFT_2024.pdf'},
+  {t:'user', text:'/mystic analiza tendencia consultas fiscales'},
+  {t:'system', text:'◎ Delegando a MYSTIC Shadow Agent...'},
+  {t:'bot', text:'🌑 <b>MYSTIC — Análisis Estratégico</b>\n\nTendencia 7 días: consultas fiscales ↑ <b>34%</b>\nNicho más activo: <b>contador</b> (42 consultas)\nHora pico: <b>10:00–12:00 CST</b>\n\n🟡 Recomendación: expandir RAG fiscal con actualizaciones SAT 2024 Q1', src:'MYSTIC GLM-Z1'},
+  {t:'user', text:'/deploy'},
+  {t:'system', text:'⟳ Verificando GitHub Actions...'},
+  {t:'bot', text:'🚀 Deploy iniciado → rama <b>main</b>\nGitHub Actions: <b>running</b>\nETA: ~3 min\nNotificación automática al completar ✓', src:'CI/CD'},
+];
+
+const tgEl=document.getElementById('tg-msgs');
+let mi=0;
+function addMsg(){
+  if(mi>=msgs.length){mi=0;tgEl.innerHTML='';return;}
+  const m=msgs[mi++];
+  // typing indicator for bot
+  if(m.t==='bot'){
+    const tip=document.createElement('div');
+    tip.className='msg bot';
+    tip.innerHTML='<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+    tgEl.appendChild(tip);
+    tgEl.scrollTop=tgEl.scrollHeight;
+    setTimeout(()=>{
+      tgEl.removeChild(tip);
+      renderMsg(m);
+    },900);
+  } else {
+    renderMsg(m);
+  }
+}
+function renderMsg(m){
+  const d=document.createElement('div');
+  d.className='msg '+m.t;
+  d.innerHTML=m.text.replace(/\n/g,'<br>');
+  if(m.src){
+    const s=document.createElement('div');
+    s.className='msg-source';
+    s.textContent='↳ '+m.src;
+    d.appendChild(s);
+  }
+  tgEl.appendChild(d);
+  tgEl.scrollTop=tgEl.scrollHeight;
+}
+addMsg();
+setInterval(addMsg,2800);
+
+// ─── AGENT LOG ───────────────────────────────────────────
+const logEvents=[
+  ['HERMES','hermes','RAG query: "horas extras LFT" → score 0.94','ok'],
+  ['ClawBot','clawbot','Dedup check Redis → nuevo mensaje → route CEO','ok'],
+  ['MYSTIC','mystic','Scan horario 08:00 → 🟢 sin alertas críticas','ok'],
+  ['HERMES','hermes','Tenant 7 onboarding → AutoSeeder trigger','ok'],
+  ['AutoSeeder','seeder','seed_global_niche("contador") → 847 chunks → Qdrant','ok'],
+  ['RAG','rag','Dense + BM25 hybrid query → 3 chunks merged','ok'],
+  ['HERMES','hermes','Response generated → cita: Art.67 LFT 2024','ok'],
+  ['ClawBot','clawbot','WhatsApp dedup TTL:30s → duplicate dropped','warn'],
+  ['HERMES','hermes','Delegating → Fiscal Agent → SAT 2024 query','ok'],
+  ['MYSTIC','mystic','Trend detected: fiscal +34% 7d → alert CEO 🟡','warn'],
+  ['AutoSeeder','seeder','seed_global_niche("medico") → NOM-251 fetched','ok'],
+  ['HERMES','hermes','JWT revocation check → Redis JTI valid','ok'],
+  ['ClawBot','clawbot','Nuevo tenant registrado → classify_niche()','ok'],
+  ['RAG','rag','Qdrant upsert: 1,203 vectors → collection "general"','ok'],
+  ['HERMES','hermes','OpenRouter Gemini Flash → 340ms P95 response','ok'],
+];
+const logEl=document.getElementById('agent-log');
+let li=0,logTotal=0;
+function addLog(){
+  const e=logEvents[li%logEvents.length];li++;logTotal++;
+  const now=new Date();
+  const ts=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const line=document.createElement('div');
+  line.className='log-line';
+  const cls=e[3]==='warn'?'log-warn':e[3]==='err'?'log-err':'log-ok';
+  const mark=e[3]==='warn'?'⚠':'e[3]'==='err'?'✗':'✓';
+  line.innerHTML=`<span class="log-ts">[${ts}]</span> <span class="log-agent ${e[1]}">${e[0]}</span> <span class="log-msg">${e[2]}</span> <span class="${cls}">${e[3]==='warn'?'⚠ WARN':'✓ OK'}</span>`;
+  logEl.appendChild(line);
+  logEl.scrollTop=logEl.scrollHeight;
+  // keep max 60 lines
+  while(logEl.children.length>60)logEl.removeChild(logEl.firstChild);
+  document.getElementById('log-count').textContent=logTotal+' eventos';
+}
+addLog();
+setInterval(addLog,1800);
+
+// ─── LIVE COUNTER tick ───────────────────────────────────
+setInterval(()=>{
+  const el=document.getElementById('cnt-tasks');
+  const cur=parseInt(el.textContent)||0;
+  el.textContent=cur+Math.floor(Math.random()*3);
+  // jitter response time
+  const ms=document.getElementById('cnt-ms');
+  const base=340+Math.floor(Math.random()*40-20);
+  ms.innerHTML=base+'<span style="font-size:14px">ms</span>';
+},3000);
+</script>
+</body>
+</html>
