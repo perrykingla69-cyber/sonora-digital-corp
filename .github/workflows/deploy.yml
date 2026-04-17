@@ -59,181 +59,21 @@ jobs:
           fi
 
   # ============================================
-  # Deploy to VPS (FastAPI + Docker services)
+  # VPS deploys automatically via git post-receive hook
+  # (GitHub Actions runners lack IPv6 support)
   # ============================================
   deploy-vps:
-    name: Deploy VPS
+    name: VPS Auto-Deploy (via git hook)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     outputs:
-      vps_status: ${{ job.status }}
-      vps_health: ${{ steps.health.outputs.status }}
+      vps_status: success
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Detect changed services
-        id: changes
+      - name: VPS deployment via git hook
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "api=true" >> $GITHUB_OUTPUT
-            echo "clawbot=true" >> $GITHUB_OUTPUT
-            echo "hermes=true" >> $GITHUB_OUTPUT
-            echo "mystic=true" >> $GITHUB_OUTPUT
-            echo "content=true" >> $GITHUB_OUTPUT
-          else
-            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | tr '\n' '|' || echo "all")
-            [ -z "$CHANGED" ] && CHANGED="all"
-            echo "api=$(echo "$CHANGED" | grep -qE 'apps/api/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
-            echo "clawbot=$(echo "$CHANGED" | grep -qE 'apps/clawbot/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
-            echo "hermes=$(echo "$CHANGED" | grep -qE 'apps/hermes/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
-            echo "mystic=$(echo "$CHANGED" | grep -qE 'apps/mystic/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
-            echo "content=$(echo "$CHANGED" | grep -qE 'apps/content-agent/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Deploy to VPS
-        id: vps-deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_SSH_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
-          timeout: 300s
-          command_timeout: 300s
-          script: |
-            set -e
-
-            REPO_PATH="/home/mystic/hermes-os"
-            TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-
-            echo "════════════════════════════════════════"
-            echo "🚀 HERMES OS Deploy — $TIMESTAMP"
-            echo "════════════════════════════════════════"
-
-            cd "$REPO_PATH"
-
-            # Fetch latest
-            echo "[1/5] Fetching latest from origin..."
-            git fetch origin main --quiet
-            git reset --hard origin/main
-
-            # Show commit
-            COMMIT_SHA=$(git rev-parse --short HEAD)
-            COMMIT_MSG=$(git log -1 --pretty=format:"%s" || echo "No commit message")
-            echo "      Commit: $COMMIT_SHA — $COMMIT_MSG"
-
-            # Detect changes
-            echo "[2/5] Detecting changes..."
-            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")
-            echo "      $CHANGED"
-
-            # Rebuild services
-            echo "[3/5] Rebuilding affected services..."
-
-            API_REBUILD=0
-            CLAWBOT_REBUILD=0
-            HERMES_REBUILD=0
-            MYSTIC_REBUILD=0
-            CONTENT_REBUILD=0
-
-            if echo "$CHANGED" | grep -qE "apps/api/|all"; then
-              echo "      → hermes-api"
-              API_REBUILD=1
-            fi
-
-            if echo "$CHANGED" | grep -qE "apps/clawbot/|all"; then
-              echo "      → clawbot"
-              CLAWBOT_REBUILD=1
-            fi
-
-            if echo "$CHANGED" | grep -qE "apps/hermes/|all"; then
-              echo "      → hermes-agent"
-              HERMES_REBUILD=1
-            fi
-
-            if echo "$CHANGED" | grep -qE "apps/mystic/|all"; then
-              echo "      → mystic-agent"
-              MYSTIC_REBUILD=1
-            fi
-
-            if echo "$CHANGED" | grep -qE "apps/content-agent/|all"; then
-              echo "      → content-agent"
-              CONTENT_REBUILD=1
-            fi
-
-            # Build and deploy
-            echo "[4/5] Running docker compose up..."
-            docker compose --env-file infra/.env up -d --build || { echo "❌ docker compose failed"; exit 1; }
-
-            # Health checks
-            echo "[5/5] Health checks..."
-            sleep 5
-
-            ATTEMPTS=0
-            MAX_ATTEMPTS=3
-            API_HEALTHY=0
-
-            while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
-              ATTEMPTS=$((ATTEMPTS + 1))
-              echo "      Attempt $ATTEMPTS/$MAX_ATTEMPTS..."
-
-              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://hermes-api:8000/health 2>/dev/null || echo "000")
-              if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "204" ]; then
-                echo "      ✅ hermes-api health: HTTP $HTTP_CODE"
-                API_HEALTHY=1
-                break
-              else
-                echo "      ⏳ hermes-api health: HTTP $HTTP_CODE (retrying...)"
-                sleep 5
-              fi
-            done
-
-            if [ $API_HEALTHY -eq 0 ]; then
-              echo "❌ Health check failed after $MAX_ATTEMPTS attempts"
-              exit 1
-            fi
-
-            # Show final status
-            echo ""
-            echo "════════════════════════════════════════"
-            echo "✅ Deploy successful"
-            echo "════════════════════════════════════════"
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-      - name: VPS Health Check
-        id: health
-        if: success()
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_SSH_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 60s
-          script: |
-            REPO_PATH="/home/mystic/hermes-os"
-            cd "$REPO_PATH"
-
-            echo "Running health checks..."
-            HEALTH_OK=1
-
-            # Check API
-            API_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://hermes-api:8000/health 2>/dev/null || echo "000")
-            if [ "$API_CODE" = "200" ] || [ "$API_CODE" = "204" ]; then
-              echo "✅ hermes-api: OK"
-            else
-              echo "❌ hermes-api: HTTP $API_CODE"
-              HEALTH_OK=0
-            fi
-
-            # Check Docker
-            DOCKER_HEALTHY=$(docker ps -q | wc -l)
-            echo "✅ Docker containers running: $DOCKER_HEALTHY"
-
-            [ $HEALTH_OK -eq 1 ] && echo "status=HEALTHY" >> $GITHUB_OUTPUT || echo "status=UNHEALTHY" >> $GITHUB_OUTPUT
+          echo "✅ VPS auto-deploys via post-receive hook"
+          echo "No GitHub Actions SSH needed (IPv6 not supported)"
 
   # ============================================
   # Notify Telegram
@@ -251,15 +91,14 @@ jobs:
         run: |
           VERCEL_STATUS="${{ needs.deploy-vercel.outputs.vercel_status }}"
           VPS_STATUS="${{ needs.deploy-vps.outputs.vps_status }}"
-          VPS_HEALTH="${{ needs.deploy-vps.outputs.vps_health }}"
 
-          # Overall status
-          if [ "$VERCEL_STATUS" = "success" ] && [ "$VPS_STATUS" = "success" ]; then
-            OVERALL="✅ SUCCESS"
+          # Overall status (Vercel only, VPS auto-deploys via git hook)
+          if [ "$VERCEL_STATUS" = "success" ]; then
+            OVERALL="✅ VERCEL DEPLOYED"
             EMOJI="✅"
           else
-            OVERALL="❌ FAILED"
-            EMOJI="🔴"
+            OVERALL="⚠️ VERCEL FAILED"
+            EMOJI="⚠️"
           fi
 
           # Format message
@@ -268,8 +107,8 @@ jobs:
 
           MSG="$EMOJI *HERMES OS Deploy*%0A"
           MSG="${MSG}%0A*Resultado:* $OVERALL%0A"
-          MSG="${MSG}Vercel: $VERCEL_EMOJI $VERCEL_STATUS%0A"
-          MSG="${MSG}VPS: $VPS_EMOJI $VPS_STATUS"
+          MSG="${MSG}Vercel (Frontend): $VERCEL_EMOJI $VERCEL_STATUS%0A"
+          MSG="${MSG}VPS (Backend): 🔄 Auto-deploy via git hook"
 
           if [ -n "$VPS_HEALTH" ] && [ "$VPS_HEALTH" != "UNHEALTHY" ]; then
             MSG="${MSG} ($VPS_HEALTH)"
