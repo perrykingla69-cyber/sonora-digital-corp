@@ -81,9 +81,8 @@ jobs:
             echo "mystic=true" >> $GITHUB_OUTPUT
             echo "content=true" >> $GITHUB_OUTPUT
           else
-            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")
-            [ -z "$(echo "$CHANGED" | grep -v '^$')" ] && CHANGED="all"
-            echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | tr '\n' '|' || echo "all")
+            [ -z "$CHANGED" ] && CHANGED="all"
             echo "api=$(echo "$CHANGED" | grep -qE 'apps/api/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
             echo "clawbot=$(echo "$CHANGED" | grep -qE 'apps/clawbot/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
             echo "hermes=$(echo "$CHANGED" | grep -qE 'apps/hermes/|all' && echo true || echo false)" >> $GITHUB_OUTPUT
