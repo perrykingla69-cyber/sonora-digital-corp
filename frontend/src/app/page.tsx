@@ -50,12 +50,12 @@ export default function HomePage() {
   }
 
   const niches = [
-    { slug: 'restaurante', name: '🍽️ Restaurantes', desc: 'Inventario, facturas CFDI, márgenes' },
-    { slug: 'contador', name: '📊 Contadores', desc: 'Cierre automático, reportes fiscales' },
-    { slug: 'pastelero', name: '🎂 Panaderías', desc: 'Recetas, costos, planning' },
-    { slug: 'abogado', name: '⚖️ Despachos', desc: 'CRM, plazos procesales, honorarios' },
-    { slug: 'fontanero', name: '🔧 Servicios', desc: 'Agenda, presupuestos, facturas móvil' },
-    { slug: 'consultor', name: '💼 Consultores', desc: 'Proyectos, timesheet, rentabilidad' },
+    { slug: 'restaurante', name: '🍽️ Restaurantes', desc: 'Pedidos, reservas, inventario' },
+    { slug: 'pastelero', name: '🎂 Panaderías', desc: 'Órdenes 24/7, confirmaciones automáticas' },
+    { slug: 'abogado', name: '⚖️ Despachos', desc: 'Consultas iniciales, seguimiento de casos' },
+    { slug: 'fontanero', name: '🔧 Servicios', desc: 'Agenda, presupuestos, notificaciones' },
+    { slug: 'consultor', name: '💼 Consultores', desc: 'Proyectos, propuestas, análisis automático' },
+    { slug: 'comercio', name: '🛒 E-commerce', desc: 'Soporte, recomendaciones, upsell IA' },
   ]
 
   return (
@@ -84,9 +84,9 @@ export default function HomePage() {
           Orquestador IA para PYMEs mexicanas
         </p>
         <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-12">
-          Automatiza contabilidad, facturas CFDI, WhatsApp/Telegram, RAG y más.
+          Agentes IA que automatizan tu negocio. Operan 24/7 en Telegram y WhatsApp.
           <br />
-          100% en México. Sin papeleos. 24/7.
+          Sin código. Sin complicaciones. Listo en minutos.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
@@ -123,7 +123,7 @@ export default function HomePage() {
       {/* Niches */}
       <section id="niches" className="max-w-6xl mx-auto px-4 py-20">
         <h2 className="text-4xl font-bold text-center mb-16 text-white">
-          6 Verticales Especializadas
+          Cualquier Negocio. Cualquier Industria.
         </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {niches.map((niche) => (
