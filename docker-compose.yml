@@ -366,6 +366,368 @@ services:
       timeout: 5s
       retries: 3
 
+  # ── CAPA 4.6: PHASE 2 AGENTS (Especialistas) ────────────
+  fiscal-agent:
+    build:
+      context: ./apps/fiscal-agent
+      dockerfile: Dockerfile
+    container_name: hermes_fiscal
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/6
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: FISCAL
+      AGENT_ROLE: fiscal_expert
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-hermes-qdrant-internal}
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  food-agent:
+    build:
+      context: ./apps/food-agent
+      dockerfile: Dockerfile
+    container_name: hermes_food
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/7
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: FOOD
+      AGENT_ROLE: food_safety_expert
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-hermes-qdrant-internal}
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  legal-agent:
+    build:
+      context: ./apps/legal-agent
+      dockerfile: Dockerfile
+    container_name: hermes_legal
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/8
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: LEGAL
+      AGENT_ROLE: legal_expert
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-hermes-qdrant-internal}
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  n8n-agent:
+    build:
+      context: ./apps/n8n-agent
+      dockerfile: Dockerfile
+    container_name: hermes_n8n_agent
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/9
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: N8N-AGENT
+      AGENT_ROLE: workflow_manager
+      N8N_URL: http://n8n:5678
+      N8N_API_KEY: ${N8N_API_KEY:-}
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+      n8n:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  monitoring-agent:
+    build:
+      context: ./apps/monitoring-agent
+      dockerfile: Dockerfile
+    container_name: hermes_monitoring
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/10
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: MONITORING
+      AGENT_ROLE: system_monitor
+      TELEGRAM_TOKEN_CEO: ${TELEGRAM_TOKEN_CEO}
+      CEO_CHAT_ID: ${CEO_CHAT_ID}
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  docker-agent:
+    build:
+      context: ./apps/docker-agent
+      dockerfile: Dockerfile
+    container_name: hermes_docker
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/11
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: DOCKER-AGENT
+      AGENT_ROLE: container_manager
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  database-agent:
+    build:
+      context: ./apps/database-agent
+      dockerfile: Dockerfile
+    container_name: hermes_database
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/12
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: DATABASE
+      AGENT_ROLE: database_manager
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  deployment-agent:
+    build:
+      context: ./apps/deployment-agent
+      dockerfile: Dockerfile
+    container_name: hermes_deployment
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/13
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: DEPLOYMENT
+      AGENT_ROLE: deployment_manager
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      VPS_HOST: ${VPS_HOST:-}
+      VPS_SSH_KEY: ${VPS_SSH_KEY:-}
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  sdd-agent:
+    build:
+      context: ./apps/sdd-agent
+      dockerfile: Dockerfile
+    container_name: hermes_sdd
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/14
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: SDD-AGENT
+      AGENT_ROLE: spec_driven_development
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  code-review-agent:
+    build:
+      context: ./apps/code-review-agent
+      dockerfile: Dockerfile
+    container_name: hermes_code_review
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/15
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: CODE-REVIEW
+      AGENT_ROLE: code_reviewer
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  architecture-agent:
+    build:
+      context: ./apps/architecture-agent
+      dockerfile: Dockerfile
+    container_name: hermes_architecture
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/16
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: ARCHITECTURE
+      AGENT_ROLE: architecture_lead
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  ceo-briefing-agent:
+    build:
+      context: ./apps/ceo-briefing-agent
+      dockerfile: Dockerfile
+    container_name: hermes_ceo_briefing
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/17
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: CEO-BRIEFING
+      AGENT_ROLE: executive_briefer
+      TELEGRAM_TOKEN_CEO: ${TELEGRAM_TOKEN_CEO}
+      CEO_CHAT_ID: ${CEO_CHAT_ID}
+      CEO_EMAIL: ${CEO_EMAIL}
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  tenant-onboarding-agent:
+    build:
+      context: ./apps/tenant-onboarding-agent
+      dockerfile: Dockerfile
+    container_name: hermes_tenant_onboard
+    <<: *always
+    logging: *default-logging
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-hermes}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hermes_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/18
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AGENT_NAME: TENANT-ONBOARDING
+      AGENT_ROLE: onboarding_specialist
+    networks:
+      - hermes_net
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
   # ── CAPA 5: FRONTEND ─────────────────────────────────────
   frontend:
     build:
