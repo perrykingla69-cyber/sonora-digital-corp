@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from . import alertas, auth, contactos, dashboard, empleados, facturas, leads, memory, ops, tenants
-from .v1 import agents, signup, agent_deployments, bots, gamification
+from .v1 import agents, signup, agent_deployments, bots, gamification, fiscal
 
 api_router = APIRouter()
 api_router.include_router(ops.router)
@@ -18,6 +18,7 @@ api_router.include_router(memory.router)
 
 # V1 API with /api/v1 prefix
 api_router.include_router(agents.router, prefix="/api/v1/agents", tags=["agents-hermes"])
+api_router.include_router(fiscal.router, prefix="/api/v1/agents", tags=["fiscal-agent"])
 
 # Fase 1 — SaaS Platform endpoints
 api_router.include_router(signup.router, prefix="/api/v1/users", tags=["users"])

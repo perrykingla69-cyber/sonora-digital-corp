@@ -47,3 +47,17 @@ class MysticAnalyzeResponse(BaseModel):
     recommendations: List[str] = Field(default_factory=list, description="Recomendaciones accionables")
     generated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp de generación")
     used_mock: bool = Field(False, description="True si usó fallback mock")
+
+
+class FiscalOperationRequest(BaseModel):
+    """Request para POST /api/v1/agents/fiscal/{operation}"""
+    tenant_id: UUID = Field(..., description="UUID del tenant")
+    inputs: dict = Field(..., description="Parámetros de entrada para la operación")
+
+
+class FiscalOperationResponse(BaseModel):
+    """Response para POST /api/v1/agents/fiscal/{operation}"""
+    success: bool = Field(..., description="Operación exitosa")
+    data: Optional[dict] = Field(None, description="Resultado de la operación")
+    error: Optional[str] = Field(None, description="Mensaje de error si no exitosa")
+    latency_ms: int = Field(..., description="Tiempo procesamiento en ms")

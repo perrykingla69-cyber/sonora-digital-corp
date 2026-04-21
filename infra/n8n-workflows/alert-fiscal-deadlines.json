@@ -1,0 +1,100 @@
+{
+  "name": "Alert Fiscal Deadlines",
+  "description": "Send WhatsApp alerts 5 days before fiscal obligation deadlines",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": ["06:00"]
+      },
+      "name": "Daily Trigger (6 AM MX)",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "host": "postgres",
+        "port": 5432,
+        "database": "hermes_db",
+        "user": "{{ $env.DB_USER }}",
+        "password": "{{ $env.DB_PASSWORD }}",
+        "queries": "SELECT o.id, o.tenant_id, o.nombre, o.vencimiento, o.monto, t.whatsapp_number FROM obligaciones o JOIN tenants t ON o.tenant_id = t.id WHERE o.vencimiento - CURRENT_DATE = 5 AND o.completada = false"
+      },
+      "name": "Query Obligaciones (5d)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "resource": "generic",
+        "requestMethod": "POST",
+        "url": "http://evolution:8080/message/sendText",
+        "authentication": "genericCredentialType",
+        "genericCredentials": "evolution_api",
+        "sendBody": true,
+        "bodyParametersUi": "keyvalue",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chatId",
+              "value": "={{ $node['Query Obligaciones (5d)'].json.whatsapp_number }}@s.whatsapp.net"
+            },
+            {
+              "name": "text",
+              "value": "📌 Obligación fiscal próxima a vencer:\\n\\n*{{ $node['Query Obligaciones (5d)'].json.nombre }}*\\n\\nVencimiento: {{ $node['Query Obligaciones (5d)'].json.vencimiento }}\\nMonto: ${{ $node['Query Obligaciones (5d)'].json.monto }}\\n\\n🔗 Ver: https://contador.hermes.mx/alerts"
+            }
+          ]
+        }
+      },
+      "name": "Send WhatsApp Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "host": "postgres",
+        "port": 5432,
+        "database": "hermes_db",
+        "user": "{{ $env.DB_USER }}",
+        "password": "{{ $env.DB_PASSWORD }}",
+        "queries": "INSERT INTO alerts_sent (tenant_id, obligacion, deadline, sent_at, status) VALUES ('{{ $node['Query Obligaciones (5d)'].json.tenant_id }}', '{{ $node['Query Obligaciones (5d)'].json.nombre }}', '{{ $node['Query Obligaciones (5d)'].json.vencimiento }}', NOW(), 'sent') ON CONFLICT DO NOTHING"
+      },
+      "name": "Log Alert Sent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "resource": "webhook",
+        "webhookUrl": "https://hooks.slack.com/services/{{ $env.SLACK_WEBHOOK }}",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParametersUi": "json",
+        "body": "{ \"text\": \"⚠️ N8N Alert Sent Failed\", \"blocks\": [{ \"type\": \"section\", \"text\": { \"type\": \"mrkdwn\", \"text\": \"*Error*: {{ $node['Send WhatsApp Alert'].json.message }}\" } }] }"
+      },
+      "name": "Error: Slack Notify",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [750, 450]
+    }
+  ],
+  "connections": {
+    "Daily Trigger (6 AM MX)": {
+      "main": [[{ "node": "Query Obligaciones (5d)", "branch": 0, "type": "main" }]]
+    },
+    "Query Obligaciones (5d)": {
+      "main": [[{ "node": "Send WhatsApp Alert", "branch": 0, "type": "main" }]]
+    },
+    "Send WhatsApp Alert": {
+      "main": [[{ "node": "Log Alert Sent", "branch": 0, "type": "main" }]],
+      "error": [[{ "node": "Error: Slack Notify", "branch": 0, "type": "main" }]]
+    }
+  },
+  "settings": {
+    "saveManualExecutions": true,
+    "timezone": "America/Mexico_City"
+  }
+}
