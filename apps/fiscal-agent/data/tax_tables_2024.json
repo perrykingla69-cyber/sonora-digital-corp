@@ -1,0 +1,32 @@
+{
+  "isr": {
+    "tablas_progresivas": {
+      "2024": [
+        {"desde": 0, "hasta": 7325.79, "tarifa": 0.016, "cuota_fija": 0},
+        {"desde": 7325.80, "hasta": 57382.77, "tarifa": 0.104, "cuota_fija": 117.21},
+        {"desde": 57382.78, "hasta": 120171.46, "tarifa": 0.192, "cuota_fija": 6241.26},
+        {"desde": 120171.47, "hasta": 252473.54, "tarifa": 0.216, "cuota_fija": 18961.20},
+        {"desde": 252473.55, "hasta": 555293.11, "tarifa": 0.264, "cuota_fija": 50844.29},
+        {"desde": 555293.12, "hasta": 956456.26, "tarifa": 0.296, "cuota_fija": 129233.82},
+        {"desde": 956456.27, "hasta": 1850296.66, "tarifa": 0.336, "cuota_fija": 289237.55},
+        {"desde": 1850296.67, "hasta": 3000000, "tarifa": 0.384, "cuota_fija": 603880.42},
+        {"desde": 3000000.01, "tarifa": 0.4, "cuota_fija": 1103261.73}
+      ]
+    },
+    "deductible_maximo": 0.7,
+    "personas_morales": {
+      "tasa_fija": 0.30
+    }
+  },
+  "iva": {
+    "tasas": [0, 8, 16],
+    "tarifa_general": 0.16,
+    "tarifa_alimentos": 0.0
+  },
+  "ieps": {
+    "gasolina": 0.381,
+    "diesel": 0.341,
+    "alcoholes": [0.06, 0.08, 0.12, 0.16]
+  },
+  "fuente": "LISR 2024 & LIVA 2024 SAT"
+}

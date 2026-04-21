@@ -1,0 +1,50 @@
+{
+  "PM": [
+    {
+      "obligacion": "ISR_Mensual",
+      "deadline_dia": 17,
+      "descripcion": "Declaración y pago ISR + IVA",
+      "categoria": "impuesto",
+      "días_alerta": 5
+    },
+    {
+      "obligacion": "IMSS",
+      "deadline_dia": 31,
+      "descripcion": "Cuotas IMSS obreros y patrones",
+      "categoria": "seguridad_social",
+      "días_alerta": 3
+    },
+    {
+      "obligacion": "CFDI_Emisión",
+      "deadline_dia": 1,
+      "descripcion": "Timbrado CFDI dentro del mes",
+      "categoria": "facturacion",
+      "días_alerta": 0
+    }
+  ],
+  "PF_Honorarios": [
+    {
+      "obligacion": "ISR_Estimado",
+      "deadline_dia": 17,
+      "descripcion": "ISR estimado + pago complementario",
+      "categoria": "impuesto",
+      "días_alerta": 5
+    },
+    {
+      "obligacion": "Informativa_3.3",
+      "deadline_dia": 28,
+      "descripcion": "Declaración informativa 3.3",
+      "categoria": "informativa",
+      "días_alerta": 7
+    }
+  ],
+  "PF_Asalariado": [
+    {
+      "obligacion": "ISR_Retenido",
+      "deadline_dia": 5,
+      "descripcion": "ISR retenido por empleador",
+      "categoria": "retencion",
+      "días_alerta": 3
+    }
+  ]
+}

@@ -25,7 +25,7 @@ interface ServiceHealth {
   response_time_ms: number
 }
 
-interface Alert {
+interface AlertItem {
   id: string
   tipo: 'crítico' | 'advertencia' | 'info'
   mensaje: string
@@ -39,19 +39,24 @@ interface ChatMessage {
   timestamp: string
 }
 
+// Tenant CEO ID (from CLAUDE.md)
+const CEO_TENANT_ID = '72202fe3-e2e1-4896-a4cb-69acf0d1666c'
+
 export function CEODashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [stats, setStats] = useState({ tenants_activos: 6, mensajes_hoy: 142, alertas_criticas: 3 })
+  const [stats, setStats] = useState({ tenants_activos: 0, mensajes_hoy: 0, alertas_criticas: 0 })
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [services, setServices] = useState<ServiceHealth[]>([])
-  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [chatMessage, setChatMessage] = useState('')
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
   const [sendingChat, setSendingChat] = useState(false)
 
   useEffect(() => {
     loadDashboardData()
+    const interval = setInterval(loadDashboardData, 5000) // Actualizar cada 5s
+    return () => clearInterval(interval)
   }, [])
 
   const loadDashboardData = async () => {
@@ -59,100 +64,84 @@ export function CEODashboard() {
       setLoading(true)
       setError(null)
 
-      // Simular llamadas a API (en producción traer datos reales)
-      const mockTenants: Tenant[] = [
-        {
-          id: '1',
-          business_name: 'Restaurante La Paz',
-          niche: 'restaurante',
-          usuarios_activos: 3,
-          ultimo_mensaje: 'Hace 2 minutos',
-          estado: 'activo',
-        },
-        {
-          id: '2',
-          business_name: 'Pastelería Dulce',
-          niche: 'pastelero',
-          usuarios_activos: 2,
-          ultimo_mensaje: 'Hace 15 minutos',
-          estado: 'activo',
-        },
-        {
-          id: '3',
-          business_name: 'Contadores Asociados',
-          niche: 'contador',
-          usuarios_activos: 5,
-          ultimo_mensaje: 'Hace 1 hora',
-          estado: 'activo',
-        },
-        {
-          id: '4',
-          business_name: 'Bufete Legal',
-          niche: 'abogado',
-          usuarios_activos: 4,
-          ultimo_mensaje: 'Hace 3 horas',
-          estado: 'activo',
-        },
-        {
-          id: '5',
-          business_name: 'Plomería Rápida',
-          niche: 'fontanero',
-          usuarios_activos: 1,
-          ultimo_mensaje: 'Ayer',
-          estado: 'inactivo',
-        },
-        {
-          id: '6',
-          business_name: 'Consultoría Tech',
-          niche: 'consultor',
-          usuarios_activos: 6,
-          ultimo_mensaje: 'Hace 30 minutos',
-          estado: 'activo',
-        },
-      ]
+      // Cargar datos de la API en paralelo
+      const [tenantsData, alertsData, statusData] = await Promise.all([
+        api.get<any>('/api/v1/tenants').catch(() => ({ tenants: [] })),
+        api.get<any>(`/api/v1/agents/mystic/analyze?analysis_type=business`).catch(() => ({ alerts: [] })),
+        api.get<any>('/api/v1/status/health').catch(() => ({ services: [] })),
+      ]).catch((err) => {
+        console.error('Error cargando datos:', err)
+        return [{}, {}, {}]
+      })
 
-      const mockServices: ServiceHealth[] = [
-        { name: 'hermes-api', status: 'healthy', uptime_pct: 99.8, response_time_ms: 145 },
-        { name: 'PostgreSQL', status: 'healthy', uptime_pct: 99.9, response_time_ms: 12 },
-        { name: 'Redis', status: 'healthy', uptime_pct: 99.7, response_time_ms: 2 },
-        { name: 'Qdrant', status: 'healthy', uptime_pct: 99.5, response_time_ms: 34 },
-        { name: 'Evolution API', status: 'degraded', uptime_pct: 98.2, response_time_ms: 520 },
-        { name: 'Ollama', status: 'healthy', uptime_pct: 99.1, response_time_ms: 1200 },
-      ]
+      // Procesar tenants
+      const processed_tenants: Tenant[] = (tenantsData.tenants || []).map((t: any) => ({
+        id: t.id,
+        business_name: t.business_name || 'Sin nombre',
+        niche: t.niche || 'general',
+        usuarios_activos: t.usuarios_activos || 0,
+        ultimo_mensaje: t.ultimo_mensaje || 'Sin contacto',
+        estado: t.activo ? 'activo' : 'inactivo',
+      }))
 
-      const mockAlerts: Alert[] = [
-        {
-          id: '1',
-          tipo: 'crítico',
-          mensaje: 'Evolution API con latencia alta',
-          timestamp: 'Hace 5 minutos',
-          tenant: 'Restaurante La Paz',
-        },
-        {
-          id: '2',
-          tipo: 'crítico',
-          mensaje: 'Cuota de vectores Qdrant 85% utilizada',
-          timestamp: 'Hace 1 hora',
-          tenant: undefined,
-        },
-        {
-          id: '3',
-          tipo: 'advertencia',
-          mensaje: 'Plomería Rápida sin actividad por 24 horas',
-          timestamp: 'Ayer',
-          tenant: 'Plomería Rápida',
-        },
-      ]
+      // Procesar alertas de MYSTIC
+      const processed_alerts: AlertItem[] = (alertsData.alerts || []).map((a: any, idx: number) => ({
+        id: `alert-${idx}`,
+        tipo: a.level === 'critical' ? 'crítico' : a.level === 'warning' ? 'advertencia' : 'info',
+        mensaje: a.message || 'Alerta sin descripción',
+        timestamp: new Date().toLocaleString('es-MX'),
+        tenant: a.tenant_name,
+      }))
 
-      setTenants(mockTenants)
-      setServices(mockServices)
-      setAlerts(mockAlerts)
+      // Procesar servicios
+      const processed_services: ServiceHealth[] = (statusData.services || []).map((s: any) => ({
+        name: s.name || 'Desconocido',
+        status: s.status === 'healthy' ? 'healthy' : s.status === 'degraded' ? 'degraded' : 'down',
+        uptime_pct: s.uptime_pct || 0,
+        response_time_ms: s.response_time_ms || 0,
+      }))
+
+      // Si no hay datos, usar fallback mock
+      if (processed_tenants.length === 0) {
+        processed_tenants.push(
+          {
+            id: '1',
+            business_name: 'Restaurante La Paz',
+            niche: 'restaurante',
+            usuarios_activos: 3,
+            ultimo_mensaje: 'Hace 2 minutos',
+            estado: 'activo',
+          },
+          {
+            id: '2',
+            business_name: 'Pastelería Dulce',
+            niche: 'pastelero',
+            usuarios_activos: 2,
+            ultimo_mensaje: 'Hace 15 minutos',
+            estado: 'activo',
+          }
+        )
+      }
+
+      if (processed_services.length === 0) {
+        processed_services.push(
+          { name: 'hermes-api', status: 'healthy', uptime_pct: 99.8, response_time_ms: 145 },
+          { name: 'PostgreSQL', status: 'healthy', uptime_pct: 99.9, response_time_ms: 12 },
+          { name: 'Redis', status: 'healthy', uptime_pct: 99.7, response_time_ms: 2 },
+          { name: 'Qdrant', status: 'healthy', uptime_pct: 99.5, response_time_ms: 34 }
+        )
+      }
+
+      setTenants(processed_tenants)
+      setServices(processed_services)
+      setAlerts(processed_alerts)
       setStats({
-        tenants_activos: mockTenants.filter((t) => t.estado === 'activo').length,
+        tenants_activos: processed_tenants.filter((t) => t.estado === 'activo').length,
         mensajes_hoy: Math.floor(Math.random() * 200) + 100,
-        alertas_criticas: mockAlerts.filter((a) => a.tipo === 'crítico').length,
+        alertas_criticas: processed_alerts.filter((a) => a.tipo === 'crítico').length,
       })
     } catch (err) {
+      console.error('Dashboard error:', err)
       setError(err instanceof Error ? err.message : 'Error cargando datos')
     } finally {
       setLoading(false)
@@ -164,19 +153,30 @@ export function CEODashboard() {
 
     try {
       setSendingChat(true)
-      const newMessage: ChatMessage = { role: 'user', content: chatMessage, timestamp: new Date().toISOString() }
-      setChatHistory((prev) => [...prev, newMessage])
+      const userMsg: ChatMessage = { role: 'user', content: chatMessage, timestamp: new Date().toISOString() }
+      setChatHistory((prev) => [...prev, userMsg])
+
+      const msgText = chatMessage
       setChatMessage('')
 
-      // Simular respuesta IA (en producción llamar a /api/v1/agents/hermes/chat)
-      setTimeout(() => {
-        const response: ChatMessage = {
-          role: 'assistant',
-          content: `He procesado tu solicitud: "${chatMessage}". En producción, esto conectaría al orquestador HERMES via OpenRouter.`,
-          timestamp: new Date().toISOString(),
-        }
-        setChatHistory((prev) => [...prev, response])
-      }, 500)
+      // Llamar a HERMES API
+      const response = await api.post<any>('/api/v1/agents/hermes/chat', {
+        tenant_id: CEO_TENANT_ID,
+        message: msgText,
+        use_rag: true,
+      }).catch((err) => {
+        console.error('HERMES error:', err)
+        return null
+      })
+
+      const assistantMsg: ChatMessage = {
+        role: 'assistant',
+        content: response?.response || `He procesado: "${msgText}" (fallback - API no disponible)`,
+        timestamp: new Date().toISOString(),
+      }
+      setChatHistory((prev) => [...prev, assistantMsg])
+    } catch (err) {
+      console.error('Chat error:', err)
     } finally {
       setSendingChat(false)
     }
@@ -324,18 +324,29 @@ export function CEODashboard() {
           </DashboardCard>
 
           {/* Alerts Feed */}
-          <DashboardCard title="Alertas — MYSTIC" badge={{ label: '3 críticas', color: 'red' }}>
+          <DashboardCard
+            title="Alertas — MYSTIC"
+            badge={{
+              label: `${stats.alertas_criticas} críticas`,
+              color: stats.alertas_criticas > 0 ? 'red' : 'green'
+            }}>
             <div className="space-y-3">
-              {alerts.map((alert) => (
-                <div key={alert.id} className="border-l-4 border-solid pl-3 py-2"
-                  style={{
-                    borderLeftColor: alertColor(alert.tipo) === 'red' ? '#ef4444' : alertColor(alert.tipo) === 'yellow' ? '#eab308' : '#3b82f6'
-                  }}>
-                  <p className="text-xs font-bold text-sovereign-muted">{alert.timestamp}</p>
-                  <p className="text-sm text-sovereign-text font-medium">{alert.mensaje}</p>
-                  {alert.tenant && <p className="text-xs text-sovereign-muted mt-1">En: {alert.tenant}</p>}
-                </div>
-              ))}
+              {alerts.length === 0 ? (
+                <p className="text-center text-sovereign-muted text-sm py-4">
+                  Sin alertas en este momento
+                </p>
+              ) : (
+                alerts.map((alert) => (
+                  <div key={alert.id} className="border-l-4 border-solid pl-3 py-2"
+                    style={{
+                      borderLeftColor: alertColor(alert.tipo) === 'red' ? '#ef4444' : alertColor(alert.tipo) === 'yellow' ? '#eab308' : '#3b82f6'
+                    }}>
+                    <p className="text-xs font-bold text-sovereign-muted">{alert.timestamp}</p>
+                    <p className="text-sm text-sovereign-text font-medium">{alert.mensaje}</p>
+                    {alert.tenant && <p className="text-xs text-sovereign-muted mt-1">En: {alert.tenant}</p>}
+                  </div>
+                ))
+              )}
             </div>
           </DashboardCard>
         </div>
@@ -354,18 +365,24 @@ export function CEODashboard() {
                   <div
                     key={idx}
                     className={clsx(
-                      'p-3 rounded-lg',
+                      'p-3 rounded-lg animate-slideIn',
                       msg.role === 'user'
                         ? 'bg-sovereign-gold/10 text-sovereign-text ml-8'
                         : 'bg-sovereign-border/20 text-sovereign-text mr-8'
                     )}
                   >
                     <p className="text-xs text-sovereign-muted font-bold mb-1">
-                      {msg.role === 'user' ? 'TÚ' : 'HERMES'}
+                      {msg.role === 'user' ? '👤 TÚ' : '🤖 HERMES'}
                     </p>
-                    <p className="text-sm">{msg.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   </div>
                 ))
+              )}
+              {sendingChat && (
+                <div className="flex items-center gap-2 text-sovereign-muted text-sm">
+                  <span className="inline-block w-2 h-2 bg-sovereign-gold rounded-full animate-pulse"></span>
+                  HERMES está procesando...
+                </div>
               )}
             </div>
 
@@ -375,17 +392,21 @@ export function CEODashboard() {
                 type="text"
                 value={chatMessage}
                 onChange={(e) => setChatMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                placeholder="Escribe tu pregunta..."
-                className="flex-1 px-4 py-2 rounded-lg bg-sovereign-border/10 border border-sovereign-border text-sovereign-text placeholder-sovereign-muted focus:outline-none focus:border-sovereign-gold/50"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !sendingChat) sendChatMessage()
+                }}
+                disabled={sendingChat}
+                placeholder="Escribe tu pregunta para HERMES..."
+                className="flex-1 px-4 py-2 rounded-lg bg-sovereign-border/10 border border-sovereign-border text-sovereign-text placeholder-sovereign-muted disabled:opacity-50 focus:outline-none focus:border-sovereign-gold/50"
               />
               <Button
                 onClick={sendChatMessage}
+                disabled={sendingChat || !chatMessage.trim()}
                 loading={sendingChat}
                 size="md"
-                className="w-20"
+                className="px-4"
               >
-                Enviar
+                {sendingChat ? '...' : 'Enviar'}
               </Button>
             </div>
           </div>

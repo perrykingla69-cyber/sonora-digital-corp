@@ -1,0 +1,37 @@
+{
+  "PM": {
+    "nombre": "Persona Moral",
+    "tipo": "empresa",
+    "tasa_isr": 0.30,
+    "permite_deduccion": true,
+    "deduccion_maxima": 0.70,
+    "obligaciones": ["ISR_Mensual", "IMSS", "CFDI_Emisión"],
+    "renovacion_anual": "diciembre"
+  },
+  "PF_Honorarios": {
+    "nombre": "Persona Física - Servicios Personales",
+    "tipo": "independiente",
+    "tasa_isr": 0.25,
+    "permite_deduccion": true,
+    "deduccion_maxima": 0.50,
+    "obligaciones": ["ISR_Estimado", "Informativa_3.3"],
+    "renovacion_anual": "enero"
+  },
+  "PF_Asalariado": {
+    "nombre": "Persona Física - Asalariado",
+    "tipo": "empleado",
+    "tasa_isr": "progresiva",
+    "permite_deduccion": false,
+    "obligaciones": ["ISR_Retenido"],
+    "renovacion_anual": "marzo"
+  },
+  "RIF": {
+    "nombre": "Régimen de Incorporación Fiscal",
+    "tipo": "micro_empresa",
+    "tasa_isr": 0.10,
+    "permite_deduccion": true,
+    "deduccion_maxima": 0.60,
+    "obligaciones": ["ISR_Mensual"],
+    "renovacion_anual": "enero"
+  }
+}

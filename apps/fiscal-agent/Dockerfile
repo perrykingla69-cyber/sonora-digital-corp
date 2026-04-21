@@ -1,6 +1,17 @@
-FROM python:3.11-slim
+FROM python:3.13-slim
+
 WORKDIR /app
+
 COPY requirements.txt .
-RUN pip install -q --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
-CMD ["python", "main.py"]
+
+ENV PORT=8001
+EXPOSE 8001
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+  CMD python -c "import requests; requests.get('http://localhost:8001/health', timeout=2)" || exit 1
+
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+
