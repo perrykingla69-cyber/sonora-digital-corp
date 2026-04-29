@@ -29,13 +29,13 @@ class HermesChatResponse(BaseModel):
 class MysticAnalyzeRequest(BaseModel):
     """Request para GET /api/v1/agents/mystic/analyze"""
     tenant_id: UUID = Field(..., description="UUID del tenant")
-    analysis_type: str = Field(..., regex=r"^(fiscal|food|business)$", description="Tipo de análisis")
+    analysis_type: str = Field(..., pattern=r"^(fiscal|food|business)$", description="Tipo de análisis")
     data: Optional[str] = Field(None, max_length=10000, description="Texto a analizar (para POST)")
 
 
 class AlertItem(BaseModel):
     """Estructura de alerta"""
-    level: str = Field(..., regex=r"^(critical|warning|info)$", description="Nivel de severidad")
+    level: str = Field(..., pattern=r"^(critical|warning|info)$", description="Nivel de severidad")
     message: str = Field(..., description="Mensaje de alerta")
     code: Optional[str] = Field(None, description="Código de error/alerta")
 

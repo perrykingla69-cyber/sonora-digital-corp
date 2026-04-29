@@ -106,7 +106,7 @@ async def hermes_chat(body: HermesChatRequest):
 )
 async def mystic_analyze(
     tenant_id: UUID = Query(..., description="UUID del tenant"),
-    analysis_type: str = Query(..., regex=r"^(fiscal|food|business)$", description="Tipo de análisis"),
+    analysis_type: str = Query(..., pattern=r"^(fiscal|food|business)$", description="Tipo de análisis"),
 ):
     """
     Análisis Profundo — MYSTIC (Estratega de Sombra).
