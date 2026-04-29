@@ -1,0 +1,53 @@
+{
+  "name": "ABE Music — Royalty Split Calculator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "royalty-split",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-1",
+      "name": "Royalty Split Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { artist_id, gross_revenue, currency } = $input.first().json;\nconst splits = [\n  { entity: 'ABE Music Inc (Management)', pct: 20 },\n  { entity: 'Artista', pct: 65 },\n  { entity: 'Productor', pct: 10 },\n  { entity: 'ABE Academy (Royalty Pool)', pct: 5 },\n];\nconst result = splits.map(s => ({ ...s, amount: (gross_revenue * s.pct / 100).toFixed(2), currency }));\nreturn [{ json: { artist_id, gross_revenue, currency, splits: result, calculated_at: new Date().toISOString() } }];"
+      },
+      "id": "code-1",
+      "name": "Calculate Splits",
+      "type": "n8n-nodes-base.code",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://hermes-api:8000/api/v1/royalties/record",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [{"name": "data", "value": "={{ $json }}"}]
+        }
+      },
+      "id": "api-1",
+      "name": "Record in DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $node['Calculate Splits'].json }}"
+      },
+      "id": "response-1",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Royalty Split Webhook": {"main": [[{"node": "Calculate Splits", "type": "main", "index": 0}]]},
+    "Calculate Splits": {"main": [[{"node": "Record in DB", "type": "main", "index": 0}]]},
+    "Record in DB": {"main": [[{"node": "Return Result", "type": "main", "index": 0}]]}
+  }
+}

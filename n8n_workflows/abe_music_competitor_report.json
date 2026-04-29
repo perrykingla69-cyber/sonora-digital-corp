@@ -1,0 +1,84 @@
+{
+  "name": "ABE Music — Weekly Competitor Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {"interval": [{"field": "cronExpression", "expression": "0 9 * * 5"}]}
+      },
+      "id": "cron-1",
+      "name": "Friday 9am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://spotify-mcp:8003/mcp",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "method", "value": "search_artist"},
+            {"name": "params", "value": {"name": "corridos tumbados norteño 2026"}}
+          ]
+        }
+      },
+      "id": "spotify-1",
+      "name": "Spotify Competitors",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://tiktok-mcp:8004/mcp",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "method", "value": "get_trending_hashtags"},
+            {"name": "params", "value": {"region": "MX", "limit": 15}}
+          ]
+        }
+      },
+      "id": "tiktok-1",
+      "name": "TikTok Trends",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 460]
+    },
+    {
+      "parameters": {
+        "url": "http://hermes-api:8000/api/v1/agents/hermes/chat",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "tenant_id", "value": "={{ $vars.ABE_TENANT_ID }}"},
+            {"name": "message", "value": "=Analiza estos datos de competidores y tendencias, da 3 recomendaciones estratégicas:\nSpotify: {{ JSON.stringify($node['Spotify Competitors'].json.result) }}\nTikTok: {{ JSON.stringify($node['TikTok Trends'].json.result) }}"},
+            {"name": "use_rag", "value": true}
+          ]
+        }
+      },
+      "id": "hermes-1",
+      "name": "HERMES Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [680, 380]
+    },
+    {
+      "parameters": {
+        "url": "={{ $vars.TELEGRAM_WEBHOOK_CEO }}",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "text", "value": "=🕵️ *Reporte Competidores — Semana {{ new Date().toLocaleDateString('es-MX') }}*\n\n{{ $node['HERMES Analysis'].json.response }}"}
+          ]
+        }
+      },
+      "id": "telegram-1",
+      "name": "Send to CEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 380]
+    }
+  ],
+  "connections": {
+    "Friday 9am": {"main": [[{"node": "Spotify Competitors", "type": "main", "index": 0}, {"node": "TikTok Trends", "type": "main", "index": 0}]]},
+    "Spotify Competitors": {"main": [[{"node": "HERMES Analysis", "type": "main", "index": 0}]]},
+    "TikTok Trends": {"main": [[{"node": "HERMES Analysis", "type": "main", "index": 0}]]},
+    "HERMES Analysis": {"main": [[{"node": "Send to CEO", "type": "main", "index": 0}]]}
+  }
+}

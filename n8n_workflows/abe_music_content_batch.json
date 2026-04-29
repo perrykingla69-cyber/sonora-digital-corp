@@ -1,0 +1,78 @@
+{
+  "name": "ABE Music — Content Batch Publisher",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {"interval": [{"field": "cronExpression", "expression": "0 8 * * 1"}]}
+      },
+      "id": "cron-1",
+      "name": "Weekly Monday 8am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://hermes-api:8000/api/v1/agents/hermes/chat",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "tenant_id", "value": "={{ $vars.ABE_TENANT_ID }}"},
+            {"name": "message", "value": "Genera 5 ideas de contenido para redes sociales para artistas norteños esta semana. Incluye hashtags trending."},
+            {"name": "use_rag", "value": true}
+          ]
+        }
+      },
+      "id": "hermes-1",
+      "name": "HERMES Content Ideas",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://tiktok-mcp:8004/mcp",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "method", "value": "get_trending_hashtags"},
+            {"name": "params", "value": {"region": "MX", "limit": 10}}
+          ]
+        }
+      },
+      "id": "tiktok-1",
+      "name": "TikTok Trending Hashtags",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 460]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{"value1": "={{ $node['HERMES Content Ideas'].json.response }}", "operation": "isNotEmpty"}]
+        }
+      },
+      "id": "if-1",
+      "name": "Has Content",
+      "type": "n8n-nodes-base.if",
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $vars.TELEGRAM_WEBHOOK_CEO }}",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "text", "value": "=📱 *Batch ABE Music semanal listo*\n\n{{ $node['HERMES Content Ideas'].json.response }}\n\n📈 *Hashtags trending:* {{ $node['TikTok Trending Hashtags'].json.result.hashtags.slice(0,5).map(h => '#'+h.name).join(' ') }}"}
+          ]
+        }
+      },
+      "id": "telegram-1",
+      "name": "Notify CEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Weekly Monday 8am": {"main": [[{"node": "HERMES Content Ideas", "type": "main", "index": 0}, {"node": "TikTok Trending Hashtags", "type": "main", "index": 0}]]},
+    "HERMES Content Ideas": {"main": [[{"node": "Has Content", "type": "main", "index": 0}]]},
+    "Has Content": {"main": [[{"node": "Notify CEO", "type": "main", "index": 0}]]}
+  }
+}

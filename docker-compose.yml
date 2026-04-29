@@ -753,6 +753,84 @@ services:
         limits:
           memory: 512M
 
+  # ── CAPA 6: ABE MUSIC MCPs ───────────────────────────────
+  spotify-mcp:
+    build:
+      context: ./apps/spotify-mcp
+    container_name: hermes_spotify_mcp
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8003:8003"
+    environment:
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:-}
+    networks:
+      - hermes_net
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  tiktok-mcp:
+    build:
+      context: ./apps/tiktok-mcp
+    container_name: hermes_tiktok_mcp
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8004:8004"
+    environment:
+      TIKTOK_ACCESS_TOKEN: ${TIKTOK_ACCESS_TOKEN:-}
+    networks:
+      - hermes_net
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  fashion-mcp:
+    build:
+      context: ./apps/fashion-mcp
+    container_name: hermes_fashion_mcp
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8005:8005"
+    environment:
+      PINTEREST_ACCESS_TOKEN: ${PINTEREST_ACCESS_TOKEN:-}
+    networks:
+      - hermes_net
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  task-validator:
+    build:
+      context: ./apps/task-validator
+    container_name: hermes_task_validator
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8006:8006"
+    networks:
+      - hermes_net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  safety-validator:
+    build:
+      context: ./apps/safety-validator
+    container_name: hermes_safety_validator
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8007:8007"
+    networks:
+      - hermes_net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
 networks:
   hermes_net:
     driver: bridge

@@ -1,0 +1,88 @@
+{
+  "name": "ABE Academy — Auto Certification on Course Completion",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "course-complete",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-1",
+      "name": "Course Complete Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{"value1": "={{ $json.score }}", "operation": "largerEqual", "value2": 80}]
+        }
+      },
+      "id": "if-1",
+      "name": "Score >= 80?",
+      "type": "n8n-nodes-base.if",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://task-validator:8006/validate/audio",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [{"name": "student_id", "value": "={{ $json.student_id }}"}, {"name": "course", "value": "={{ $json.course_id }}"}]
+        }
+      },
+      "id": "validate-1",
+      "name": "Validate Final Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [680, 240]
+    },
+    {
+      "parameters": {
+        "url": "http://hermes-api:8000/api/v1/certificates/mint",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "student_id", "value": "={{ $json.student_id }}"},
+            {"name": "course_id", "value": "={{ $json.course_id }}"},
+            {"name": "score", "value": "={{ $json.score }}"}
+          ]
+        }
+      },
+      "id": "mint-1",
+      "name": "Mint NFT Certificate",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 240]
+    },
+    {
+      "parameters": {
+        "url": "={{ $vars.TELEGRAM_WEBHOOK_CEO }}",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "text", "value": "=🎓 *Nuevo certificado ABE Academy*\n\nAlumno: {{ $json.student_name }}\nCurso: {{ $json.course_name }}\nScore: {{ $json.score }}%\n\nNFT minteado ✅"}
+          ]
+        }
+      },
+      "id": "telegram-1",
+      "name": "Notify CEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1120, 240]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"rejected\", \"reason\": \"Score below 80\"}"
+      },
+      "id": "response-fail",
+      "name": "Reject",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [680, 420]
+    }
+  ],
+  "connections": {
+    "Course Complete Webhook": {"main": [[{"node": "Score >= 80?", "type": "main", "index": 0}]]},
+    "Score >= 80?": {"main": [[{"node": "Validate Final Task", "type": "main", "index": 0}], [{"node": "Reject", "type": "main", "index": 0}]]},
+    "Validate Final Task": {"main": [[{"node": "Mint NFT Certificate", "type": "main", "index": 0}]]},
+    "Mint NFT Certificate": {"main": [[{"node": "Notify CEO", "type": "main", "index": 0}]]}
+  }
+}
