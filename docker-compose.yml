@@ -831,6 +831,25 @@ services:
         limits:
           memory: 512M
 
+  comfyui-proxy:
+    build:
+      context: ./apps/comfyui-proxy
+    container_name: hermes_comfyui_proxy
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8008:8008"
+    environment:
+      COMFYUI_URL: http://host.docker.internal:8188
+      DREAMINA_API_KEY: ${DREAMINA_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - hermes_net
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
 networks:
   hermes_net:
     driver: bridge
