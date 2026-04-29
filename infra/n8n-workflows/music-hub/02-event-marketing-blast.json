@@ -1,0 +1,283 @@
+{
+  "id": "music-hub-02-event-marketing",
+  "name": "Music Hub — Marketing Blast de Evento",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nuevo-evento",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-evento",
+      "name": "Webhook — Nuevo Evento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "music-hub-nuevo-evento"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, message: 'Evento recibido, procesando marketing' }) }}"
+      },
+      "id": "node-webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 180]
+    },
+    {
+      "parameters": {
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.OPENROUTER_API_KEY }}"
+            },
+            {
+              "name": "HTTP-Referer",
+              "value": "https://sonoradigitalcorp.com"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "google/gemini-2.0-flash-001"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"user\", \"content\": \"Genera copy de marketing en español para este evento musical:\\n\\nArtista: {{ $json.body.nombre_artistico }}\\nEvento: {{ $json.body.nombre_evento }}\\nFecha: {{ $json.body.fecha }}\\nLugar: {{ $json.body.lugar }}\\nGenero: {{ $json.body.genero || 'Regional Mexicano' }}\\n\\nCrea: 1) Post para Instagram (máx 150 palabras, con hashtags), 2) Mensaje corto para Telegram (máx 80 palabras). Responde en JSON con campos: instagram_post, telegram_msg\"}]"
+            },
+            {
+              "name": "max_tokens",
+              "value": 500
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-openrouter-copy",
+      "name": "OpenRouter — Generar Copy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsear respuesta de OpenRouter\nconst choice = $input.first().json.choices?.[0]?.message?.content || '{}';\nlet parsed;\ntry {\n  // Intentar extraer JSON del response\n  const match = choice.match(/\\{[\\s\\S]*\\}/);\n  parsed = match ? JSON.parse(match[0]) : { instagram_post: choice, telegram_msg: choice };\n} catch(e) {\n  parsed = { instagram_post: choice, telegram_msg: choice };\n}\n\n// Pasar datos del evento junto con el copy\nconst evento = $('Webhook — Nuevo Evento').first().json.body;\nreturn [{\n  json: {\n    ...evento,\n    instagram_post: parsed.instagram_post || '',\n    telegram_msg: parsed.telegram_msg || '',\n    copy_raw: choice,\n  }\n}];"
+      },
+      "id": "node-parse-copy",
+      "name": "Parsear Copy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://fal.run/fal-ai/flux/schnell",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Key {{ $env.FAL_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "=Concert event flyer for {{ $json.nombre_artistico }}, {{ $json.nombre_evento }}, {{ $json.fecha }}, {{ $json.lugar }}, Regional Mexicano music event, vibrant colors, professional poster design, festive atmosphere, high quality"
+            },
+            {
+              "name": "image_size",
+              "value": "portrait_4_3"
+            },
+            {
+              "name": "num_inference_steps",
+              "value": 4
+            },
+            {
+              "name": "num_images",
+              "value": 1
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "node-fal-flyer",
+      "name": "Fal.ai — Generar Flyer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combinar flyer URL con datos del evento\nconst flyer = $input.first().json;\nconst evento = $('Parsear Copy').first().json;\nreturn [{\n  json: {\n    ...evento,\n    flyer_url: flyer.images?.[0]?.url || null,\n  }\n}];"
+      },
+      "id": "node-merge-data",
+      "name": "Merge Evento + Flyer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "=🎉 *¡Tu evento está en marcha!*\n\n*{{ $json.nombre_evento }}*\n📅 {{ $json.fecha }}\n📍 {{ $json.lugar }}\n\n📱 *Copy para Telegram:*\n{{ $json.telegram_msg }}\n\n🖼️ Flyer: {{ $json.flyer_url || 'Generando...' }}\n\n_Activa el recordatorio 3 días antes en tu panel._",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": false
+        }
+      },
+      "id": "node-tg-evento-inicial",
+      "name": "Telegram — Blast Inicial al Artista",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "hermes-telegram-cred",
+          "name": "HERMES Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "id": "node-wait-3days",
+      "name": "Esperar 3 días",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1340, 500]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Merge Evento + Flyer').item.json.telegram_chat_id }}",
+        "text": "=⏰ *Recordatorio — 3 días para tu evento*\n\n*{{ $('Merge Evento + Flyer').item.json.nombre_evento }}*\n📅 {{ $('Merge Evento + Flyer').item.json.fecha }}\n📍 {{ $('Merge Evento + Flyer').item.json.lugar }}\n\n📢 ¿Ya publicaste en redes sociales? ¡Es el momento ideal!\n\n💡 Accede a tu panel para ver el copy listo: https://sonoradigitalcorp.com/dashboard",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-tg-reminder-blast",
+      "name": "Telegram — Reminder Blast",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1560, 500],
+      "credentials": {
+        "telegramApi": {
+          "id": "hermes-telegram-cred",
+          "name": "HERMES Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Nuevo Evento": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "OpenRouter — Generar Copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter — Generar Copy": {
+      "main": [
+        [
+          {
+            "node": "Parsear Copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Copy": {
+      "main": [
+        [
+          {
+            "node": "Fal.ai — Generar Flyer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fal.ai — Generar Flyer": {
+      "main": [
+        [
+          {
+            "node": "Merge Evento + Flyer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Evento + Flyer": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Blast Inicial al Artista",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Esperar 3 días",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar 3 días": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Reminder Blast",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/Hermosillo",
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": ["music-hub", "eventos", "marketing", "fal-ai", "openrouter"],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-25T00:00:00.000Z",
+  "versionId": "v1.0.0",
+  "active": true
+}

@@ -1,0 +1,241 @@
+{
+  "id": "music-hub-05-weekly-artist-report",
+  "name": "Music Hub — Reporte Semanal por Artista",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "node-cron-lunes",
+      "name": "Cron Lunes 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  a.id AS tenant_id,\n  a.nombre_artistico,\n  a.telegram_chat_id,\n  a.genero_musical,\n  COUNT(DISTINCT af.fan_id) FILTER (WHERE af.created_at >= NOW() - INTERVAL '7 days') AS fans_nuevos_semana,\n  COUNT(DISTINCT af.fan_id) AS fans_total,\n  COALESCE(SUM(af.puntos), 0) AS puntos_total_fans,\n  COUNT(DISTINCT e.id) FILTER (WHERE e.fecha_evento >= NOW() AND e.fecha_evento <= NOW() + INTERVAL '30 days') AS eventos_proximos,\n  COUNT(DISTINCT c.id) FILTER (WHERE c.created_at >= NOW() - INTERVAL '7 days') AS contrataciones_semana\nFROM artists a\nLEFT JOIN artist_fans af ON af.tenant_id = a.tenant_id\nLEFT JOIN artist_events e ON e.tenant_id = a.tenant_id\nLEFT JOIN artist_contrataciones c ON c.tenant_id = a.tenant_id\nWHERE a.activo = true AND a.telegram_chat_id IS NOT NULL\nGROUP BY a.id, a.nombre_artistico, a.telegram_chat_id, a.genero_musical\nORDER BY fans_nuevos_semana DESC",
+        "options": {}
+      },
+      "id": "node-pg-stats",
+      "name": "PostgreSQL — Stats por Artista",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [460, 300],
+      "credentials": {
+        "postgres": {
+          "id": "hermes-postgres-cred",
+          "name": "HERMES PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "node-split-artistas",
+      "name": "SplitInBatches — Por Artista",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.OPENROUTER_API_KEY }}"
+            },
+            {
+              "name": "HTTP-Referer",
+              "value": "https://sonoradigitalcorp.com"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "thudm/glm-z1-rumination:free"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"user\", \"content\": \"Eres MYSTIC, analista estratégico de Sonora Digital Corp. Analiza estos datos de la semana para el artista {{ $json.nombre_artistico }} ({{ $json.genero_musical }}):\\n\\n- Fans nuevos esta semana: {{ $json.fans_nuevos_semana }}\\n- Fans totales: {{ $json.fans_total }}\\n- Puntos acumulados fans: {{ $json.puntos_total_fans }}\\n- Eventos próximos (30 días): {{ $json.eventos_proximos }}\\n- Contrataciones esta semana: {{ $json.contrataciones_semana }}\\n\\nDa un análisis breve (máx 150 palabras) con: 1 fortaleza, 1 área de mejora y 1 acción concreta para la próxima semana. Habla directamente al artista en español, tono motivacional profesional.\"}]"
+            },
+            {
+              "name": "max_tokens",
+              "value": 400
+            }
+          ]
+        },
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "id": "node-openrouter-analisis",
+      "name": "OpenRouter GLM — Análisis Estratégico",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsear respuesta GLM Z1 y combinar con stats\nconst stats = $('SplitInBatches — Por Artista').item.json;\nconst glmResponse = $input.first().json;\nconst analisis = glmResponse.choices?.[0]?.message?.content || 'Análisis no disponible esta semana.';\n\n// Calcular tendencia\nconst tendencia = stats.fans_nuevos_semana > 0\n  ? `📈 +${stats.fans_nuevos_semana} fans nuevos esta semana`\n  : '📊 Sin fans nuevos esta semana — momento de activar promoción';\n\nconst reporte = `📊 *Reporte Semanal — ${stats.nombre_artistico}*\\n_Lunes ${new Date().toLocaleDateString('es-MX')}_\\n\\n` +\n  `*📈 Tu semana en números:*\\n` +\n  `• ${tendencia}\\n` +\n  `• 👥 Fans totales: ${stats.fans_total}\\n` +\n  `• 🎟️ Eventos próximos (30 días): ${stats.eventos_proximos}\\n` +\n  `• 📋 Nuevas contrataciones: ${stats.contrataciones_semana}\\n` +\n  `• 💎 Puntos acumulados fans: ${stats.puntos_total_fans}\\n\\n` +\n  `*🤖 Análisis MYSTIC:*\\n${analisis}\\n\\n` +\n  `_Ver reporte completo: https://sonoradigitalcorp.com/dashboard_`;\n\nreturn [{ json: { reporte, telegram_chat_id: stats.telegram_chat_id } }];"
+      },
+      "id": "node-build-reporte",
+      "name": "Build Reporte Semanal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $json.reporte }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "node-tg-reporte",
+      "name": "Telegram — Enviar Reporte al Artista",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "hermes-telegram-cred",
+          "name": "HERMES Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "leftValue": "={{ $('SplitInBatches — Por Artista').item.json.items_remaining }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        }
+      },
+      "id": "node-if-more",
+      "name": "¿Más artistas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "Cron Lunes 8AM": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL — Stats por Artista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL — Stats por Artista": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches — Por Artista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches — Por Artista": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter GLM — Análisis Estratégico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter GLM — Análisis Estratégico": {
+      "main": [
+        [
+          {
+            "node": "Build Reporte Semanal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reporte Semanal": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Enviar Reporte al Artista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram — Enviar Reporte al Artista": {
+      "main": [
+        [
+          {
+            "node": "¿Más artistas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Más artistas?": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches — Por Artista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/Hermosillo",
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": ["music-hub", "reporte", "semanal", "mystic", "openrouter"],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-25T00:00:00.000Z",
+  "versionId": "v1.0.0",
+  "active": true
+}

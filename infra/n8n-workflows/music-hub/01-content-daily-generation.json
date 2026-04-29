@@ -1,0 +1,220 @@
+{
+  "id": "music-hub-01-content-daily",
+  "name": "Music Hub — Generación Diaria de Contenido",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "node-cron-content",
+      "name": "Cron 2AM Diario",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT a.id AS tenant_id, a.nombre_artistico, a.genero_musical, a.telegram_chat_id FROM artists a INNER JOIN tenants t ON a.tenant_id = t.id WHERE a.activo = true AND a.telegram_chat_id IS NOT NULL ORDER BY a.created_at ASC",
+        "options": {}
+      },
+      "id": "node-pg-artists",
+      "name": "PostgreSQL — Artistas Activos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [460, 300],
+      "credentials": {
+        "postgres": {
+          "id": "hermes-postgres-cred",
+          "name": "HERMES PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "node-split-batches",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://fal.run/fal-ai/flux/schnell",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Key {{ $env.FAL_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "=Professional music artist promotional photo for {{ $json.nombre_artistico }}, {{ $json.genero_musical }} genre, vibrant Mexican regional music aesthetic, stage lighting, high quality, instagram ready, 4k"
+            },
+            {
+              "name": "image_size",
+              "value": "square_hd"
+            },
+            {
+              "name": "num_inference_steps",
+              "value": 4
+            },
+            {
+              "name": "num_images",
+              "value": 1
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "node-fal-image",
+      "name": "Fal.ai — Generar Imagen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO artist_content_daily (tenant_id, image_url, generated_at, status) VALUES ('{{ $('PostgreSQL — Artistas Activos').item.json.tenant_id }}', '{{ $json.images[0].url }}', NOW(), 'ready') ON CONFLICT DO NOTHING",
+        "options": {}
+      },
+      "id": "node-pg-save-content",
+      "name": "PostgreSQL — Guardar Contenido",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [1120, 200],
+      "credentials": {
+        "postgres": {
+          "id": "hermes-postgres-cred",
+          "name": "HERMES PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('PostgreSQL — Artistas Activos').item.json.telegram_chat_id }}",
+        "text": "=🎨 *Hola {{ $('PostgreSQL — Artistas Activos').item.json.nombre_artistico }}!*\n\nTus contenidos del día están listos ✅\n\n🖼️ Imagen generada y lista para publicar en redes sociales.\n\nAccede a tu panel para aprobar y programar: https://sonoradigitalcorp.com/dashboard",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-tg-notify-artist",
+      "name": "Telegram — Notificar Artista",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 400],
+      "credentials": {
+        "telegramApi": {
+          "id": "hermes-telegram-cred",
+          "name": "HERMES Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log de errores para monitoreo\nconst item = $input.first();\nconsole.log('[01-content-daily] Error procesando artista:', JSON.stringify(item.json));\nreturn [{ json: { error: true, data: item.json } }];"
+      },
+      "id": "node-error-handler",
+      "name": "Manejo de Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 500]
+    }
+  ],
+  "connections": {
+    "Cron 2AM Diario": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL — Artistas Activos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL — Artistas Activos": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "Fal.ai — Generar Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fal.ai — Generar Imagen": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL — Guardar Contenido",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram — Notificar Artista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL — Guardar Contenido": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/Hermosillo",
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["music-hub", "content", "fal-ai", "daily"],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-25T00:00:00.000Z",
+  "versionId": "v1.0.0",
+  "active": true
+}

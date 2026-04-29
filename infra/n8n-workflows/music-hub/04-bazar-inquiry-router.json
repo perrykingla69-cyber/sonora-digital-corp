@@ -1,0 +1,299 @@
+{
+  "id": "music-hub-04-bazar-inquiry-router",
+  "name": "Music Hub — Bazar Router de Solicitudes",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "id": "node-tg-trigger-bazar",
+      "name": "Telegram Trigger — Bazar",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "bazar-telegram-trigger",
+      "credentials": {
+        "telegramApi": {
+          "id": "bazar-telegram-cred",
+          "name": "Bazar Acordeones Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Detectar tipo de solicitud por palabras clave en el mensaje\nconst msg = ($input.first().json.message?.text || '').toLowerCase();\nconst chatId = $input.first().json.message?.chat?.id;\nconst from = $input.first().json.message?.from;\n\nlet tipo = 'otro';\nif (/repar|arregl|compost|rot[ao]|pegad|suelto|golpe/i.test(msg)) tipo = 'reparacion';\nelse if (/afin|desafin|destempl|tono|voz|nota/i.test(msg)) tipo = 'afinacion';\nelse if (/vip|membresia|suscri|plan|premium/i.test(msg)) tipo = 'membresia';\n\nreturn [{\n  json: {\n    tipo,\n    mensaje_original: msg,\n    chat_id: chatId,\n    nombre_usuario: from?.first_name || 'Cliente',\n    username: from?.username || null,\n    timestamp: new Date().toISOString(),\n  }\n}];"
+      },
+      "id": "node-classify-msg",
+      "name": "Clasificar Mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "value": "reparacion"
+            },
+            {
+              "value": "afinacion"
+            },
+            {
+              "value": "membresia"
+            }
+          ]
+        },
+        "fallbackOutput": "extra"
+      },
+      "id": "node-switch-tipo",
+      "name": "Switch — Tipo Solicitud",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO bazar_solicitudes (tipo, descripcion, nombre_cliente, telegram_chat_id, estado, created_at)\nVALUES ('{{ $json.tipo }}', '{{ $json.mensaje_original }}', '{{ $json.nombre_usuario }}', {{ $json.chat_id }}, 'pendiente', NOW())\nRETURNING id",
+        "options": {}
+      },
+      "id": "node-pg-insert-solicitud",
+      "name": "PostgreSQL — INSERT Solicitud",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [900, 200],
+      "credentials": {
+        "postgres": {
+          "id": "hermes-postgres-cred",
+          "name": "HERMES PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.BAZAR_ADMIN_CHAT_ID }}",
+        "text": "=🔧 *Nueva solicitud de REPARACIÓN*\n\n👤 Cliente: {{ $('Clasificar Mensaje').item.json.nombre_usuario }}\n📲 Chat ID: {{ $('Clasificar Mensaje').item.json.chat_id }}\n💬 Mensaje: _{{ $('Clasificar Mensaje').item.json.mensaje_original }}_\n⏰ Hora: {{ $('Clasificar Mensaje').item.json.timestamp }}\n\n🔑 Responde al chat_id para contactarlo directamente.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-tg-admin-reparacion",
+      "name": "Telegram — Notificar Joaquín (Reparación)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 100],
+      "credentials": {
+        "telegramApi": {
+          "id": "bazar-telegram-cred",
+          "name": "Bazar Acordeones Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.BAZAR_ADMIN_CHAT_ID }}",
+        "text": "=🎵 *Nueva solicitud de AFINACIÓN*\n\n👤 Cliente: {{ $('Clasificar Mensaje').item.json.nombre_usuario }}\n📲 Chat ID: {{ $('Clasificar Mensaje').item.json.chat_id }}\n💬 Mensaje: _{{ $('Clasificar Mensaje').item.json.mensaje_original }}_\n⏰ Hora: {{ $('Clasificar Mensaje').item.json.timestamp }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-tg-admin-afinacion",
+      "name": "Telegram — Notificar Joaquín (Afinación)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "bazar-telegram-cred",
+          "name": "Bazar Acordeones Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Clasificar Mensaje').item.json.chat_id }}",
+        "text": "=🎓 *Membresía VIP — $189 MXN/mes*\n\n✅ Descuento 15% en reparaciones\n✅ Afinación anual gratuita\n✅ Acceso prioritario a inventario\n✅ Soporte directo con Joaquín\n\n🔗 Suscríbete: https://pay.sonoradigitalcorp.com/bazar-vip\n\n¿Tienes dudas? Escribe /contacto",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-tg-info-membresia",
+      "name": "Telegram — Info Membresía VIP",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 500],
+      "credentials": {
+        "telegramApi": {
+          "id": "bazar-telegram-cred",
+          "name": "Bazar Acordeones Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Clasificar Mensaje').item.json.chat_id }}",
+        "text": "=🙋 *¡Gracias por contactarnos!*\n\nTu mensaje fue recibido y Joaquín te responderá pronto.\n\n⏱️ *Tiempo de respuesta estimado:*\n• Reparaciones: 2-4 horas hábiles\n• Afinaciones: 1-2 horas hábiles\n• Pedidos: 24 horas\n\nMientras tanto, usa /catalogo para ver nuestro inventario 🪗",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-tg-autoreply-cliente-rep",
+      "name": "Telegram — Auto-reply Cliente (Reparación)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 100],
+      "credentials": {
+        "telegramApi": {
+          "id": "bazar-telegram-cred",
+          "name": "Bazar Acordeones Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Clasificar Mensaje').item.json.chat_id }}",
+        "text": "=🎵 *Solicitud de afinación recibida.*\n\nJoaquín te confirmará disponibilidad y precio estimado.\n\n⏱️ *Tiempo de respuesta:* 1-2 horas hábiles\n\n📅 Servicio Normal: 7-10 días | Urgente: 24-48 hrs",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-tg-autoreply-cliente-af",
+      "name": "Telegram — Auto-reply Cliente (Afinación)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "bazar-telegram-cred",
+          "name": "Bazar Acordeones Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Clasificar Mensaje').item.json.chat_id }}",
+        "text": "Hola! Para ayudarte mejor, usa los comandos:\n\n/reparacion — Solicitar reparación\n/afinacion — Solicitar afinación\n/catalogo — Ver acordeones\n/membresia — Info VIP\n/contacto — Dirección y horarios",
+        "additionalFields": {}
+      },
+      "id": "node-tg-autoreply-otro",
+      "name": "Telegram — Auto-reply Otro",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 500],
+      "credentials": {
+        "telegramApi": {
+          "id": "bazar-telegram-cred",
+          "name": "Bazar Acordeones Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger — Bazar": {
+      "main": [
+        [
+          {
+            "node": "Clasificar Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Switch — Tipo Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch — Tipo Solicitud": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL — INSERT Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PostgreSQL — INSERT Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram — Info Membresía VIP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram — Auto-reply Otro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL — INSERT Solicitud": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Notificar Joaquín (Reparación)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram — Notificar Joaquín (Afinación)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram — Notificar Joaquín (Reparación)": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Auto-reply Cliente (Reparación)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram — Notificar Joaquín (Afinación)": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Auto-reply Cliente (Afinación)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/Hermosillo",
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": ["music-hub", "bazar", "router", "telegram"],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-25T00:00:00.000Z",
+  "versionId": "v1.0.0",
+  "active": false
+}

@@ -1,0 +1,220 @@
+{
+  "id": "music-hub-03-fan-crm-onboarding",
+  "name": "Music Hub — Fan CRM Onboarding",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nuevo-fan",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-fan",
+      "name": "Webhook — Nuevo Fan",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "music-hub-nuevo-fan"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, message: 'Fan registrado en CRM' }) }}"
+      },
+      "id": "node-webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Asignar nivel EMERGENTE y puntos iniciales\nconst body = $input.first().json.body || {};\nreturn [{\n  json: {\n    tenant_id:          body.tenant_id || null,\n    nombre:             body.nombre || 'Fan',\n    telefono:           body.telefono || null,\n    email:              body.email || null,\n    telegram_chat_id:   body.telegram_chat_id || null,\n    nivel:              'EMERGENTE',\n    puntos:             body.referido_por ? 25 : 0,  // bonus por referido\n    referido_por:       body.referido_por || null,\n    artista_slug:       body.artista_slug || null,\n    source:             body.source || 'telegram',\n  }\n}];"
+      },
+      "id": "node-set-nivel",
+      "name": "Set — Nivel EMERGENTE y Puntos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO artist_fans (\n  tenant_id, nombre, telefono, email, telegram_chat_id,\n  nivel, puntos, referido_por, created_at\n)\nSELECT\n  '{{ $json.tenant_id }}'::uuid,\n  '{{ $json.nombre }}',\n  {{ $json.telefono ? `'${$json.telefono}'` : 'NULL' }},\n  {{ $json.email ? `'${$json.email}'` : 'NULL' }},\n  {{ $json.telegram_chat_id || 'NULL' }},\n  '{{ $json.nivel }}',\n  {{ $json.puntos }},\n  {{ $json.referido_por ? `'${$json.referido_por}'::uuid` : 'NULL' }},\n  NOW()\nWHERE NOT EXISTS (\n  SELECT 1 FROM artist_fans\n  WHERE telegram_chat_id = {{ $json.telegram_chat_id || 0 }}\n  AND tenant_id = '{{ $json.tenant_id }}'\n)\nRETURNING fan_id, nivel, puntos",
+        "options": {}
+      },
+      "id": "node-pg-insert-fan",
+      "name": "PostgreSQL — INSERT Fan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [680, 400],
+      "credentials": {
+        "postgres": {
+          "id": "hermes-postgres-cred",
+          "name": "HERMES PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Set — Nivel EMERGENTE y Puntos').item.json.telegram_chat_id }}",
+        "text": "=🎸 *¡Bienvenido al Fan Club!*\n\nHola *{{ $('Set — Nivel EMERGENTE y Puntos').item.json.nombre }}*, ya eres parte de la familia.\n\n⭐ *Tu nivel:* EMERGENTE\n💎 *Puntos iniciales:* {{ $('Set — Nivel EMERGENTE y Puntos').item.json.puntos }}\n\n*¿Cómo ganar más puntos?*\n• Asistir a eventos (+100 pts)\n• Comprar merch (+50 pts por compra)\n• Referir amigos (+50 pts por referido)\n\nUsa /puntos para ver tu saldo en cualquier momento. ¡A gozar! 🎵",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-tg-welcome",
+      "name": "Telegram — Welcome Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "hermes-telegram-cred",
+          "name": "HERMES Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Set — Nivel EMERGENTE y Puntos').item.json.referido_por }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        }
+      },
+      "id": "node-if-referido",
+      "name": "¿Tiene Referido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 500]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE artist_fans SET puntos = puntos + 50 WHERE telegram_chat_id = {{ $('Set — Nivel EMERGENTE y Puntos').item.json.referido_por }} AND tenant_id = '{{ $('Set — Nivel EMERGENTE y Puntos').item.json.tenant_id }}' RETURNING fan_id, puntos, telegram_chat_id",
+        "options": {}
+      },
+      "id": "node-pg-bonus-referido",
+      "name": "PostgreSQL — Bonus Referidor",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [1120, 500],
+      "credentials": {
+        "postgres": {
+          "id": "hermes-postgres-cred",
+          "name": "HERMES PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "=🎉 *¡Bonus de referido!*\n\n*{{ $('Set — Nivel EMERGENTE y Puntos').item.json.nombre }}* se unió usando tu link.\n\n+50 puntos añadidos a tu cuenta 🎸\nTotal actual: {{ $json.puntos }} pts",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-tg-bonus-notify",
+      "name": "Telegram — Notificar Bonus Referidor",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 500],
+      "credentials": {
+        "telegramApi": {
+          "id": "hermes-telegram-cred",
+          "name": "HERMES Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Nuevo Fan": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set — Nivel EMERGENTE y Puntos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set — Nivel EMERGENTE y Puntos": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL — INSERT Fan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL — INSERT Fan": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Welcome Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "¿Tiene Referido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene Referido?": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL — Bonus Referidor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL — Bonus Referidor": {
+      "main": [
+        [
+          {
+            "node": "Telegram — Notificar Bonus Referidor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/Hermosillo",
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": ["music-hub", "fan-crm", "onboarding", "telegram"],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-25T00:00:00.000Z",
+  "versionId": "v1.0.0",
+  "active": true
+}
