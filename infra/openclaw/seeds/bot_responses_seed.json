@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "tenants": ["abe_music", "mds"],
+  "channels": ["telegram", "whatsapp", "voice_web"],
+  "responses": [
+    {
+      "name": "lead_welcome_abe",
+      "priority": 10,
+      "triggers": ["hola", "info", "abe", "musica", "artista"],
+      "method": "STATIC",
+      "response_text": "¡Hola! Soy HERMES de ABE Music. Te ayudo con lanzamientos, contenido y crecimiento de fans. ¿Eres artista, manager o fan?"
+    },
+    {
+      "name": "lead_welcome_mds",
+      "priority": 10,
+      "triggers": ["mds", "logistica", "inventario", "rutas"],
+      "method": "STATIC",
+      "response_text": "¡Bienvenido a MDS! Podemos automatizar check-ins, inventario QR y rutas. ¿Te interesa demo operativa o cotización?"
+    },
+    {
+      "name": "voice_landing_intro",
+      "priority": 9,
+      "triggers": ["voz", "hablar", "llamada", "asistente"],
+      "method": "BRAIN",
+      "question_template": "Responde en español de México, breve y cálido. Usuario dijo: {{message}}. Explica la experiencia de voz bidireccional para ABE/MDS y ofrece siguiente acción."
+    }
+  ]
+}
