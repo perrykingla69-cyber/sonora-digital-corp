@@ -21,8 +21,9 @@ from app.core.rag import search_context
 
 logger = logging.getLogger(__name__)
 
-HERMES_TIMEOUT = 5.0  # segundos
+HERMES_TIMEOUT = 30.0  # segundos (OpenRouter cold start puede tardar ~10s)
 HERMES_MODEL = "google/gemini-2.0-flash-001"  # OpenRouter
+MYSTIC_MODEL = "thudm/glm-z1-rumination:free"  # OpenRouter free tier
 HERMES_CACHE_TTL = 3600  # 1 hora para respuestas frecuentes
 
 MOCK_RESPONSES = {
@@ -68,7 +69,7 @@ class HermesService:
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
-                    "https://openrouter.io/api/v1/chat/completions",
+                    "https://openrouter.ai/api/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
                         "HTTP-Referer": "https://sonoradigitalcorp.com",
@@ -241,15 +242,36 @@ class MysticService:
             {"role": "user", "content": prompt},
         ]
 
-        # Para este MVP, usamos mock (no llamamos OpenRouter para MYSTIC, es local via Ollama en prod)
-        # pero implementamos estructura para integración futura
-        analysis = MOCK_RESPONSES.get(f"mystic_{analysis_type}", MOCK_RESPONSES["mystic_business"])
+        # Llamar OpenRouter con modelo de razonamiento MYSTIC
+        ai_response = None
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                r = await client.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+                        "HTTP-Referer": "https://sonoradigitalcorp.com",
+                    },
+                    json={
+                        "model": MYSTIC_MODEL,
+                        "messages": messages,
+                        "temperature": 0.4,
+                        "max_tokens": 2048,
+                    },
+                )
+                r.raise_for_status()
+                ai_response = r.json().get("choices", [{}])[0].get("message", {}).get("content")
+        except Exception as e:
+            logger.warning(f"MYSTIC OpenRouter error: {e} — usando mock")
+
+        used_mock = ai_response is None
+        analysis = ai_response or MOCK_RESPONSES.get(f"mystic_{analysis_type}", MOCK_RESPONSES["mystic_business"])
         alerts = MYSTIC_ALERTS.get(analysis_type, [])
-        recommendations = [
-            "Revisar reporte mensual",
-            "Coordinar con equipo de operaciones",
-            "Documentar hallazgos",
-        ]
+        recommendations = (
+            ["Análisis generado por MYSTIC con IA — revisar hallazgos"]
+            if not used_mock else
+            ["Revisar reporte mensual", "Coordinar con equipo de operaciones", "Documentar hallazgos"]
+        )
 
         # Guardar en cache
         cache_data = {
@@ -260,10 +282,10 @@ class MysticService:
         try:
             await redis_client.setex(
                 cache_key,
-                3600,  # TTL 1 hora
+                3600,
                 json.dumps(cache_data)
             )
         except Exception as e:
             logger.warning(f"Cache save failed: {e}")
 
-        return (analysis, alerts, recommendations, True)  # used_mock = True (mock por ahora)
+        return (analysis, alerts, recommendations, used_mock)
