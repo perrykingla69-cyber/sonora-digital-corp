@@ -188,7 +188,7 @@ export function CEODashboard() {
     return 'red'
   }
 
-  const alertColor = (tipo: Alert['tipo']) => {
+  const alertColor = (tipo: AlertItem['tipo']) => {
     if (tipo === 'crítico') return 'red'
     if (tipo === 'advertencia') return 'yellow'
     return 'blue'
