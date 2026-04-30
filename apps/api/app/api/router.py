@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from . import alertas, auth, contactos, dashboard, empleados, facturas, leads, memory, ops, tenants
-from .v1 import agents, signup, agent_deployments, bots, gamification, fiscal
+from .v1 import agents, signup, agent_deployments, bots, gamification, fiscal, academy
 
 api_router = APIRouter()
 api_router.include_router(ops.router)
@@ -27,3 +27,6 @@ api_router.include_router(bots.router, prefix="/api/v1/bots", tags=["bots"])
 
 # Gamification
 api_router.include_router(gamification.router, prefix="/api/v1", tags=["gamification"])
+
+# ABE Music Academy — /api/academy/* (frontend BASE = sonoradigitalcorp.com/api)
+api_router.include_router(academy.router, prefix="/api", tags=["ABE Academy"])
