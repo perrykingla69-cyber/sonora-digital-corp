@@ -1,0 +1,85 @@
+gateway:
+  port: 3003
+  log_level: info
+
+channels:
+  telegram:
+    - name: ceo_bot
+      token: ${TELEGRAM_TOKEN_CEO}
+      route: hermes_agent
+      poll: true
+    - name: public_bot
+      token: ${TELEGRAM_TOKEN_PUBLIC}
+      route: lead_router
+      poll: true
+  whatsapp:
+    provider: evolution
+    apiUrl: http://evolution:8080
+    apiKey: ${EVOLUTION_API_KEY}
+    instance: abe-mds
+    webhook: /openclaw/whatsapp
+    routes:
+      default: lead_router
+  voice_web:
+    provider: web_rtc
+    webhook: /openclaw/voice
+    stt:
+      provider: whisper
+      model: tiny
+    tts:
+      provider: elevenlabs
+      voice: ${VOICE_DEFAULT}
+
+middleware:
+  dedup:
+    enabled: true
+    provider: redis
+    url: redis://:${REDIS_PASSWORD}@redis:6379
+    ttl: 30
+  auth:
+    enabled: true
+    provider: jwt
+    secret: ${JWT_SECRET}
+  rate_limit:
+    enabled: true
+    provider: redis
+    limits:
+      api: 30
+      bots: 100
+    window: 60
+
+skills:
+  /studio:
+    description: Orquestación creativa de imagen/video
+    agent: StudioOrchestrator
+  /music/analyze:
+    description: Analiza audio y entrega BPM/clave/estructura
+    agent: MusicAnalyzer
+    target: http://music-analyzer:8001/analyze
+  /music/complete:
+    description: Pipeline letra -> instrumental -> mix -> master
+    agent: MusicFactory
+
+routes:
+  lead_router:
+    resolver: intent
+    intents:
+      abe_music: hermes_api_chat
+      mds: hermes_api_chat
+      default: hermes_api_chat
+
+apis:
+  hermes_api:
+    url: http://api:8000
+    endpoints:
+      chat: /api/v1/agents/hermes/chat
+      lead: /api/v1/leads/intake
+  music_analyzer:
+    url: http://music-analyzer:8001
+
+notifications:
+  telegram_ceo:
+    chat_id: "5738935134"
+    on_deploy: true
+    on_error: true
+    on_alert: true
