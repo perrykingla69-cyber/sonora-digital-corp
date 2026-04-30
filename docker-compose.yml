@@ -731,11 +731,11 @@ services:
   # ── CAPA 5: FRONTEND ─────────────────────────────────────
   frontend:
     build:
-      context: ./apps/frontend
+      context: ./frontend
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: https://${DOMAIN:-sonoradigitalcorp.com}/api
-        NEXT_PUBLIC_APP_NAME: Hermes OS
+        NEXT_PUBLIC_APP_NAME: ABE Music
     container_name: hermes_frontend
     <<: *always
     logging: *default-logging
