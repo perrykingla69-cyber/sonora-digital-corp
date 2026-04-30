@@ -1,0 +1,18 @@
+{
+  "name": "abe-misiones",
+  "priority": 83,
+  "triggers": [
+    "mis misiones",
+    "misiones",
+    "retos",
+    "objetivos",
+    "que debo hacer",
+    "como ganar xp",
+    "ganar puntos",
+    "tareas"
+  ],
+  "method": "GET",
+  "endpoint": "/api/academy/misiones",
+  "auth": true,
+  "response_template": "🎯 *Tus Misiones ABE Music*\n\n{{#each misiones}}{{#if completada}}✅{{else}}⏳{{/if}} *{{titulo}}* (+{{xp_reward}} XP)\n   {{descripcion}}\n   Progreso: {{progreso_pct}}%\n\n{{/each}}\n_Completa misiones para subir de nivel y desbloquear logros._"
+}

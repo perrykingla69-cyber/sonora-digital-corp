@@ -1,0 +1,19 @@
+{
+  "name": "abe-distribucion",
+  "priority": 75,
+  "triggers": [
+    "distribucion",
+    "distribuir musica",
+    "spotify",
+    "apple music",
+    "streaming",
+    "streams",
+    "regalias",
+    "cuanto gano",
+    "plataformas digitales",
+    "subir cancion",
+    "lanzar cancion"
+  ],
+  "method": "STATIC",
+  "response_text": "🌐 *Distribución Digital — ABE Music*\n\n*¿Cómo distribuir tu música?*\nCon ABE Music tu música llega a:\n• 🟢 Spotify\n• 🍎 Apple Music\n• 📺 YouTube Music\n• 🎵 TikTok / CapCut\n• 🔵 Deezer, Amazon Music y más\n\n*Regalías estimadas (por stream):*\n• Spotify: $0.003–$0.005 USD\n• Apple Music: $0.007–$0.01 USD\n• YouTube Music: $0.002 USD\n\n*Plan ABE Distribución — $299 MXN/mes*\n✅ Distribución ilimitada\n✅ Splits entre colaboradores\n✅ Estadísticas en tiempo real\n✅ ISRC y UPC incluidos\n✅ Soporte prioritario\n\n📱 Habla con Abraham para activar tu plan:\n_abemusic.mx/distribucion_"
+}

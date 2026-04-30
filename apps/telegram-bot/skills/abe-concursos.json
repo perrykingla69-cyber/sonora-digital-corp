@@ -1,0 +1,19 @@
+{
+  "name": "abe-concursos",
+  "priority": 77,
+  "triggers": [
+    "concurso",
+    "concursos",
+    "competencia",
+    "battle",
+    "torneo",
+    "premio",
+    "quien gana",
+    "que hay de premio",
+    "concurso de streams"
+  ],
+  "method": "GET",
+  "endpoint": "/api/academy/concursos",
+  "auth": true,
+  "response_template": "🏆 *Concursos ABE Music*\n\n{{#each concursos}}🎯 *{{titulo}}*\n   📅 Termina: {{fecha_fin}}\n   🎁 Premio: {{premio}}\n   👥 Participantes: {{participantes}}\n   Estado: {{#eq estado 'activo'}}🟢 Activo{{else}}⚫ Cerrado{{/eq}}\n\n{{/each}}\n_Escribe \"unirme al concurso\" para participar._"
+}

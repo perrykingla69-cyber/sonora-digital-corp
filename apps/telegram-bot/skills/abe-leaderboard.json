@@ -1,0 +1,18 @@
+{
+  "name": "abe-leaderboard",
+  "priority": 80,
+  "triggers": [
+    "leaderboard",
+    "ranking",
+    "top artistas",
+    "quien va ganando",
+    "posicion",
+    "lugar",
+    "tabla",
+    "clasificacion"
+  ],
+  "method": "GET",
+  "endpoint": "/api/academy/leaderboard",
+  "auth": true,
+  "response_template": "📊 *Ranking ABE Music*\n\n{{#each artistas}}{{posicion}}. {{emoji}} *{{user_id}}*\n   Nivel {{nivel}} • {{experiencia}} XP • {{rango}}\n\n{{/each}}\n_El que más XP acumule gana premios mensuales. ¡Tú puedes!_ 🏆"
+}

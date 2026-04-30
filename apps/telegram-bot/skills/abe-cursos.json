@@ -1,0 +1,21 @@
+{
+  "name": "abe-cursos",
+  "priority": 78,
+  "triggers": [
+    "cursos",
+    "clases",
+    "academia",
+    "academy",
+    "aprender",
+    "estudiar",
+    "produccion",
+    "mezcla",
+    "marketing musical",
+    "que cursos hay",
+    "cursos disponibles"
+  ],
+  "method": "GET",
+  "endpoint": "/api/academy/cursos",
+  "auth": true,
+  "response_template": "🎓 *ABE Music Academy*\n\n{{#each cursos}}{{icono}} *{{titulo}}*\n   Nivel req: {{nivel_req}} • {{xp_total}} XP • {{duracion_min}} min\n   {{#if desbloqueado}}✅ Disponible{{else}}🔒 Nivel {{nivel_req}} requerido{{/if}}\n\n{{/each}}\n_Entra a sonoradigitalcorp.com/academy para estudiar._"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "abe-bienvenida",
+  "priority": 90,
+  "triggers": [
+    "hola",
+    "buenas",
+    "buenos dias",
+    "buenas tardes",
+    "buenas noches",
+    "help",
+    "ayuda",
+    "menu",
+    "opciones",
+    "que puedes hacer",
+    "comandos",
+    "inicio",
+    "start"
+  ],
+  "method": "STATIC",
+  "response_text": "🎵 *¡Bienvenido a ABE Music!*\n\nSoy tu asistente inteligente para artistas. Puedo ayudarte con:\n\n🏆 *Tu perfil* — nivel, XP, rango actual\n🎯 *Misiones* — retos activos y recompensas\n🏅 *Logros* — insignias desbloqueadas\n📊 *Leaderboard* — tu posición vs otros artistas\n🎓 *Academy* — cursos de producción, marketing y más\n🎸 *Catálogo* — tus canciones registradas\n💰 *Distribución* — streams y regalías\n📅 *Eventos* — contrataciones y agenda\n\nEscríbeme cualquier pregunta en lenguaje natural.\n\n🌐 _abemusic.mx_"
+}

@@ -1,0 +1,19 @@
+{
+  "name": "abe-contratacion",
+  "priority": 73,
+  "triggers": [
+    "contratacion",
+    "evento",
+    "concierto",
+    "tocada",
+    "presentacion",
+    "agenda",
+    "shows",
+    "fecha",
+    "contratar",
+    "cotizar evento",
+    "precio por tocar"
+  ],
+  "method": "STATIC",
+  "response_text": "📅 *Contrataciones — ABE Music*\n\n¿Quieres contratar un artista o registrar una fecha?\n\n*Para artistas:*\n✅ Registra tu rider técnico\n✅ Define tus rangos de precio\n✅ Gestiona tu agenda desde el dashboard\n✅ Recibe pagos seguros vía ABE Music\n\n*Para contratantes:*\n📋 Cuéntanos tu evento:\n• Tipo de evento (boda, corporativo, festival)\n• Fecha y lugar\n• Presupuesto aproximado\n• Géneros preferidos\n\nTe conectamos con el artista ideal en Sonora.\n\n📱 Escribe: *\"quiero contratar artista\"* con los detalles\n🌐 _abemusic.mx/contrataciones_"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "abe-perfil-xp",
+  "priority": 85,
+  "triggers": [
+    "mi perfil",
+    "mi nivel",
+    "mi xp",
+    "mis puntos",
+    "cuantos puntos",
+    "mi rango",
+    "mi experiencia",
+    "ver perfil",
+    "perfil",
+    "nivel",
+    "progreso"
+  ],
+  "method": "GET",
+  "endpoint": "/api/academy/perfil",
+  "auth": true,
+  "response_template": "🎮 *Tu Perfil ABE Music*\n\n🏆 Rango: {{rango_emoji}} {{rango}}\n⭐ Nivel: {{nivel}}\n✨ XP: {{experiencia}} / {{xp_siguiente_nivel}}\n📊 Progreso: [{{progreso_pct}}%]\n\n🔥 Racha: {{streak_dias}} días\n🎯 Misiones activas: {{misiones_activas}}\n🏅 Logros: {{logros_desbloqueados}} / {{total_logros}}\n\n📈 *Stats*\n🎵 Canciones: {{stats.canciones_catalogo}}\n👥 Fans: {{stats.fans_totales}}\n🎓 Cursos: {{stats.cursos_completados}}\n\n_Sigue subiendo de nivel completando misiones y cursos._"
+}

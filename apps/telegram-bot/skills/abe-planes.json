@@ -1,0 +1,16 @@
+{
+  "name": "abe-planes",
+  "priority": 70,
+  "triggers": [
+    "planes",
+    "precios",
+    "cuanto cuesta",
+    "suscripcion",
+    "membresia",
+    "plan abe",
+    "que incluye",
+    "diferencia de planes"
+  ],
+  "method": "STATIC",
+  "response_text": "💎 *Planes ABE Music*\n\n🌱 *Free — $0/mes*\n• Perfil de artista\n• 1 canción en catálogo\n• Academy básica (3 clases)\n• Bot ABE Music\n\n🎵 *Artista — $199 MXN/mes*\n• Todo lo del plan Free\n• Catálogo ilimitado\n• Distribución (3 plataformas)\n• Estadísticas de streams\n• Misiones y logros completos\n\n⭐ *Pro — $399 MXN/mes*\n• Todo lo del plan Artista\n• Distribución 12+ plataformas\n• ISRC y UPC incluidos\n• Splits entre colaboradores\n• Contrataciones gestionadas\n• Soporte prioritario 24/7\n\n🏆 *Label — $999 MXN/mes*\n• Hasta 20 artistas\n• Panel CEO ABE Music\n• Reportes financieros\n• API access\n• Manager dedicado\n\n📱 Activa tu plan: _abemusic.mx/planes_\n👤 O escribe *\"hablar con Abraham\"*"
+}
