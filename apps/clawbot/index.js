@@ -523,11 +523,9 @@ async function main() {
       res.sendStatus(200)
     })
   } else {
-    // Polling en desarrollo
+    // Polling en desarrollo — hermesBot y mysticBot solo envían (polling lo hacen hermes_agent y mystic_agent)
     ceoBot.launch()
     publicBot.launch()
-    hermesBot.launch()
-    mysticBot.launch()
     console.log('🤖 Bots en modo polling (desarrollo)')
   }
 
