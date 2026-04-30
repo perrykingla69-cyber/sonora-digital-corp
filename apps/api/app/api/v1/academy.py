@@ -124,9 +124,9 @@ async def get_perfil(user: CurrentUser = Depends(get_current_user)) -> dict[str,
     email = await _get_user_email(user.user_id)
     xp = await _get_user_xp(email)
     nivel = nivel_desde_xp(xp)
-    xp_actual = xp_para_nivel(nivel)
-    xp_siguiente = xp_para_nivel(nivel + 1)
-    progreso_pct = min(100, int((xp - xp_actual) / max(1, xp_siguiente - xp_actual) * 100))
+    xp_floor = xp_para_nivel(nivel - 1) if nivel > 1 else 0
+    xp_siguiente = xp_para_nivel(nivel)
+    progreso_pct = min(100, max(0, int((xp - xp_floor) / max(1, xp_siguiente - xp_floor) * 100)))
     rango, emoji = rango_desde_xp(xp)
     fans = await _get_fans_count(user.tenant_id)
     catalogo = await _get_catalogo_count(user.tenant_id)
@@ -136,6 +136,7 @@ async def get_perfil(user: CurrentUser = Depends(get_current_user)) -> dict[str,
         "nivel": nivel,
         "experiencia": xp,
         "xp_siguiente_nivel": xp_siguiente,
+        "xp_nivel_actual": xp_floor,
         "progreso_pct": progreso_pct,
         "rango": rango,
         "rango_emoji": emoji,
