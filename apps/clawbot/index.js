@@ -524,8 +524,21 @@ async function main() {
     })
   } else {
     // Polling en desarrollo — hermesBot y mysticBot solo envían (polling lo hacen hermes_agent y mystic_agent)
-    ceoBot.launch()
-    publicBot.launch()
+    const launchWithRetry = (bot, name, delay = 0) => {
+      setTimeout(() => {
+        bot.launch().catch(err => {
+          const code = err?.response?.error_code || err?.code
+          if (code === 409) {
+            console.log(`[${name}] Conflict 409, reintentando en 15s...`)
+            launchWithRetry(bot, name, 15000)
+          } else {
+            console.error(`[${name}] Error fatal:`, err.message)
+          }
+        })
+      }, delay)
+    }
+    launchWithRetry(ceoBot, 'CEO')
+    launchWithRetry(publicBot, 'PUBLIC')
     console.log('🤖 Bots en modo polling (desarrollo)')
   }
 
