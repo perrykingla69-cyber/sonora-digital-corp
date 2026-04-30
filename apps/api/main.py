@@ -15,7 +15,7 @@ import time
 from app.core.config import settings
 from app.core.database import engine, init_db
 from app.core.redis import redis_client
-from app.api.v1 import auth, tenants, users, conversations, documents, webhooks, agents, content, payments
+from app.api.v1 import auth, tenants, users, conversations, documents, webhooks, agents, content, payments, academy
 from app.webhooks import heygen as heygen_wh, fal as fal_wh
 
 
@@ -89,6 +89,7 @@ app.include_router(content.router,       prefix=f"{PREFIX}/content",       tags=
 app.include_router(payments.router,      prefix=f"{PREFIX}/payments",      tags=["Payments"])
 app.include_router(heygen_wh.router,     prefix="/webhooks",               tags=["Webhooks"])
 app.include_router(fal_wh.router,        prefix="/webhooks",               tags=["Webhooks"])
+app.include_router(academy.router,       prefix="/api",                    tags=["ABE Academy"])
 
 
 @app.get("/health", include_in_schema=False)
