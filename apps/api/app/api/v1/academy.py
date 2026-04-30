@@ -242,3 +242,88 @@ async def get_concursos(user: CurrentUser = Depends(get_current_user)) -> list[d
 @router.post("/concursos/{concurso_id}/unirse")
 async def unirse_concurso(concurso_id: str, user: CurrentUser = Depends(get_current_user)) -> dict[str, Any]:
     return {"ok": True, "mensaje": "¡Te uniste al concurso! Que gane el mejor 🏆"}
+
+
+@router.get("/stats")
+async def get_stats(user: CurrentUser = Depends(get_current_user)) -> dict[str, Any]:
+    """Dashboard CEO — métricas agregadas de la plataforma ABE Music."""
+    from sqlalchemy import text
+    async with get_tenant_session(user.tenant_id) as db:
+        r = await db.execute(text("""
+            SELECT
+                (SELECT COUNT(*) FROM artistas WHERE tenant_id = :tid)                               AS total_artistas,
+                (SELECT COUNT(*) FROM catalogo_musical cm
+                   JOIN artistas a ON cm.artista_id = a.id WHERE a.tenant_id = :tid)                AS total_canciones,
+                (SELECT COUNT(*) FROM artist_fans WHERE tenant_id = :tid)                           AS total_fans,
+                (SELECT COUNT(*) FROM artist_contrataciones WHERE tenant_id = :tid)                 AS total_contrataciones,
+                (SELECT COUNT(*) FROM artist_contrataciones
+                   WHERE tenant_id = :tid AND estado = 'confirmado')                                AS contrataciones_confirmadas,
+                (SELECT COALESCE(SUM(precio_acordado), 0) FROM artist_contrataciones
+                   WHERE tenant_id = :tid AND estado = 'confirmado')                               AS ingresos_contrataciones,
+                (SELECT COUNT(*) FROM academy_inscripciones ai
+                   JOIN users u ON ai.student_email = u.email
+                   WHERE u.tenant_id = :tid)                                                        AS estudiantes_academy,
+                (SELECT COUNT(*) FROM academy_inscripciones ai
+                   JOIN users u ON ai.student_email = u.email
+                   WHERE u.tenant_id = :tid AND ai.status = 'completed')                           AS cursos_completados
+        """), {"tid": str(user.tenant_id)})
+        row = r.fetchone()
+
+    # Leaderboard top 3
+    async with get_tenant_session(user.tenant_id) as db:
+        lb = await db.execute(text("""
+            SELECT u.email, COALESCE(SUM(ai.xp_earned), 0) AS xp
+            FROM users u
+            LEFT JOIN academy_inscripciones ai ON ai.student_email = u.email AND ai.status = 'completed'
+            WHERE u.tenant_id = :tid
+            GROUP BY u.email ORDER BY xp DESC LIMIT 3
+        """), {"tid": str(user.tenant_id)})
+        top3 = lb.fetchall()
+
+    # Artistas recientes
+    async with get_tenant_session(user.tenant_id) as db:
+        art = await db.execute(text("""
+            SELECT nombre, genero, status, created_at
+            FROM artistas WHERE tenant_id = :tid
+            ORDER BY created_at DESC LIMIT 5
+        """), {"tid": str(user.tenant_id)})
+        artistas_recientes = art.fetchall()
+
+    return {
+        "kpis": {
+            "total_artistas":            int(row.total_artistas),
+            "total_canciones":           int(row.total_canciones),
+            "total_fans":                int(row.total_fans),
+            "total_contrataciones":      int(row.total_contrataciones),
+            "contrataciones_confirmadas":int(row.contrataciones_confirmadas),
+            "ingresos_contrataciones":   float(row.ingresos_contrataciones),
+            "estudiantes_academy":       int(row.estudiantes_academy),
+            "cursos_completados":        int(row.cursos_completados),
+        },
+        "top_artistas": [
+            {
+                "posicion": i + 1,
+                "nombre": r.email.split("@")[0].title(),
+                "xp": int(r.xp),
+                "nivel": nivel_desde_xp(int(r.xp)),
+                "rango": rango_desde_xp(int(r.xp))[0],
+                "emoji": rango_desde_xp(int(r.xp))[1],
+            }
+            for i, r in enumerate(top3)
+        ],
+        "artistas_recientes": [
+            {
+                "nombre": a.nombre,
+                "genero": a.genero,
+                "status": a.status,
+                "desde": a.created_at.strftime("%Y-%m-%d") if a.created_at else None,
+            }
+            for a in artistas_recientes
+        ],
+        "concurso_activo": {
+            "titulo": "Battle de Streams — Mayo 2026",
+            "fecha_fin": "2026-05-31",
+            "participantes": int(row.total_artistas),
+            "estado": "activo",
+        },
+    }

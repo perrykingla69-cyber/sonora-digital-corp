@@ -3,6 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/lib/api'
 import { getUser } from '@/lib/auth'
+import dynamic from 'next/dynamic'
+
+const ABE_TENANT_ID = '22222222-ab10-4000-8000-000000000002'
+const AbeMusicDashboard = dynamic(() => import('@/components/dashboard-abe/AbeMusicDashboard'), { ssr: false })
+
 import {
   FileText, TrendingUp, DollarSign, AlertTriangle, CheckCircle,
   ExternalLink, Brain, Zap, Shield, Clock, ChevronRight,
@@ -100,6 +105,11 @@ function LegalNotice({ text }: { text: string }) {
 export default function DashboardPage() {
   const user = getUser()
   const nombre = user?.nombre?.split(' ')[0] || 'Empresario'
+
+  // Redirige al dashboard ABE Music si el tenant lo requiere
+  if (user?.tenant_id === ABE_TENANT_ID) {
+    return <AbeMusicDashboard nombre={nombre} />
+  }
 
   const [stats, setStats]       = useState({ facturas: 0, pendiente: 0, clientes: 0, ahorro: 48000 })
   const [tc, setTc]             = useState<number | null>(null)
